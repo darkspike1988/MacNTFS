@@ -32,7 +32,7 @@ struct SidebarView: View {
 
             let otherDrives = driveManager.drives.filter { !$0.isNTFS && !$0.isDiskImage }
             if !otherDrives.isEmpty {
-                Section("Andere Laufwerke (APFS / ExFAT)") {
+                Section("Laufwerke") {
                     ForEach(otherDrives) { drive in
                         NavigationLink(value: drive.id) {
                             DriveRow(drive: drive)

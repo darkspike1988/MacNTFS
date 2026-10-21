@@ -15,104 +15,108 @@ struct DriveDetailView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 20) {
-                // Hero Header
-                HStack(spacing: 16) {
-                    ZStack {
-                        RoundedRectangle(cornerRadius: 16, style: .continuous)
-                            .fill(
-                                LinearGradient(
-                                    colors: [AppTheme.ntfsBlue.opacity(0.85), AppTheme.ntfsBlue],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 72, height: 72)
-                            .shadow(color: AppTheme.ntfsBlue.opacity(0.35), radius: 8, x: 0, y: 4)
+            VStack(alignment: .leading, spacing: 18) {
+                // Header (Apple HIG Style)
+                VStack(alignment: .leading, spacing: 14) {
+                    HStack(spacing: 14) {
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                .fill(drive.isSystemDisk ? Color.primary.opacity(0.06) : AppTheme.ntfsBlue.opacity(0.12))
+                                .frame(width: 44, height: 44)
 
-                        Image(systemName: drive.isDiskImage ? "doc.zipper" : (drive.isSystemDisk ? "apple.logo" : "externaldrive.fill"))
-                            .font(.system(size: 36))
-                            .foregroundStyle(.white)
-                    }
+                            Image(systemName: drive.isDiskImage ? "doc.zipper" : (drive.isSystemDisk ? "apple.logo" : "externaldrive.fill"))
+                                .font(.system(size: 22))
+                                .foregroundStyle(drive.isSystemDisk ? Color.primary : AppTheme.ntfsBlue)
+                        }
 
-                    VStack(alignment: .leading, spacing: 4) {
-                        HStack(spacing: 8) {
-                            Text(drive.name)
-                                .font(.title)
-                                .fontWeight(.bold)
+                        VStack(alignment: .leading, spacing: 3) {
+                            HStack(spacing: 8) {
+                                Text(drive.name)
+                                    .font(.title2)
+                                    .fontWeight(.semibold)
 
-                            if drive.isNTFS {
-                                Text("NTFS")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(AppTheme.ntfsBlue.opacity(0.15))
-                                    .foregroundStyle(AppTheme.ntfsBlue)
-                                    .clipShape(Capsule())
-                            } else {
-                                Text(drive.fileSystemName.components(separatedBy: " ").first ?? "Volume")
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(Color.secondary.opacity(0.15))
-                                    .foregroundStyle(.secondary)
-                                    .clipShape(Capsule())
-                            }
-
-                            if drive.isNTFS {
-                                if drive.isDirty {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "exclamationmark.triangle.fill")
-                                        Text("Unclean Unmount")
-                                    }
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(AppTheme.warningOrange.opacity(0.15))
-                                    .foregroundStyle(AppTheme.warningOrange)
-                                    .clipShape(Capsule())
+                                if drive.isSystemDisk {
+                                    Text("macOS")
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.primary.opacity(0.08))
+                                        .foregroundStyle(.primary)
+                                        .clipShape(Capsule())
+                                } else if drive.isNTFS {
+                                    Text("NTFS")
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(AppTheme.ntfsBlue.opacity(0.15))
+                                        .foregroundStyle(AppTheme.ntfsBlue)
+                                        .clipShape(Capsule())
                                 } else {
-                                    HStack(spacing: 4) {
-                                        Image(systemName: "checkmark.seal.fill")
-                                        Text("Clean")
+                                    Text(drive.fileSystemName.components(separatedBy: " ").first ?? "Volume")
+                                        .font(.caption2)
+                                        .fontWeight(.bold)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(Color.secondary.opacity(0.12))
+                                        .foregroundStyle(.secondary)
+                                        .clipShape(Capsule())
+                                }
+
+                                if drive.isNTFS {
+                                    if drive.isDirty {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "exclamationmark.triangle.fill")
+                                            Text("Unsauber getrennt")
+                                        }
+                                        .font(.caption2)
+                                        .fontWeight(.medium)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(AppTheme.warningOrange.opacity(0.15))
+                                        .foregroundStyle(AppTheme.warningOrange)
+                                        .clipShape(Capsule())
+                                    } else {
+                                        HStack(spacing: 3) {
+                                            Image(systemName: "checkmark.seal.fill")
+                                            Text("Sauber")
+                                        }
+                                        .font(.caption2)
+                                        .fontWeight(.medium)
+                                        .padding(.horizontal, 6)
+                                        .padding(.vertical, 2)
+                                        .background(AppTheme.successGreen.opacity(0.15))
+                                        .foregroundStyle(AppTheme.successGreen)
+                                        .clipShape(Capsule())
                                     }
-                                    .font(.caption2)
-                                    .fontWeight(.bold)
-                                    .padding(.horizontal, 6)
-                                    .padding(.vertical, 2)
-                                    .background(AppTheme.successGreen.opacity(0.15))
-                                    .foregroundStyle(AppTheme.successGreen)
-                                    .clipShape(Capsule())
                                 }
                             }
+
+                            HStack(spacing: 6) {
+                                Text(drive.fileSystemName)
+                                Text("•")
+                                    .foregroundStyle(.tertiary)
+                                Text(drive.modelName.isEmpty ? "Laufwerk" : drive.modelName)
+                                if !drive.vendor.isEmpty && drive.vendor != drive.modelName {
+                                    Text("(\(drive.vendor))")
+                                }
+                                Text("•")
+                                    .foregroundStyle(.tertiary)
+                                Text(drive.busProtocol)
+                                Text("•")
+                                    .foregroundStyle(.tertiary)
+                                Text(drive.devicePath)
+                            }
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
                         }
 
-                        HStack(spacing: 6) {
-                            Text(drive.modelName)
-                                .fontWeight(.medium)
-                            if !drive.vendor.isEmpty && drive.vendor != drive.modelName {
-                                Text("(\(drive.vendor))")
-                                    .foregroundStyle(.secondary)
-                            }
-                            Text("•")
-                                .foregroundStyle(.tertiary)
-                            Text(drive.busProtocol)
-                                .foregroundStyle(.secondary)
-                            Text("•")
-                                .foregroundStyle(.tertiary)
-                            Text(drive.devicePath)
-                                .foregroundStyle(.secondary)
-                        }
-                        .font(.subheadline)
+                        Spacer()
                     }
 
-                    Spacer()
-
-                    // Action Buttons
-                    HStack(spacing: 8) {
+                    // Spacious Action Bar (Full labels without truncation)
+                    HStack(spacing: 10) {
                         Button(action: {
                             if drive.isNTFS {
                                 showingBrowser = true
@@ -120,15 +124,17 @@ struct DriveDetailView: View {
                                 openInFinder(path: mount)
                             }
                         }) {
-                            Label("Durchsuchen", systemImage: "folder.fill")
+                            Label("Durchsuchen", systemImage: "folder")
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(AppTheme.ntfsBlue)
+                        .controlSize(.regular)
 
                         Button(action: { showingForensics = true }) {
-                            Label("Forensik & Rettung", systemImage: "waveform.path.ecg")
+                            Label("Forensik & Datenrettung", systemImage: "waveform.path.ecg")
                         }
                         .buttonStyle(.bordered)
+                        .controlSize(.regular)
                         .disabled(!drive.isNTFS)
                         .help(drive.isNTFS ? "NTFS Forensik & MFT-Carving öffnen" : "Forensik & MFT-Carving ist nur für NTFS-Dateisysteme verfügbar")
 
@@ -137,24 +143,29 @@ struct DriveDetailView: View {
                                 Label("Geschützt (macOS)", systemImage: "lock.fill")
                             }
                             .buttonStyle(.bordered)
+                            .controlSize(.regular)
                             .disabled(true)
-                            .help("Das interne macOS-Startvolume ist schreibgeschützt und kann nicht gelöscht werden.")
+                            .help("Das interne macOS-Startvolume ist schreibgeschützt und kann nicht formatiert werden.")
                         } else {
                             Button(action: { showingFormatSheet = true }) {
                                 Label("Formatieren...", systemImage: "eraser.line.dashed")
                             }
                             .buttonStyle(.bordered)
+                            .controlSize(.regular)
                         }
 
                         if let mount = drive.mountPoint {
                             Button(action: { openInFinder(path: mount) }) {
-                                Label("Finder", systemImage: "arrow.up.forward.app")
+                                Label("Im Finder anzeigen", systemImage: "arrow.up.forward.app")
                             }
                             .buttonStyle(.bordered)
+                            .controlSize(.regular)
                         }
+
+                        Spacer()
                     }
                 }
-                .padding(.bottom, 8)
+                .padding(.bottom, 4)
 
                 // Storage Capacity Card (macOS Apple Style Gauge)
                 VStack(alignment: .leading, spacing: 10) {
@@ -202,64 +213,6 @@ struct DriveDetailView: View {
                     }
                 }
                 .appleCardStyle()
-
-                // Non-NTFS Compatibility or System Protection Banner
-                if !drive.isNTFS && !drive.isDiskImage {
-                    if drive.isSystemDisk {
-                        HStack(spacing: 16) {
-                            Image(systemName: "apple.logo")
-                                .font(.system(size: 32))
-                                .foregroundStyle(Color.primary)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("macOS Start- und Systemvolume (\(drive.fileSystemName))")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-
-                                Text("Dieses interne Startvolume wird von macOS verwaltet und ist durch APFS-Snapshots sowie die Apple System Integrity Protection (SIP) geschützt.")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-
-                            Text("macOS System")
-                                .font(.caption)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 10)
-                                .padding(.vertical, 5)
-                                .background(Color.primary.opacity(0.08))
-                                .clipShape(Capsule())
-                        }
-                        .appleCardStyle()
-                    } else {
-                        HStack(spacing: 16) {
-                            Image(systemName: "info.circle.fill")
-                                .font(.system(size: 32))
-                                .foregroundStyle(AppTheme.ntfsBlue)
-
-                            VStack(alignment: .leading, spacing: 4) {
-                                Text("Nicht-NTFS Dateisystem: \(drive.fileSystemName)")
-                                    .font(.headline)
-                                    .fontWeight(.semibold)
-
-                                Text("Dieses externe Laufwerk ist derzeit als \(drive.fileSystemName) formatiert. Für nahtlosen plattformübergreifenden High-Speed-Zugriff unter Windows und macOS kannst du dieses Volume mit MacNTFS nach NTFS konvertieren.")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
-                            }
-
-                            Spacer()
-
-                            Button(action: { showingFormatSheet = true }) {
-                                Label("In NTFS formatieren...", systemImage: "eraser.line.dashed")
-                            }
-                            .buttonStyle(.borderedProminent)
-                            .tint(AppTheme.ntfsBlue)
-                            .controlSize(.regular)
-                        }
-                        .appleCardStyle()
-                    }
-                }
 
                 // Information Grid
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
@@ -332,17 +285,19 @@ struct DriveDetailView: View {
                             }
                         } else {
                             DetailRow(label: "Dateisystem", value: drive.fileSystemName)
-                            DetailRow(label: "Treiber-Status", value: "Aktiv durch macOS gemountet")
+                            DetailRow(label: "Treiber-Status", value: drive.isSystemDisk ? "macOS Systemvolume (SIP geschützt)" : "Aktiv durch macOS gemountet")
                             DetailRow(label: "Integritätsprüfung", value: "Exklusiv für NTFS-Volumes")
 
-                            Button(action: { showingFormatSheet = true }) {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "eraser.line.dashed")
-                                    Text("Laufwerk in NTFS formatieren...")
+                            if !drive.isSystemDisk {
+                                Button(action: { showingFormatSheet = true }) {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "eraser.line.dashed")
+                                        Text("Laufwerk in NTFS formatieren...")
+                                    }
                                 }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
                             }
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
                         }
                     }
                     .appleCardStyle()
