@@ -175,6 +175,17 @@ public enum NTFSFormatter {
         // Sectors per cluster (0x0D)
         vbr[0x0D] = sectorsPerCluster
 
+        // Media descriptor (0x15): 0xF8 = Hard disk / standard media (required by Windows, Tuxera and ntfs-3g)
+        vbr[0x15] = 0xF8
+
+        // Sectors per track (0x18): 63
+        vbr[0x18] = 0x3F
+        vbr[0x19] = 0x00
+
+        // Number of heads (0x1A): 255
+        vbr[0x1A] = 0xFF
+        vbr[0x1B] = 0x00
+
         // Total sectors (0x28)
         var tSectors = totalSectors.littleEndian
         withUnsafeBytes(of: &tSectors) { vbr.replaceSubrange(0x28..<0x30, with: $0) }
