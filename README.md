@@ -100,10 +100,10 @@ swift build -c release
 | Phase | Milestone | Status |
 | :--- | :--- | :---: |
 | **Phase 1** | **Read-Only Core Engine** (VBR/BPB, Fixups, MFT Parsing, Runlists, B-Tree Listing, CLI) | ✅ **Done** |
-| **Phase 2** | **Native FSKit Integration** (Mounting NTFS volumes read-only in Finder via `FSKit.framework`) | 🔄 In Progress |
-| **Phase 3** | **Safe Write Engine** (Cluster Allocation via `$Bitmap`, MFT Record Creation, B-Tree Mutation) | ⏳ Planned |
-| **Phase 4** | **macOS Interoperability** (Extended Attributes `xattr` via Named Streams, Symlinks, Timestamps) | ⏳ Planned |
-| **Phase 5** | **GUI App & Distribution** (Menu Bar App, Auto-Mounting, Sparkle Auto-Update, DMG Release) | ⏳ Planned |
+| **Phase 2** | **Native FSKit Integration** (`MacNTFSFileSystem`, `FSUnaryFileSystemOperations`, `FSBlockDeviceResource` bridge) | ✅ **Done** |
+| **Phase 3** | **Write Engine Architecture** (`BitmapManager` Cluster Allokator, `DataRunEncoder`, `MFTRecordBuilder` mit Fixup-Array) | ✅ **Done** |
+| **Phase 4** | **macOS Interoperability** (Extended Attributes `xattr` via Named Streams, Symlinks, Timestamps) | 🔄 In Progress |
+| **Phase 5** | **GUI App & Distribution** (SwiftUI App mit Menu Bar, Apple Storage Bar, Sparkle Auto-Update, DMG Release) | ✅ **Done** |
 
 ---
 

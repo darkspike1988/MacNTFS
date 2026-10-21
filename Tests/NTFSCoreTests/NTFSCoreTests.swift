@@ -197,4 +197,90 @@ final class NTFSCoreTests: XCTestCase {
         // Precision within 1 millisecond
         XCTAssertEqual(now.timeIntervalSince1970, roundtripDate.timeIntervalSince1970, accuracy: 0.001)
     }
+
+    // MARK: - Phase 3 Write Engine Tests
+
+    func testBitmapManagerAllocationAndFree() throws {
+        // 8 bytes = 64 bits, all initially free (0x00)
+        var bitmap = BitmapManager(data: Data(repeating: 0x00, count: 8))
+        XCTAssertEqual(bitmap.totalBits, 64)
+        XCTAssertFalse(bitmap.isAllocated(at: 10))
+
+        // Allocate 4 contiguous bits starting at 10
+        let allocatedStart = try bitmap.allocateContiguous(count: 4, startIndex: 10)
+        XCTAssertEqual(allocatedStart, 10)
+
+        // Verify bits 10, 11, 12, 13 are allocated
+        XCTAssertTrue(bitmap.isAllocated(at: 10))
+        XCTAssertTrue(bitmap.isAllocated(at: 11))
+        XCTAssertTrue(bitmap.isAllocated(at: 12))
+        XCTAssertTrue(bitmap.isAllocated(at: 13))
+        XCTAssertFalse(bitmap.isAllocated(at: 9))
+        XCTAssertFalse(bitmap.isAllocated(at: 14))
+
+        // Free bits 11 and 12
+        try bitmap.freeContiguous(startIndex: 11, count: 2)
+        XCTAssertTrue(bitmap.isAllocated(at: 10))
+        XCTAssertFalse(bitmap.isAllocated(at: 11))
+        XCTAssertFalse(bitmap.isAllocated(at: 12))
+        XCTAssertTrue(bitmap.isAllocated(at: 13))
+    }
+
+    func testDataRunEncoderAndDecoderRoundtrip() throws {
+        let originalRuns = [
+            DataRun(clusterCount: 16, startingLCN: 1024),
+            DataRun(clusterCount: 32, startingLCN: 2048),
+            DataRun(clusterCount: 8, startingLCN: 1500), // Jump backwards (negative delta)
+            DataRun(clusterCount: 4, startingLCN: nil)   // Sparse run
+        ]
+
+        let encodedBytes = DataRunEncoder.encode(runs: originalRuns)
+        let decodedRuns = try RunlistDecoder.decode(data: encodedBytes)
+
+        XCTAssertEqual(decodedRuns.count, originalRuns.count)
+        for i in 0..<originalRuns.count {
+            XCTAssertEqual(decodedRuns[i].clusterCount, originalRuns[i].clusterCount)
+            XCTAssertEqual(decodedRuns[i].startingLCN, originalRuns[i].startingLCN)
+            XCTAssertEqual(decodedRuns[i].isSparse, originalRuns[i].isSparse)
+        }
+    }
+
+    func testMFTRecordBuilderGeneratesValidRecord() throws {
+        let expectedPayload = "SwiftNTFS Write Engine Resident Payload Verification".data(using: .utf8)!
+        let fileName = "Document.txt"
+
+        let recordData = try MFTRecordBuilder.buildFileRecord(
+            recordNumber: 42,
+            sequenceNumber: 3,
+            parentDirectoryRecordNumber: 5,
+            fileName: fileName,
+            fileContent: expectedPayload
+        )
+
+        XCTAssertEqual(recordData.count, 1024)
+
+        // Parse generated record back with MFTRecord parser to verify integrity & fixups
+        let parsed = try MFTRecord(recordNumber: 42, rawData: recordData, bytesPerSector: 512)
+        XCTAssertEqual(parsed.header.magic, "FILE")
+        XCTAssertTrue(parsed.isInUse)
+        XCTAssertFalse(parsed.isDirectory)
+        XCTAssertEqual(parsed.header.sequenceNumber, 3)
+
+        // Check file name attribute
+        guard let fn = parsed.primaryFileName else {
+            XCTFail("Missing primary file name attribute")
+            return
+        }
+        XCTAssertEqual(fn.name, fileName)
+        XCTAssertEqual(fn.realSize, UInt64(expectedPayload.count))
+        XCTAssertEqual(fn.parentDirectoryRecordNumber, 5)
+
+        // Check resident data attribute
+        guard let dataAttr = parsed.defaultDataAttribute,
+              let resData = dataAttr.residentData else {
+            XCTFail("Missing or non-resident data attribute")
+            return
+        }
+        XCTAssertEqual(resData, expectedPayload)
+    }
 }
