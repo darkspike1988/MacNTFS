@@ -81,6 +81,56 @@ struct MacNTFSCLI {
                 let destName = args.count >= 5 ? args[4] : URL(fileURLWithPath: localPath).lastPathComponent
                 try await handleWrite(devPath: devPath, localFilePath: localPath, destFileName: destName)
 
+            case "forensics":
+                guard args.count >= 3 else {
+                    printForensicsUsage()
+                    exit(1)
+                }
+                let subCommand = args[2]
+                switch subCommand {
+                case "scan":
+                    guard args.count >= 4 else {
+                        print("Usage: macntfs forensics scan <image-or-device>")
+                        exit(1)
+                    }
+                    try await handleForensicsScan(path: args[3])
+
+                case "recover":
+                    guard args.count >= 6, let recNum = UInt64(args[4]) else {
+                        print("Usage: macntfs forensics recover <image-or-device> <mft-record-number> <output-file>")
+                        exit(1)
+                    }
+                    try await handleForensicsRecover(path: args[3], recordNumber: recNum, destPath: args[5])
+
+                case "hexdump":
+                    guard args.count >= 4 else {
+                        print("Usage: macntfs forensics hexdump <image-or-device> [offset-bytes] [length-bytes]")
+                        exit(1)
+                    }
+                    let offset = args.count >= 5 ? (UInt64(args[4]) ?? 0) : 0
+                    let count = args.count >= 6 ? (Int(args[5]) ?? 512) : 512
+                    try await handleForensicsHexdump(path: args[3], offset: offset, count: count)
+
+                case "surface-scan":
+                    guard args.count >= 4 else {
+                        print("Usage: macntfs forensics surface-scan <image-or-device>")
+                        exit(1)
+                    }
+                    try await handleForensicsSurfaceScan(path: args[3])
+
+                case "boot-diff":
+                    guard args.count >= 4 else {
+                        print("Usage: macntfs forensics boot-diff <image-or-device>")
+                        exit(1)
+                    }
+                    try await handleForensicsBootDiff(path: args[3])
+
+                default:
+                    print("Unknown forensics subcommand: '\(subCommand)'")
+                    printForensicsUsage()
+                    exit(1)
+                }
+
             case "--help", "-h", "help":
                 printUsage()
 
@@ -289,5 +339,96 @@ struct MacNTFSCLI {
         let recNum = try vol.writeFile(fileName: destFileName, data: fileData)
 
         print("Successfully wrote '\(destFileName)' (Allocated MFT Record #\(recNum)).")
+    }
+
+    static func printForensicsUsage() {
+        print("""
+        MacNTFS Forensics & Data Recovery Suite:
+          macntfs forensics scan <image-or-device>                   Scan MFT for deleted/recoverable files
+          macntfs forensics recover <image-or-device> <rec#> <out>   Carve/recover deleted file by record #
+          macntfs forensics hexdump <image-or-device> [off] [len]    Hex + ASCII dump of disk offset
+          macntfs forensics surface-scan <image-or-device>           Non-destructive read test for bad sectors
+          macntfs forensics boot-diff <image-or-device>              Forensic diff between primary & backup VBR
+        """)
+    }
+
+    static func handleForensicsScan(path: String) async throws {
+        print("Forensically carving MFT for deleted files on '\(path)'...")
+        let device = try FileBlockDevice(path: path)
+        let vol = try NTFSVolume(blockDevice: device)
+
+        let deleted = try vol.scanDeletedFiles()
+        print("\n=== Discovered Deleted / Recoverable Files (\(deleted.count)) ===")
+        if deleted.isEmpty {
+            print("No deleted files found in currently allocated MFT records.")
+            return
+        }
+
+        print("Rec#   Size         Confidence                      Modified             Name")
+        print("----------------------------------------------------------------------------------")
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateFormat = "yyyy-MM-dd HH:mm"
+
+        for f in deleted {
+            let recStr = String(format: "%-6d", f.recordNumber)
+            let sizeStr = String(format: "%-12d", f.fileSize)
+            let confStr = f.confidence.rawValue.padding(toLength: 30, withPad: " ", startingAt: 0)
+            let dateStr = dateFormatter.string(from: f.modificationDate)
+            print("\(recStr) \(sizeStr) \(confStr)  \(dateStr)   \(f.fileName)")
+        }
+        print("----------------------------------------------------------------------------------")
+        print("Tip: Run 'macntfs forensics recover \(path) <rec#> <output-file>' to restore any file.")
+    }
+
+    static func handleForensicsRecover(path: String, recordNumber: UInt64, destPath: String) async throws {
+        print("Carving MFT Record #\(recordNumber) from '\(path)'...")
+        let device = try FileBlockDevice(path: path)
+        let vol = try NTFSVolume(blockDevice: device)
+
+        let (name, data) = try vol.recoverDeletedFile(recordNumber: recordNumber)
+        try data.write(to: URL(fileURLWithPath: destPath))
+        print("Successfully carved '\(name)' (\(data.count) bytes) -> saved to '\(destPath)'!")
+    }
+
+    static func handleForensicsHexdump(path: String, offset: UInt64, count: Int) async throws {
+        let device = try FileBlockDevice(path: path)
+        let raw = try device.read(offset: offset, count: count)
+        print("=== Hexdump of '\(path)' [Offset: 0x\(String(offset, radix: 16)), Length: \(count) bytes] ===")
+        print(NTFSForensicsEngine.hexDump(data: raw, baseOffset: offset, maxBytes: count))
+    }
+
+    static func handleForensicsSurfaceScan(path: String) async throws {
+        print("Performing non-destructive surface scan on '\(path)'...")
+        let device = try FileBlockDevice(path: path)
+        let report = try NTFSForensicsEngine.surfaceScan(device: device)
+
+        print("\n=== Surface Scan Report ===")
+        print("Total Bytes Scanned:   \(ByteCountFormatter.string(fromByteCount: Int64(report.totalBytesScanned), countStyle: .file)) (\(report.totalBytesScanned) bytes)")
+        print("Total Sectors:         \(report.totalSectorsScanned)")
+        print("Bad / Damaged Sectors: \(report.badSectors.count)")
+
+        if report.badSectors.isEmpty {
+            print("Status:                CLEAN - No hardware I/O read errors detected.")
+        } else {
+            print("Status:                DAMAGED - Defective sectors detected:")
+            for s in report.badSectors {
+                print("  • Sector LBA \(s) (Byte offset: 0x\(String(s * 512, radix: 16)))")
+            }
+        }
+    }
+
+    static func handleForensicsBootDiff(path: String) async throws {
+        print("Analyzing primary vs backup Volume Boot Records on '\(path)'...")
+        let device = try FileBlockDevice(path: path)
+        let diff = try NTFSForensicsEngine.compareBootSectors(device: device)
+
+        print("\n=== Forensic Boot Sector Comparison ===")
+        print("Primary VBR Valid:     \(diff.primaryValid ? "YES" : "CORRUPT")")
+        print("Backup VBR Valid:      \(diff.backupValid ? "YES" : "CORRUPT / MISSING")")
+        print("Byte-for-Byte Match:   \(diff.byteIdentical ? "IDENTICAL (100% in sync)" : "MISMATCH")")
+        print("OEM ID Match:          \(diff.oemIDMatches ? "YES" : "NO")")
+        print("Serial Number Match:   \(diff.serialMatches ? "YES (0x\(String(diff.primarySerial, radix: 16).uppercased()))" : "MISMATCH (Pri: 0x\(String(diff.primarySerial, radix: 16)) vs Bak: 0x\(String(diff.backupSerial, radix: 16)))")")
+        print("Cluster Size Match:    \(diff.clusterSizeMatches ? "YES (\(diff.primaryClusterSize) bytes)" : "MISMATCH")")
+        print("MFT LCN Cluster Match: \(diff.mftClusterMatches ? "YES" : "MISMATCH")")
     }
 }

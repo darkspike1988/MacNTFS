@@ -209,6 +209,16 @@ public final class NTFSVolume: Sendable {
         return try NTFSVolumeChecker.repair(device: blockDevice)
     }
 
+    /// Scans the volume forensically for deleted and recoverable files in the MFT.
+    public func scanDeletedFiles() throws -> [RecoverableFile] {
+        return try NTFSForensicsEngine.scanDeletedFiles(volume: self)
+    }
+
+    /// Recovers / carves the data of a deleted file by its MFT record number.
+    public func recoverDeletedFile(recordNumber: UInt64) throws -> (name: String, data: Data) {
+        return try NTFSForensicsEngine.recoverDeletedFile(volume: self, recordNumber: recordNumber)
+    }
+
     private static func readFromRuns(
         runs: [DataRun],
         virtualOffset: UInt64,

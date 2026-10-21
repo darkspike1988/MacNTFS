@@ -417,4 +417,82 @@ final class NTFSCoreTests: XCTestCase {
         XCTAssertTrue(names.contains("TestData.bin"))
         XCTAssertTrue(names.contains("Mac_Report_2026_.log"))
     }
+
+    // MARK: - Forensics & Data Recovery Tests
+
+    func testForensicHexDump() {
+        let sample = "NTFS FILE RECOVERY TEST DATA 1234567890".data(using: .utf8)!
+        let dump = NTFSForensicsEngine.hexDump(data: sample, baseOffset: 0x1000)
+        XCTAssertTrue(dump.contains("00001000"))
+        XCTAssertTrue(dump.contains("4E 54 46 53")) // "NTFS" in hex
+        XCTAssertTrue(dump.contains("|NTFS FILE RECOVE|"))
+    }
+
+    func testForensicBootSectorComparison() throws {
+        let totalBytes = 20 * 1024 * 1024
+        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
+        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "BOOT_CMP"))
+
+        let comp = try NTFSForensicsEngine.compareBootSectors(device: memDevice)
+        XCTAssertTrue(comp.primaryValid)
+        XCTAssertTrue(comp.backupValid)
+        XCTAssertTrue(comp.byteIdentical)
+        XCTAssertTrue(comp.oemIDMatches)
+        XCTAssertTrue(comp.serialMatches)
+        XCTAssertTrue(comp.clusterSizeMatches)
+        XCTAssertTrue(comp.mftClusterMatches)
+    }
+
+    func testForensicScanAndRecoverDeletedFile() throws {
+        let totalBytes = 25 * 1024 * 1024
+        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
+        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "CARVE_TEST"))
+
+        let volume = try NTFSVolume(blockDevice: memDevice)
+
+        // 1. Create a confidential file
+        let originalPayload = "CONFIDENTIAL FINANCIAL REPORT - Q3 2026 - DO NOT LEAK".data(using: .utf8)!
+        let recNum = try volume.writeFile(fileName: "Q3_Report.docx", data: originalPayload)
+
+        // 2. Forensically "delete" the file by clearing bit 0 in its MFT header (in-use flag = 0)
+        // Record offset = 4 * 4096 + recNum * 1024
+        let recOffset = (4 * 4096) + (recNum * 1024)
+        var recBytes = try memDevice.read(offset: recOffset, count: 1024)
+        try FixupApplier.applyFixup(data: &recBytes, updateSequenceOffset: 0x30, updateSequenceSize: 3)
+
+        // Clear inUse flag at offset 0x16..0x17
+        recBytes[0x16] = 0x00
+        recBytes[0x17] = 0x00
+
+        FixupApplier.prepareForWrite(data: &recBytes, updateSequenceOffset: 0x30, updateSequenceSize: 3)
+        try memDevice.write(offset: recOffset, data: recBytes)
+
+        // 3. Scan for deleted/recoverable files
+        let deletedFiles = try volume.scanDeletedFiles()
+        XCTAssertFalse(deletedFiles.isEmpty)
+        guard let match = deletedFiles.first(where: { $0.recordNumber == recNum }) else {
+            XCTFail("Deleted file was not found during MFT carving")
+            return
+        }
+
+        XCTAssertEqual(match.fileName, "Q3_Report.docx")
+        XCTAssertEqual(match.fileSize, UInt64(originalPayload.count))
+        XCTAssertEqual(match.confidence, .excellent)
+
+        // 4. Recover (carve) payload
+        let (carvedName, carvedData) = try volume.recoverDeletedFile(recordNumber: recNum)
+        XCTAssertEqual(carvedName, "Q3_Report.docx")
+        XCTAssertEqual(carvedData, originalPayload)
+    }
+
+    func testForensicSurfaceScan() throws {
+        let totalBytes = 1 * 1024 * 1024 // 1 MB
+        let memDevice = MemoryBlockDevice(data: Data(repeating: 0x55, count: totalBytes), writable: true)
+        let report = try NTFSForensicsEngine.surfaceScan(device: memDevice, chunkSize: 32 * 1024)
+
+        XCTAssertEqual(report.totalBytesScanned, UInt64(totalBytes))
+        XCTAssertEqual(report.totalSectorsScanned, UInt64(totalBytes / 512))
+        XCTAssertFalse(report.isDamaged)
+        XCTAssertTrue(report.badSectors.isEmpty)
+    }
 }

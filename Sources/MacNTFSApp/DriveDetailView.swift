@@ -7,6 +7,7 @@ struct DriveDetailView: View {
 
     @State private var showingBrowser: Bool = false
     @State private var showingFormatSheet: Bool = false
+    @State private var showingForensics: Bool = false
     @State private var healthReport: NTFSHealthReport?
     @State private var isVerifying: Bool = false
     @State private var isRepairing: Bool = false
@@ -86,12 +87,17 @@ struct DriveDetailView: View {
                     Spacer()
 
                     // Action Buttons
-                    HStack(spacing: 10) {
+                    HStack(spacing: 8) {
                         Button(action: { showingBrowser = true }) {
                             Label("Durchsuchen", systemImage: "folder.fill")
                         }
                         .buttonStyle(.borderedProminent)
                         .tint(AppTheme.ntfsBlue)
+
+                        Button(action: { showingForensics = true }) {
+                            Label("Forensik & Rettung", systemImage: "waveform.path.ecg")
+                        }
+                        .buttonStyle(.bordered)
 
                         Button(action: { showingFormatSheet = true }) {
                             Label("Formatieren...", systemImage: "eraser.line.dashed")
@@ -276,6 +282,9 @@ struct DriveDetailView: View {
         }
         .sheet(isPresented: $showingFormatSheet) {
             FormatVolumeSheet(drive: drive, driveManager: driveManager)
+        }
+        .sheet(isPresented: $showingForensics) {
+            ForensicsView(drive: drive, volume: driveManager.getNTFSVolume(for: drive))
         }
     }
 

@@ -15,6 +15,8 @@
 
 * **Apple-Native GUI:** Modern macOS interface built with SwiftUI, SF Pro typography, NavigationSplitView, and translucent Apple materials.
 * **Full Read & Write Capability:** Seamlessly write, import, and export files to NTFS volumes with automatic filename sanitization.
+* **Forensic File Recovery (Undelete & Carving):** Scan inactive MFT records to discover deleted files and carve data back to Mac with zero data loss.
+* **Hex Inspector & Sector Diagnostics:** Low-level hexadecimal cluster & sector viewer and non-destructive hardware surface scan for bad blocks.
 * **Format to NTFS:** Initialize partitions and disks as standard Windows NTFS with configurable cluster sizes.
 * **First Aid & Repair:** Detect and repair filesystem inconsistencies, clear dirty flags from Windows unclean unmounts, and restore boot sectors.
 * **Virtual Disk Image Studio:** Create, format, and mount `.img` / `.raw` NTFS virtual disk images on demand.
@@ -30,10 +32,14 @@
 
 The macOS application provides an Apple-like experience:
 1. **Drive Dashboard:** Shows storage capacity gauges, cluster size, MFT offset, and volume serial numbers.
-2. **First Aid & Maintenance:** Instant diagnostic scan for Boot Sector, Backup Boot Sector, MFT integrity, and Dirty Flag status, with one-click automated repair.
-3. **Format Wizard:** Erase and format partitions to Windows NTFS 3.1 directly within an Apple Disk Utility-inspired workflow.
-4. **Interactive Explorer:** Direct access to directories, file metadata, drag-and-drop file imports from Mac, and file exports.
-5. **Disk Image Support:** Create new blank NTFS images (.img) or inspect existing ones via drag-and-drop.
+2. **Forensics & Data Recovery Suite:** 
+   * **File Carving & Undelete:** Deep scan over Master File Table to restore deleted files.
+   * **Hex Inspector:** Inspect raw boot sectors, MFT records, and cluster bytes with ASCII view.
+   * **Surface Scan:** Hardware-level sector verification to detect failing disk blocks.
+3. **First Aid & Maintenance:** Instant diagnostic scan for Boot Sector, Backup Boot Sector, MFT integrity, and Dirty Flag status, with one-click automated repair.
+4. **Format Wizard:** Erase and format partitions to Windows NTFS 3.1 directly within an Apple Disk Utility-inspired workflow.
+5. **Interactive Explorer:** Direct access to directories, file metadata, drag-and-drop file imports from Mac, and file exports.
+6. **Disk Image Support:** Create new blank NTFS images (.img) or inspect existing ones via drag-and-drop.
 
 ---
 
