@@ -6,7 +6,7 @@ cd "$(dirname "$0")/.."
 
 # MacNTFS DMG Packaging Script
 APP_NAME="MacNTFS"
-VERSION="${1:-0.1.3}"
+VERSION="${1:-0.1.5}"
 OUTPUT_DIR="build/dist"
 STAGING_DIR="build/dmg-staging"
 DMG_NAME="${APP_NAME}-${VERSION}-arm64.dmg"
@@ -41,7 +41,7 @@ cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
     <key>CFBundleExecutable</key>
     <string>MacNTFSApp</string>
     <key>CFBundleIdentifier</key>
-    <string>com.michaelkatschko.MacNTFS</string>
+    <string>org.macntfs.MacNTFS</string>
     <key>CFBundleName</key>
     <string>MacNTFS</string>
     <key>CFBundleDisplayName</key>

@@ -8,6 +8,10 @@ struct SettingsView: View {
     @State private var isCheckingUpdates: Bool = false
     @State private var updateStatus: String? = nil
 
+    private var currentVersion: String {
+        Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "0.1.5"
+    }
+
     var body: some View {
         TabView {
             // Tab 1: Allgemein
@@ -36,7 +40,7 @@ struct SettingsView: View {
                     Text("MacNTFS")
                         .font(.title2)
                         .fontWeight(.bold)
-                    Text("Version 0.1.0 (Build 2026)")
+                    Text("Version \(currentVersion) (Build 2026)")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                 }
@@ -89,16 +93,23 @@ struct SettingsView: View {
                     .padding(.horizontal, 40)
 
                 VStack(spacing: 6) {
-                    Text("Entwickelt von **Michael Katschko**")
+                    Text("Freie & quelloffene Software")
                         .font(.body)
+                        .fontWeight(.medium)
 
-                    Text("Lizenziert unter der MIT-Lizenz")
+                    Text("Lizenziert unter der MIT-Lizenz • 100% Open Source")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
 
-                Link(destination: URL(string: "https://github.com/darkspike1988/MacNTFS")!) {
-                    Label("GitHub Repository", systemImage: "arrow.up.right.square")
+                HStack(spacing: 16) {
+                    Link(destination: URL(string: "https://darkspike1988.github.io/MacNTFS/")!) {
+                        Label("Produkt-Webseite", systemImage: "safari")
+                    }
+
+                    Link(destination: URL(string: "https://github.com/darkspike1988/MacNTFS")!) {
+                        Label("GitHub Repository", systemImage: "arrow.up.right.square")
+                    }
                 }
                 .font(.caption)
             }
@@ -125,8 +136,9 @@ struct SettingsView: View {
                 if let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any],
                    let tagName = json["tag_name"] as? String {
                     await MainActor.run {
-                        if tagName == "v0.1.0" {
-                            self.updateStatus = "MacNTFS ist auf dem neuesten Stand (v0.1.0)."
+                        let cleanTag = tagName.replacingOccurrences(of: "v", with: "")
+                        if cleanTag == self.currentVersion {
+                            self.updateStatus = "MacNTFS ist auf dem neuesten Stand (v\(self.currentVersion))."
                         } else {
                             self.updateStatus = "Neues Update verfügbar: \(tagName)!"
                         }

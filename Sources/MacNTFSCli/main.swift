@@ -148,7 +148,7 @@ struct MacNTFSCLI {
     static func printUsage() {
         print("""
         MacNTFS - High-Performance Pure Swift NTFS File System Engine & CLI
-        Copyright (c) 2026 Michael Katschko
+        Open-Source Project • MIT License
 
         Usage:
           macntfs probe <image-or-device>                 Inspect VBR, BPB, and volume metadata

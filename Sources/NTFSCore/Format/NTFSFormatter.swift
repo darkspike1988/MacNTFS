@@ -512,8 +512,8 @@ public enum NTFSFormatter {
         var aID = attrID.littleEndian
         var vLen = UInt32(value.count).littleEndian
         var vOff = UInt16(alignedHeader).littleEndian
-        var idx: UInt8 = 0
-        var pad: UInt8 = 0
+        let idx: UInt8 = 0
+        let pad: UInt8 = 0
 
         withUnsafeBytes(of: &rawT) { res.append(contentsOf: $0) }
         withUnsafeBytes(of: &recLen) { res.append(contentsOf: $0) }

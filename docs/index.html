@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MacNTFS — High-Performance Pure Swift NTFS für macOS</title>
+    <meta name="description" content="Nativer NTFS Lese- und Schreibzugriff, 1-Klick-Reparatur, Formatierer und MFT-Datenrettung für macOS. 100% User-Space FSKit, keine KEXTs, kein Recovery Mode.">
+    <meta name="theme-color" content="#000000">
+
+    <!-- Open Graph / Meta -->
+    <meta property="og:title" content="MacNTFS — Pure Swift NTFS Engine für macOS">
+    <meta property="og:description" content="Voller NTFS Lese- und Schreibzugriff ohne Kernel Extensions. Modern, sicher und open source.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://darkspike1988.github.io/MacNTFS/">
+
+    <style>
+        :root {
+            --bg-color: #000000;
+            --surface-color: rgba(255, 255, 255, 0.05);
+            --surface-border: rgba(255, 255, 255, 0.1);
+            --text-main: #F5F5F7;
+            --text-secondary: #86868B;
+            --accent-blue: #2997FF;
+            --accent-blue-hover: #0077ED;
+            --accent-green: #30D158;
+            --accent-orange: #FF9F0A;
+            --font-stack: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "Helvetica Neue", sans-serif;
+            --code-font: ui-monospace, Menlo, Monaco, "SF Mono", Consolas, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: var(--font-stack);
+            -webkit-font-smoothing: antialiased;
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+
+        a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        /* Navigation */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(0, 0, 0, 0.7);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--surface-border);
+            height: 52px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 28px;
+        }
+
+        .nav-logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+            font-size: 17px;
+            letter-spacing: -0.01em;
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            font-size: 13px;
+            color: var(--text-secondary);
+        }
+
+        .nav-links a:hover {
+            color: var(--text-main);
+            transition: color 0.15s ease;
+        }
+
+        .nav-cta {
+            background: var(--accent-blue);
+            color: #fff !important;
+            padding: 5px 14px;
+            border-radius: 980px;
+            font-weight: 500;
+            font-size: 12px;
+            transition: background 0.2s ease, transform 0.1s ease;
+        }
+
+        .nav-cta:hover {
+            background: var(--accent-blue-hover);
+            transform: scale(1.02);
+        }
+
+        /* Container */
+        .container {
+            max-width: 1080px;
+            margin: 0 auto;
+            padding: 0 24px;
+        }
+
+        /* Hero */
+        .hero {
+            padding-top: 140px;
+            padding-bottom: 80px;
+            text-align: center;
+            position: relative;
+        }
+
+        .hero-glow {
+            position: absolute;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 600px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(41, 151, 255, 0.15) 0%, rgba(0, 0, 0, 0) 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(41, 151, 255, 0.1);
+            border: 1px solid rgba(41, 151, 255, 0.3);
+            color: var(--accent-blue);
+            padding: 6px 14px;
+            border-radius: 980px;
+            font-size: 13px;
+            font-weight: 500;
+            margin-bottom: 24px;
+            backdrop-filter: blur(10px);
+        }
+
+        .badge-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--accent-green);
+            box-shadow: 0 0 8px var(--accent-green);
+        }
+
+        h1.hero-title {
+            font-size: 64px;
+            line-height: 1.06;
+            font-weight: 700;
+            letter-spacing: -0.025em;
+            margin-bottom: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .gradient-text {
+            background: linear-gradient(135deg, #FFFFFF 30%, #A1A1A6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-sub {
+            font-size: 21px;
+            line-height: 1.4;
+            color: var(--text-secondary);
+            max-width: 720px;
+            margin: 0 auto 36px auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 16px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #FFFFFF;
+            color: #000000;
+            padding: 12px 26px;
+            border-radius: 980px;
+            font-weight: 600;
+            font-size: 16px;
+            transition: all 0.2s ease;
+            box-shadow: 0 4px 20px rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: scale(1.03);
+            box-shadow: 0 6px 28px rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            color: #FFFFFF;
+            padding: 12px 24px;
+            border-radius: 980px;
+            font-weight: 500;
+            font-size: 16px;
+            transition: all 0.2s ease;
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.1);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        /* App Window Preview */
+        .window-preview {
+            max-width: 960px;
+            margin: 60px auto 100px auto;
+            background: #1E1E22;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 30px 90px rgba(0, 0, 0, 0.8), 0 0 40px rgba(41, 151, 255, 0.15);
+            overflow: hidden;
+            text-align: left;
+        }
+
+        .window-titlebar {
+            background: #252529;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            padding: 0 14px;
+            gap: 8px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .traffic-light {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+        .tl-red { background: #FF5F56; }
+        .tl-yellow { background: #FFBD2E; }
+        .tl-green { background: #27C93F; }
+
+        .window-title {
+            margin-left: auto;
+            margin-right: auto;
+            font-size: 12px;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .window-body {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            min-height: 480px;
+            background: #161618;
+        }
+
+        .window-sidebar {
+            background: rgba(30, 30, 34, 0.6);
+            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            padding: 16px;
+        }
+
+        .sidebar-section-title {
+            font-size: 11px;
+            font-weight: 600;
+            color: #6E6E73;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            margin-bottom: 8px;
+        }
+
+        .sidebar-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            margin-bottom: 4px;
+        }
+        .sidebar-item.active {
+            background: rgba(41, 151, 255, 0.18);
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+
+        .window-main {
+            padding: 24px;
+            overflow-y: auto;
+        }
+
+        .drive-hero {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .drive-icon-box {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, #0077ED, #2997FF);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 26px;
+            box-shadow: 0 8px 20px rgba(0, 119, 237, 0.35);
+        }
+
+        .storage-gauge {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 18px;
+            margin-bottom: 20px;
+        }
+
+        .gauge-bar-bg {
+            height: 10px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        .gauge-bar-fill {
+            height: 100%;
+            width: 42%;
+            background: linear-gradient(90deg, #2997FF, #30D158);
+            border-radius: 5px;
+        }
+
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .detail-card {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 10px;
+            padding: 14px;
+            font-size: 13px;
+        }
+
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+            color: var(--text-secondary);
+        }
+        .detail-row span:last-child {
+            color: #FFFFFF;
+            font-weight: 500;
+        }
+
+        /* Bento Features Grid */
+        .section-title {
+            text-align: center;
+            font-size: 40px;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+            margin-bottom: 14px;
+        }
+
+        .section-desc {
+            text-align: center;
+            font-size: 19px;
+            color: var(--text-secondary);
+            max-width: 650px;
+            margin: 0 auto 56px auto;
+        }
+
+        .bento-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 100px;
+        }
+
+        .bento-card {
+            background: var(--surface-color);
+            border: 1px solid var(--surface-border);
+            border-radius: 18px;
+            padding: 32px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+        }
+
+        .bento-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(255, 255, 255, 0.25);
+        }
+
+        .bento-card.span-2 {
+            grid-column: span 2;
+        }
+
+        .bento-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: rgba(41, 151, 255, 0.12);
+            color: var(--accent-blue);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+        }
+
+        .bento-title {
+            font-size: 22px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            letter-spacing: -0.01em;
+        }
+
+        .bento-text {
+            font-size: 15px;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Comparison Section */
+        .compare-section {
+            padding: 80px 0;
+            border-top: 1px solid var(--surface-border);
+        }
+
+        .compare-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 40px;
+            font-size: 14px;
+        }
+
+        .compare-table th, .compare-table td {
+            padding: 16px 20px;
+            text-align: left;
+            border-bottom: 1px solid var(--surface-border);
+        }
+
+        .compare-table th {
+            color: var(--text-secondary);
+            font-weight: 500;
+            font-size: 13px;
+        }
+
+        .compare-table td.highlight {
+            color: var(--accent-blue);
+            font-weight: 600;
+            background: rgba(41, 151, 255, 0.05);
+        }
+
+        .tag-safe {
+            color: var(--accent-green);
+            font-weight: 600;
+        }
+
+        .tag-danger {
+            color: #FF453A;
+            font-weight: 500;
+        }
+
+        /* Terminal CLI Showcase */
+        .terminal-box {
+            background: #111114;
+            border: 1px solid var(--surface-border);
+            border-radius: 14px;
+            padding: 20px;
+            font-family: var(--code-font);
+            font-size: 14px;
+            line-height: 1.7;
+            margin: 40px auto 100px auto;
+            max-width: 840px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.6);
+            overflow-x: auto;
+        }
+
+        .term-prompt { color: var(--accent-green); }
+        .term-cmd { color: #FFFFFF; font-weight: 600; }
+        .term-out { color: var(--text-secondary); }
+        .term-accent { color: var(--accent-blue); }
+
+        /* CTA Footer Section */
+        .cta-box {
+            text-align: center;
+            padding: 90px 20px;
+            background: radial-gradient(circle, rgba(41, 151, 255, 0.08) 0%, rgba(0, 0, 0, 0) 70%);
+            border-radius: 24px;
+            border: 1px solid var(--surface-border);
+            margin-bottom: 80px;
+        }
+
+        footer {
+            border-top: 1px solid var(--surface-border);
+            padding: 40px 0;
+            font-size: 12px;
+            color: #6E6E73;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            h1.hero-title { font-size: 38px; }
+            .hero-sub { font-size: 17px; }
+            .bento-grid { grid-template-columns: 1fr; }
+            .bento-card.span-2 { grid-column: span 1; }
+            .window-body { grid-template-columns: 1fr; }
+            .window-sidebar { display: none; }
+            .hero-actions { flex-direction: column; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Navigation -->
+    <nav>
+        <div class="nav-logo">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#2997FF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                <line x1="8" y1="21" x2="16" y2="21"></line>
+                <line x1="12" y1="17" x2="12" y2="21"></line>
+            </svg>
+            <span>MacNTFS</span>
+        </div>
+        <div class="nav-links">
+            <a href="#features">Features</a>
+            <a href="#comparison">Vergleich</a>
+            <a href="#cli">Terminal</a>
+            <a href="https://github.com/darkspike1988/MacNTFS" target="_blank">GitHub</a>
+            <a href="https://github.com/darkspike1988/MacNTFS/releases/latest" class="nav-cta">Laden (DMG)</a>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero container">
+        <div class="hero-glow"></div>
+        <div class="badge">
+            <span class="badge-dot"></span>
+            Version 0.1.4 • Native Apple FSKit User-Space Engine
+        </div>
+
+        <h1 class="hero-title">
+            NTFS auf dem Mac.<br>
+            <span class="gradient-text">Wie von Apple gedacht.</span>
+        </h1>
+
+        <p class="hero-sub">
+            Voller Lese- und Schreibzugriff, native SSD-Übertragungsrate, 1-Klick-Integritätsreparatur und MFT-Datenrettung. 
+            Keine Kernel Extensions. Kein Recovery Mode. 100% Open Source.
+        </p>
+
+        <div class="hero-actions">
+            <a href="https://github.com/darkspike1988/MacNTFS/releases/latest/download/MacNTFS-0.1.5-arm64.dmg" class="btn-primary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Kostenlos laden (macOS DMG)
+            </a>
+            <a href="https://github.com/darkspike1988/MacNTFS" target="_blank" class="btn-secondary">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                GitHub Repository
+            </a>
+        </div>
+
+        <!-- Interactive macOS Window Mockup -->
+        <div class="window-preview">
+            <div class="window-titlebar">
+                <div class="traffic-light tl-red"></div>
+                <div class="traffic-light tl-yellow"></div>
+                <div class="traffic-light tl-green"></div>
+                <div class="window-title">MacNTFS — Samsung T7 Portable SSD</div>
+            </div>
+            <div class="window-body">
+                <div class="window-sidebar">
+                    <div class="sidebar-section-title">NTFS Volumes</div>
+                    <div class="sidebar-item active">
+                        <span>💾</span>
+                        <span>Samsung T7 SSD</span>
+                    </div>
+                    <div class="sidebar-item">
+                        <span>🗄️</span>
+                        <span>Seagate Expansion</span>
+                    </div>
+                    <div class="sidebar-section-title" style="margin-top: 20px;">Disk Images</div>
+                    <div class="sidebar-item">
+                        <span>📦</span>
+                        <span>VirtualDisk.img</span>
+                    </div>
+                </div>
+                <div class="window-main">
+                    <div class="drive-hero">
+                        <div class="drive-icon-box">⚡</div>
+                        <div>
+                            <div style="font-size: 22px; font-weight: 700; display: flex; align-items: center; gap: 8px;">
+                                Samsung T7 Portable SSD
+                                <span style="font-size: 11px; font-weight: 700; background: rgba(41, 151, 255, 0.2); color: #2997FF; padding: 2px 8px; border-radius: 999px;">NTFS 3.1</span>
+                                <span style="font-size: 11px; font-weight: 700; background: rgba(48, 209, 88, 0.2); color: #30D158; padding: 2px 8px; border-radius: 999px;">✓ Clean</span>
+                            </div>
+                            <div style="font-size: 13px; color: var(--text-secondary);">/dev/disk4s1 • Native FSKit User-Space Driver</div>
+                        </div>
+                    </div>
+
+                    <div class="storage-gauge">
+                        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+                            <span style="font-weight: 600;">Speicherbelegung</span>
+                            <span style="color: var(--text-secondary);">420 GB von 1.000 GB verwendet</span>
+                        </div>
+                        <div class="gauge-bar-bg">
+                            <div class="gauge-bar-fill"></div>
+                        </div>
+                        <div style="display: flex; gap: 20px; font-size: 12px; color: var(--text-secondary);">
+                            <span>🔵 Belegt: 420 GB</span>
+                            <span>⚪ Frei: 580 GB</span>
+                        </div>
+                    </div>
+
+                    <div class="details-grid">
+                        <div class="detail-card">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Dateisystem-Parameter</div>
+                            <div class="detail-row"><span>Clustergröße</span><span>4.096 Bytes (4 KB)</span></div>
+                            <div class="detail-row"><span>Zugriff</span><span style="color: #30D158;">Lesen & Schreiben (Nativ)</span></div>
+                            <div class="detail-row"><span>Seriennummer</span><span>0x7E39C4B821A</span></div>
+                        </div>
+                        <div class="detail-card">
+                            <div style="font-weight: 600; margin-bottom: 8px;">Integrität & Erste Hilfe</div>
+                            <div class="detail-row"><span>Dirty Flag</span><span style="color: #30D158;">Sauber ausgehängt</span></div>
+                            <div class="detail-row"><span>Treiber-Typ</span><span>Apple FSKit (User-Space)</span></div>
+                            <div class="detail-row"><span>Kernel Extension</span><span>Keine (100% sicher)</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Bento Features Section -->
+    <section class="container" id="features">
+        <h2 class="section-title">Konsequente Sicherheit. Null Kompromisse.</h2>
+        <p class="section-desc">Die erste vollwertige NTFS-Lösung für den Mac, die ohne unsichere Kernel-Erweiterungen und Neustarts auskommt.</p>
+
+        <div class="bento-grid">
+            <div class="bento-card span-2">
+                <div>
+                    <div class="bento-icon">🛡️</div>
+                    <h3 class="bento-title">Kein Recovery Mode. Volle Systemsicherheit.</h3>
+                    <p class="bento-text">
+                        Klassische Treiber wie Tuxera oder Paragon zwingen dich auf Apple Silicon Macs, den Mac im Wiederherstellungsmodus zu starten und den Schutz auf „Reduzierte Sicherheit“ herabzusetzen. 
+                        <strong>MacNTFS läuft zu 100% im User-Space über Apples modernes FSKit</strong>. Dein Mac bleibt vollständig geschützt.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <div>
+                    <div class="bento-icon">⚡</div>
+                    <h3 class="bento-title">Echtes Schreiben per Drag & Drop</h3>
+                    <p class="bento-text">
+                        Schreibe, bearbeite und lösche Dateien direkt auf deinen NTFS-Festplatten. Inklusive automatischer Bereinigung ungültiger Windows-Sonderzeichen.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <div>
+                    <div class="bento-icon">🩹</div>
+                    <h3 class="bento-title">Erste Hilfe & Dirty-Flag Reparatur</h3>
+                    <p class="bento-text">
+                        Wurde die Festplatte unter Windows ohne Auswerfen abgezogen, blockiert macOS das Volume. MacNTFS scannt die MFT und bereinigt das Dirty-Flag mit einem Klick.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <div>
+                    <div class="bento-icon">🔍</div>
+                    <h3 class="bento-title">Forensische Datenrettung (MFT Carving)</h3>
+                    <p class="bento-text">
+                        Versehentlich eine wichtige Datei gelöscht? MacNTFS durchsucht inaktive MFT-Records und stellt gelöschte Dokumente und Fotos wieder her.
+                    </p>
+                </div>
+            </div>
+
+            <div class="bento-card">
+                <div>
+                    <div class="bento-icon">💿</div>
+                    <h3 class="bento-title">Formatierer & Disk-Image Studio</h3>
+                    <p class="bento-text">
+                        Formatiere Festplatten nach Windows NTFS 3.1 oder erstelle virtuelle NTFS-Images (.img) mit frei wählbarer Clustergröße von 512B bis 64KB.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section class="compare-section" id="comparison">
+        <div class="container">
+            <h2 class="section-title">Warum MacNTFS die modernste Wahl ist</h2>
+            <p class="section-desc">Ein direkter Vergleich der Architekturen für macOS Sonoma, Sequoia und neuer.</p>
+
+            <table class="compare-table">
+                <thead>
+                    <tr>
+                        <th>Funktion / Eigenschaft</th>
+                        <th class="highlight">MacNTFS</th>
+                        <th>Tuxera NTFS</th>
+                        <th>Paragon NTFS</th>
+                        <th>macFUSE</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>System-Architektur</strong></td>
+                        <td class="highlight"><strong>Apple FSKit (User-Space)</strong></td>
+                        <td>Kernel Extension (KEXT)</td>
+                        <td>System / Kernel Extension</td>
+                        <td>KEXT / FUSE Layer</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Recovery Mode erforderlich?</strong></td>
+                        <td class="highlight"><span class="tag-safe">NEIN (Volle Sicherheit)</span></td>
+                        <td><span class="tag-danger">JA (Reduzierte Sicherheit)</span></td>
+                        <td><span class="tag-danger">JA (Reduzierte Sicherheit)</span></td>
+                        <td><span class="tag-danger">JA</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Nativer Schreibzugriff</strong></td>
+                        <td class="highlight"><span class="tag-safe">Ja (Resident & Non-Resident)</span></td>
+                        <td>Ja</td>
+                        <td>Ja</td>
+                        <td>Langsam (FUSE Overhead)</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Integritäts-Reparatur (Dirty Flag)</strong></td>
+                        <td class="highlight"><span class="tag-safe">Ja (1-Klick First Aid)</span></td>
+                        <td>Ja</td>
+                        <td>Eingeschränkt</td>
+                        <td>Nein</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Forensisches MFT File Carving</strong></td>
+                        <td class="highlight"><span class="tag-safe">Ja (Integrierter Retter)</span></td>
+                        <td>Nein</td>
+                        <td>Nein</td>
+                        <td>Nein</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Hex-Inspektor & Oberflächenscan</strong></td>
+                        <td class="highlight"><span class="tag-safe">Ja</span></td>
+                        <td>Nein</td>
+                        <td>Nein</td>
+                        <td>Nein</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Lizenz & Kosten</strong></td>
+                        <td class="highlight"><strong>100% Free & Open Source (MIT)</strong></td>
+                        <td>Kommerziell (~35 €)</td>
+                        <td>Kommerziell (~20 €)</td>
+                        <td>Open Source</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    <!-- Terminal CLI Section -->
+    <section class="container" id="cli" style="padding-top: 80px;">
+        <h2 class="section-title">Leistungsstark auch im Terminal</h2>
+        <p class="section-desc">Das mitgelieferte <code>macntfs</code> CLI-Tool ermöglicht Inspektionen, Automatisierungen und forensische Scans direkt in zsh oder bash.</p>
+
+        <div class="terminal-box">
+            <div><span class="term-prompt">$</span> <span class="term-cmd">macntfs check /dev/rdisk4s1 --repair</span></div>
+            <div class="term-out">Checking NTFS filesystem on '/dev/rdisk4s1' (Mode: Check & Repair)...</div>
+            <div class="term-accent">=== NTFS Diagnostics Report ===</div>
+            <div class="term-out">Status: ATTENTION NEEDED (Dirty Flag active)</div>
+            <div class="term-out">Executing Repairs...</div>
+            <div class="term-prompt">✓ Dirty Flag in $Volume erfolgreich gelöscht (Volume als 'Sauber' markiert).</div>
+            <div class="term-prompt">✓ Repair completed successfully!</div>
+            <br>
+            <div><span class="term-prompt">$</span> <span class="term-cmd">macntfs forensics scan /dev/rdisk4s1</span></div>
+            <div class="term-out">Forensically carving MFT for deleted files on '/dev/rdisk4s1'...</div>
+            <div class="term-accent">=== Discovered Deleted / Recoverable Files (1) ===</div>
+            <div class="term-out">Rec#   Size         Confidence                 Modified          Name</div>
+            <div class="term-out">----------------------------------------------------------------------------------</div>
+            <div class="term-out">42     24.576       100% (Resident intakt)     2026-10-21 18:45  Financials_Q3.xlsx</div>
+        </div>
+    </section>
+
+    <!-- CTA Section -->
+    <section class="container">
+        <div class="cta-box">
+            <h2 style="font-size: 38px; font-weight: 700; margin-bottom: 14px;">Bereit für modernes NTFS auf deinem Mac?</h2>
+            <p style="font-size: 18px; color: var(--text-secondary); margin-bottom: 30px;">
+                Lade MacNTFS als fertiges DMG herunter oder erkunde den Open-Source-Code auf GitHub.
+            </p>
+            <div class="hero-actions">
+                <a href="https://github.com/darkspike1988/MacNTFS/releases/latest/download/MacNTFS-0.1.5-arm64.dmg" class="btn-primary">
+                    MacNTFS herunterladen (DMG)
+                </a>
+                <a href="https://github.com/darkspike1988/MacNTFS" target="_blank" class="btn-secondary">
+                    Auf GitHub mitwirken
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p style="margin-bottom: 8px;">
+                MacNTFS ist ein freies, quelloffenes Open-Source-Projekt lizenziert unter der <strong>MIT-Lizenz</strong>.
+            </p>
+            <p>
+                macOS, Apple Silicon, FSKit und Finder sind Marken von Apple Inc. Windows und NTFS sind Marken der Microsoft Corporation.
+            </p>
+        </div>
+    </footer>
+
+</body>
+</html>
