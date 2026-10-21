@@ -3,6 +3,7 @@ import Combine
 import Cocoa
 import DiskArbitration
 import UserNotifications
+import IOKit
 import NTFSCore
 
 public struct DiscoveredDrive: Identifiable, Hashable {
@@ -138,7 +139,7 @@ public final class DriveManager: ObservableObject {
         }
         guard drive.isNTFS else { return nil }
         do {
-            let device = try FileBlockDevice(path: drive.devicePath)
+            let device = try FileBlockDevice(path: drive.devicePath, writable: true, allowReadOnlyFallback: true)
             let vol = try NTFSVolume(blockDevice: device)
             volumeCache[drive.id] = vol
             return vol
@@ -255,6 +256,88 @@ public final class DriveManager: ObservableObject {
                 )
                 found.append(drive)
             }
+        }
+
+        // 2. Discover physical block devices and partitions via IOKit (e.g. unmounted external NTFS drives)
+        var iterator: io_iterator_t = 0
+        let matching = IOServiceMatching("IOMedia")
+        if IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) == KERN_SUCCESS {
+            var entry = IOIteratorNext(iterator)
+            while entry != 0 {
+                var props: Unmanaged<CFMutableDictionary>?
+                if IORegistryEntryCreateCFProperties(entry, &props, kCFAllocatorDefault, 0) == KERN_SUCCESS,
+                   let dict = props?.takeRetainedValue() as? [String: Any] {
+                    let bsdName = dict["BSD Name"] as? String ?? ""
+                    let content = dict["Content"] as? String ?? ""
+                    let size = dict["Size"] as? UInt64 ?? 0
+                    let whole = dict["Whole"] as? Bool ?? false
+                    let ejectable = dict["Ejectable"] as? Bool ?? false
+                    let removable = dict["Removable"] as? Bool ?? false
+
+                    let bsdPath = "/dev/" + bsdName
+                    let rbsdPath = "/dev/r" + bsdName
+
+                    let isAlreadyFound = found.contains(where: {
+                        $0.bsdName == bsdName ||
+                        $0.devicePath == bsdPath ||
+                        $0.devicePath == rbsdPath
+                    })
+
+                    // Only process partition slices with reasonable size (> 10MB) not already in found
+                    if !whole && size >= 10_000_000 && !isAlreadyFound && !bsdName.starts(with: "disk1s") && !bsdName.starts(with: "disk2s") {
+                        let hwInfo = DiskHardwareProbe.query(bsdPath: bsdPath)
+                        var isNtfs = content.lowercased().contains("ntfs") || content == "EBD0A0A2-B9E5-4433-87C0-68B6B72699C7"
+                        var volumeName = bsdName
+                        var isClean = true
+                        var clusterSize: UInt32 = 4096
+                        var serialStr = hwInfo.serialNumber
+
+                        if let rawDev = try? FileBlockDevice(path: rbsdPath, writable: false, allowReadOnlyFallback: true),
+                           let ntfsVol = try? NTFSVolume(blockDevice: rawDev) {
+                            isNtfs = true
+                            isClean = !ntfsVol.isDirty
+                            clusterSize = ntfsVol.bootSector.clusterSizeBytes
+                            if !ntfsVol.volumeName.isEmpty {
+                                volumeName = ntfsVol.volumeName
+                            }
+                            let ntfsSerial = String(format: "%016llX", ntfsVol.bootSector.volumeSerialNumber)
+                            if ntfsSerial != "0000000000000000" && (serialStr == "N/A" || serialStr.isEmpty) {
+                                serialStr = ntfsSerial
+                            }
+                        }
+
+                        // Add if it's NTFS or an external removable drive
+                        if isNtfs || ejectable || removable {
+                            let drive = DiscoveredDrive(
+                                id: UUID(),
+                                name: volumeName,
+                                devicePath: rbsdPath,
+                                bsdName: bsdName,
+                                isDiskImage: false,
+                                mountPoint: nil,
+                                totalCapacity: size,
+                                freeSpace: isNtfs ? (size / 10) : 0,
+                                isNTFS: isNtfs,
+                                fileSystemName: isNtfs ? "Windows NT File System (NTFS)" : content,
+                                modelName: hwInfo.model.isEmpty ? (dict["Media Name"] as? String ?? "USB Drive") : hwInfo.model,
+                                vendor: hwInfo.vendor,
+                                busProtocol: hwInfo.busProtocol,
+                                serialNumber: serialStr,
+                                isDirty: isNtfs ? !isClean : false,
+                                clusterSize: clusterSize,
+                                isReadOnly: false,
+                                isSSD: hwInfo.isSSD,
+                                isSystemDisk: false,
+                                isInternal: !(ejectable || removable)
+                            )
+                            found.append(drive)
+                        }
+                    }
+                }
+                IOObjectRelease(entry)
+                entry = IOIteratorNext(iterator)
+            }
+            IOObjectRelease(iterator)
         }
 
         // Keep any previously loaded disk images

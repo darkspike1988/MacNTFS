@@ -41,17 +41,19 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
     private let fd: Int32
     public let size: UInt64
     public let isWritable: Bool
+    public let sectorSize: Int
+    private let isSectorAlignedDevice: Bool
     private let path: String
 
-    public init(path: String, writable: Bool = false) throws {
+    public init(path: String, writable: Bool = false, allowReadOnlyFallback: Bool = false) throws {
         self.path = path
 
         let flags = writable ? O_RDWR : O_RDONLY
         var openFd = Darwin.open(path, flags)
         var actualWritable = writable
 
-        // Fallback to read-only if write access is denied and writable was requested
-        if openFd < 0 && writable {
+        // Fallback to read-only only if explicitly permitted
+        if openFd < 0 && writable && allowReadOnlyFallback {
             openFd = Darwin.open(path, O_RDONLY)
             actualWritable = false
         }
@@ -59,7 +61,10 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         if openFd < 0 {
             let err = errno
             let msg = String(cString: strerror(err))
-            throw BlockDeviceError.cannotOpenFile(path: path, message: msg)
+            let hint = writable && (err == EACCES || err == EPERM)
+                ? " Write access to raw block devices on macOS requires administrative privileges (sudo) or Full Disk Access."
+                : ""
+            throw BlockDeviceError.cannotOpenFile(path: path, message: "\(msg).\(hint)")
         }
 
         self.fd = openFd
@@ -73,13 +78,36 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         }
 
         let mode = statBuf.st_mode & S_IFMT
-        if mode == S_IFCHR || mode == S_IFBLK {
+        let isDevice = (mode == S_IFCHR || mode == S_IFBLK)
+        self.isSectorAlignedDevice = isDevice
+
+        var detectedSectorSize = 512
+        if isDevice {
+            #if os(macOS)
+            var blockSize: UInt32 = 0
+            var blockCount: UInt64 = 0
+            let DKIOCGETBLOCKSIZE: UInt = 0x40046418
+            let DKIOCGETBLOCKCOUNT: UInt = 0x40086419
+
+            if Darwin.ioctl(openFd, DKIOCGETBLOCKSIZE, &blockSize) == 0 &&
+               Darwin.ioctl(openFd, DKIOCGETBLOCKCOUNT, &blockCount) == 0 &&
+               blockSize > 0 && blockCount > 0 {
+                self.size = blockCount * UInt64(blockSize)
+                detectedSectorSize = Int(blockSize)
+            } else {
+                let endPos = Darwin.lseek(openFd, 0, SEEK_END)
+                Darwin.lseek(openFd, 0, SEEK_SET)
+                self.size = endPos > 0 ? UInt64(endPos) : UInt64(statBuf.st_size)
+            }
+            #else
             let endPos = Darwin.lseek(openFd, 0, SEEK_END)
             Darwin.lseek(openFd, 0, SEEK_SET)
             self.size = endPos >= 0 ? UInt64(endPos) : UInt64(statBuf.st_size)
+            #endif
         } else {
             self.size = UInt64(statBuf.st_size)
         }
+        self.sectorSize = detectedSectorSize
     }
 
     deinit {
@@ -88,12 +116,7 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         }
     }
 
-    public func read(offset: UInt64, count: Int) throws -> Data {
-        guard count > 0 else { return Data() }
-        if size > 0 && offset + UInt64(count) > size {
-            throw BlockDeviceError.outOfBounds(offset: offset, requested: count, totalSize: size)
-        }
-
+    private func alignedReadDirect(offset: UInt64, count: Int) throws -> Data {
         var buffer = [UInt8](repeating: 0, count: count)
         var totalBytesRead = 0
 
@@ -119,12 +142,35 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         return Data(buffer.prefix(totalBytesRead))
     }
 
-    public func write(offset: UInt64, data toWrite: Data) throws {
-        guard isWritable else {
-            throw BlockDeviceError.readOnlyDevice
+    public func read(offset: UInt64, count: Int) throws -> Data {
+        guard count > 0 else { return Data() }
+        if size > 0 && offset + UInt64(count) > size {
+            throw BlockDeviceError.outOfBounds(offset: offset, requested: count, totalSize: size)
         }
-        guard !toWrite.isEmpty else { return }
 
+        if !isSectorAlignedDevice {
+            return try alignedReadDirect(offset: offset, count: count)
+        }
+
+        let sSize = UInt64(sectorSize)
+        if offset % sSize == 0 && count % sectorSize == 0 {
+            return try alignedReadDirect(offset: offset, count: count)
+        }
+
+        // Sector bounce buffer read for unaligned offset or length
+        let alignedStart = (offset / sSize) * sSize
+        let alignedEnd = ((offset + UInt64(count) + sSize - 1) / sSize) * sSize
+        let alignedCount = Int(alignedEnd - alignedStart)
+
+        let alignedData = try alignedReadDirect(offset: alignedStart, count: alignedCount)
+        let subStart = Int(offset - alignedStart)
+        guard subStart < alignedData.count else { return Data() }
+        let available = alignedData.count - subStart
+        let sliceCount = min(count, available)
+        return alignedData.subdata(in: subStart..<(subStart + sliceCount))
+    }
+
+    private func alignedWriteDirect(offset: UInt64, data toWrite: Data) throws {
         let count = toWrite.count
         var totalBytesWritten = 0
 
@@ -144,6 +190,39 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
             }
             totalBytesWritten += bytesWritten
         }
+    }
+
+    public func write(offset: UInt64, data toWrite: Data) throws {
+        guard isWritable else {
+            throw BlockDeviceError.readOnlyDevice
+        }
+        guard !toWrite.isEmpty else { return }
+
+        if !isSectorAlignedDevice {
+            try alignedWriteDirect(offset: offset, data: toWrite)
+            return
+        }
+
+        let sSize = UInt64(sectorSize)
+        if offset % sSize == 0 && toWrite.count % sectorSize == 0 {
+            try alignedWriteDirect(offset: offset, data: toWrite)
+            return
+        }
+
+        // Sector bounce buffer write (Read-Modify-Write for raw devices)
+        let alignedStart = (offset / sSize) * sSize
+        let alignedEnd = ((offset + UInt64(toWrite.count) + sSize - 1) / sSize) * sSize
+        let alignedCount = Int(alignedEnd - alignedStart)
+
+        var bounceBuffer = (try? alignedReadDirect(offset: alignedStart, count: alignedCount)) ?? Data()
+        if bounceBuffer.count < alignedCount {
+            bounceBuffer.append(Data(repeating: 0, count: alignedCount - bounceBuffer.count))
+        }
+
+        let subStart = Int(offset - alignedStart)
+        bounceBuffer.replaceSubrange(subStart..<(subStart + toWrite.count), with: toWrite)
+
+        try alignedWriteDirect(offset: alignedStart, data: bounceBuffer)
     }
 
     public func flush() throws {

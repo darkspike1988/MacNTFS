@@ -129,12 +129,17 @@ public enum NTFSFormatter {
 
         // C. $MFTMirr at mirror cluster (mirrors first 4 records = 4096 bytes)
         let mirrorByteOffset = mftMirrorCluster * clusterSize
-        let mirrorChunk = mftRecordsData.prefix(4096)
+        let mirrorChunk = Data(mftRecordsData.prefix(4096))
         try device.write(offset: mirrorByteOffset, data: mirrorChunk)
 
-        // D. Cluster $Bitmap at cluster 32
+        // D. Cluster $Bitmap at cluster 32 (padded to cluster boundary)
         let bitmapByteOffset = bitmapCluster * clusterSize
-        try device.write(offset: bitmapByteOffset, data: clusterBitmapData)
+        let clusterPaddedCount = ((clusterBitmapData.count + Int(clusterSize) - 1) / Int(clusterSize)) * Int(clusterSize)
+        var paddedBitmap = clusterBitmapData
+        if paddedBitmap.count < clusterPaddedCount {
+            paddedBitmap.append(Data(repeating: 0, count: clusterPaddedCount - paddedBitmap.count))
+        }
+        try device.write(offset: bitmapByteOffset, data: paddedBitmap)
 
         // E. Backup VBR at the very last sector of the partition (standard NTFS)
         let backupVBROffset = (totalSectors - 1) * sectorSize
