@@ -432,12 +432,12 @@ struct DriveDetailView: View {
     }
 
     private func handleDroppedFiles(_ providers: [NSItemProvider]) -> Bool {
-        guard let vol = driveManager.getNTFSVolume(for: drive) else { return false }
         isWritingDroppedFiles = true
         dropSuccessMessage = nil
 
         let group = DispatchGroup()
         var importedCount = 0
+        let targetDev = drive.devicePath
 
         for provider in providers {
             group.enter()
@@ -445,8 +445,7 @@ struct DriveDetailView: View {
                 defer { group.leave() }
                 guard let fileURL = url else { return }
                 do {
-                    let data = try Data(contentsOf: fileURL)
-                    try vol.writeFile(fileName: fileURL.lastPathComponent, data: data, directoryPath: "/")
+                    try PrivilegedDiskBridge.writeFile(devicePath: targetDev, fileURL: fileURL)
                     importedCount += 1
                 } catch {
                     print("Error writing dropped file: \(error)")
@@ -662,13 +661,14 @@ struct FormatVolumeSheet: View {
 
         let targetName = volumeName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "UNTITLED" : volumeName
         let cluster = selectedClusterSize
+        let targetDev = drive.devicePath
 
         Task {
             do {
-                let dev = try FileBlockDevice(path: drive.devicePath, writable: true)
-                try NTFSFormatter.format(
-                    device: dev,
-                    options: .init(volumeName: targetName, clusterSize: cluster)
+                try PrivilegedDiskBridge.format(
+                    devicePath: targetDev,
+                    volumeName: targetName,
+                    clusterSize: cluster
                 )
                 await MainActor.run {
                     self.isFormatting = false

@@ -231,8 +231,6 @@ struct FileBrowserSheet: View {
     }
 
     private func importFile() {
-        guard let vol = volume else { return }
-
         let openPanel = NSOpenPanel()
         openPanel.canChooseFiles = true
         openPanel.canChooseDirectories = false
@@ -242,8 +240,7 @@ struct FileBrowserSheet: View {
         if openPanel.runModal() == .OK {
             for url in openPanel.urls {
                 do {
-                    let data = try Data(contentsOf: url)
-                    try vol.writeFile(fileName: url.lastPathComponent, data: data, directoryPath: currentPath)
+                    try PrivilegedDiskBridge.writeFile(devicePath: drive.devicePath, fileURL: url)
                 } catch {
                     self.errorMessage = "Import fehlgeschlagen: \(error.localizedDescription)"
                     return
@@ -255,16 +252,14 @@ struct FileBrowserSheet: View {
     }
 
     private func handleDroppedProviders(_ providers: [NSItemProvider]) -> Bool {
-        guard let vol = volume else { return false }
-        let targetPath = currentPath
+        let targetDev = drive.devicePath
 
         for provider in providers {
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 guard let fileURL = url else { return }
                 Task {
                     do {
-                        let data = try Data(contentsOf: fileURL)
-                        try vol.writeFile(fileName: fileURL.lastPathComponent, data: data, directoryPath: targetPath)
+                        try PrivilegedDiskBridge.writeFile(devicePath: targetDev, fileURL: fileURL)
                         await MainActor.run {
                             self.statusMessage = "'\(fileURL.lastPathComponent)' erfolgreich auf NTFS übertragen!"
                             self.loadDirectory()
