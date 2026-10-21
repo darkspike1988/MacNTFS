@@ -8,9 +8,17 @@ on:
 jobs:
   release:
     runs-on: macos-14
+    permissions:
+      contents: write
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
+
+      - name: Select Xcode 16
+        run: |
+          if [ -d "/Applications/Xcode_16.app" ]; then
+            sudo xcode-select -s /Applications/Xcode_16.app
+          fi
 
       - name: Extract Version
         id: get_version
