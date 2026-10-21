@@ -44,10 +44,28 @@ public enum PrivilegedDiskBridge {
                 userInfo: [NSLocalizedDescriptionKey: errString]
             )
         }
+
+        // 3. Remount disk so it appears immediately under /Volumes and in Finder
+        let mountProcess = Process()
+        mountProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        mountProcess.arguments = ["mount", bsdDisk]
+        try? mountProcess.run()
+        mountProcess.waitUntilExit()
     }
 
-    /// Writes/imports a file into the root of an NTFS block device using either direct I/O or the helper.
-    public static func writeFile(devicePath: String, fileURL: URL) throws {
+    /// Writes/imports a file into the root of an NTFS block device using VFS mount copy, direct I/O, or the helper.
+    public static func writeFile(devicePath: String, fileURL: URL, mountPoint: String? = nil) throws {
+        // 0. If actively mounted and accessible, copy directly via standard FileManager
+        if let mount = mountPoint, FileManager.default.fileExists(atPath: mount) {
+            let destURL = URL(fileURLWithPath: mount).appendingPathComponent(fileURL.lastPathComponent)
+            if FileManager.default.fileExists(atPath: destURL.path) {
+                try? FileManager.default.removeItem(at: destURL)
+            }
+            if (try? FileManager.default.copyItem(at: fileURL, to: destURL)) != nil {
+                return
+            }
+        }
+
         // 1. Direct in-process if device is openable writable
         if let dev = try? FileBlockDevice(path: devicePath, writable: true),
            let vol = try? NTFSVolume(blockDevice: dev),

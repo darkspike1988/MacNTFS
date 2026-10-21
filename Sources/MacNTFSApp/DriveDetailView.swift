@@ -166,6 +166,20 @@ struct DriveDetailView: View {
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.regular)
+
+                            if !drive.isSystemDisk {
+                                Button(action: { driveManager.unmount(drive: drive) }) {
+                                    Label("Auswerfen", systemImage: "eject")
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.regular)
+                            }
+                        } else if !drive.isSystemDisk {
+                            Button(action: { driveManager.mount(drive: drive) }) {
+                                Label("Einbinden", systemImage: "externaldrive.badge.plus")
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.regular)
                         }
 
                         Spacer()
@@ -445,7 +459,7 @@ struct DriveDetailView: View {
                 defer { group.leave() }
                 guard let fileURL = url else { return }
                 do {
-                    try PrivilegedDiskBridge.writeFile(devicePath: targetDev, fileURL: fileURL)
+                    try PrivilegedDiskBridge.writeFile(devicePath: targetDev, fileURL: fileURL, mountPoint: drive.mountPoint)
                     importedCount += 1
                 } catch {
                     print("Error writing dropped file: \(error)")

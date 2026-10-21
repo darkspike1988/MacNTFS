@@ -360,6 +360,28 @@ public final class DriveManager: ObservableObject {
         self.isScanning = false
     }
 
+    /// Mounts an unmounted NTFS drive via diskutil.
+    public func mount(drive: DiscoveredDrive) {
+        let bsdDisk = "/dev/" + drive.bsdName.replacingOccurrences(of: "rdisk", with: "disk")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        process.arguments = ["mount", bsdDisk]
+        try? process.run()
+        process.waitUntilExit()
+        refreshDrives()
+    }
+
+    /// Safely unmounts/ejects a mounted drive via diskutil.
+    public func unmount(drive: DiscoveredDrive) {
+        let bsdDisk = "/dev/" + drive.bsdName.replacingOccurrences(of: "rdisk", with: "disk")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        process.arguments = ["unmount", bsdDisk]
+        try? process.run()
+        process.waitUntilExit()
+        refreshDrives()
+    }
+
     /// Loads a raw NTFS disk image (.img, .raw, .vhd) into the manager.
     public func loadDiskImage(at url: URL) {
         do {

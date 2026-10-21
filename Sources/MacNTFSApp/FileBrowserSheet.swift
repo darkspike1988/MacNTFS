@@ -240,7 +240,7 @@ struct FileBrowserSheet: View {
         if openPanel.runModal() == .OK {
             for url in openPanel.urls {
                 do {
-                    try PrivilegedDiskBridge.writeFile(devicePath: drive.devicePath, fileURL: url)
+                    try PrivilegedDiskBridge.writeFile(devicePath: drive.devicePath, fileURL: url, mountPoint: drive.mountPoint)
                 } catch {
                     self.errorMessage = "Import fehlgeschlagen: \(error.localizedDescription)"
                     return
@@ -253,13 +253,14 @@ struct FileBrowserSheet: View {
 
     private func handleDroppedProviders(_ providers: [NSItemProvider]) -> Bool {
         let targetDev = drive.devicePath
+        let mount = drive.mountPoint
 
         for provider in providers {
             _ = provider.loadObject(ofClass: URL.self) { url, _ in
                 guard let fileURL = url else { return }
                 Task {
                     do {
-                        try PrivilegedDiskBridge.writeFile(devicePath: targetDev, fileURL: fileURL)
+                        try PrivilegedDiskBridge.writeFile(devicePath: targetDev, fileURL: fileURL, mountPoint: mount)
                         await MainActor.run {
                             self.statusMessage = "'\(fileURL.lastPathComponent)' erfolgreich auf NTFS übertragen!"
                             self.loadDirectory()
