@@ -4,9 +4,13 @@ import NTFSCore
 struct DriveDetailView: View {
     let drive: DiscoveredDrive
     @ObservedObject var driveManager: DriveManager
+
     @State private var showingBrowser: Bool = false
-    @State private var integrityMessage: String?
+    @State private var showingFormatSheet: Bool = false
+    @State private var healthReport: NTFSHealthReport?
     @State private var isVerifying: Bool = false
+    @State private var isRepairing: Bool = false
+    @State private var repairStatusMessage: String?
 
     var body: some View {
         ScrollView {
@@ -89,6 +93,11 @@ struct DriveDetailView: View {
                         .buttonStyle(.borderedProminent)
                         .tint(AppTheme.ntfsBlue)
 
+                        Button(action: { showingFormatSheet = true }) {
+                            Label("Formatieren...", systemImage: "eraser.line.dashed")
+                        }
+                        .buttonStyle(.bordered)
+
                         if let mount = drive.mountPoint {
                             Button(action: { openInFinder(path: mount) }) {
                                 Label("Finder", systemImage: "arrow.up.forward.app")
@@ -158,13 +167,13 @@ struct DriveDetailView: View {
                         DetailRow(label: "Format", value: "Windows NT File System (NTFS)")
                         DetailRow(label: "Clustergröße", value: "\(drive.clusterSize / 1024) KB (\(drive.clusterSize) Bytes)")
                         DetailRow(label: "Seriennummer", value: drive.serialNumber)
-                        DetailRow(label: "Zugriff", value: drive.isReadOnly ? "Nur Lesen (Schutz aktiv)" : "Lesen & Schreiben")
+                        DetailRow(label: "Zugriff", value: drive.isReadOnly ? "Nur Lesen" : "Lesen & Schreiben (Nativ)")
                     }
                     .appleCardStyle()
 
-                    // Card 2: Integrity & State
+                    // Card 2: Integrity & State (Tuxera Maintenance feature)
                     VStack(alignment: .leading, spacing: 12) {
-                        Label("Integrität & Sicherheit", systemImage: "shield.checkered")
+                        Label("Erste Hilfe & Integrität", systemImage: "shield.checkered")
                             .font(.headline)
 
                         Divider()
@@ -174,31 +183,86 @@ struct DriveDetailView: View {
                             value: drive.isDirty ? "Aktiv (Unsauber getrennt)" : "Sauber ausgehängt",
                             color: drive.isDirty ? AppTheme.warningOrange : AppTheme.successGreen
                         )
-                        DetailRow(label: "Treiber-Typ", value: "Native FSKit User-Space")
-                        DetailRow(label: "Kernel Extension", value: "Keine (100% sicher)")
+                        DetailRow(label: "Treiber-Architektur", value: "Native FSKit User-Space")
+                        DetailRow(label: "SIP / Kernel Extension", value: "Keine KEXT nötig (100% sicher)")
 
-                        Button(action: runIntegrityCheck) {
-                            HStack {
-                                if isVerifying {
-                                    ProgressView().controlSize(.small)
-                                } else {
-                                    Image(systemName: "wrench.and.screwdriver")
+                        HStack(spacing: 10) {
+                            Button(action: runIntegrityCheck) {
+                                HStack(spacing: 4) {
+                                    if isVerifying {
+                                        ProgressView().controlSize(.small)
+                                    } else {
+                                        Image(systemName: "wrench.and.screwdriver")
+                                    }
+                                    Text("Überprüfen")
                                 }
-                                Text("Volume-Struktur überprüfen")
+                            }
+                            .buttonStyle(.bordered)
+                            .controlSize(.small)
+                            .disabled(isVerifying || isRepairing)
+
+                            if drive.isDirty || (healthReport != nil && !healthReport!.repairsAvailable.isEmpty) {
+                                Button(action: runRepair) {
+                                    HStack(spacing: 4) {
+                                        if isRepairing {
+                                            ProgressView().controlSize(.small)
+                                        } else {
+                                            Image(systemName: "sparkles")
+                                        }
+                                        Text("Volume reparieren")
+                                    }
+                                }
+                                .buttonStyle(.borderedProminent)
+                                .tint(AppTheme.ntfsBlue)
+                                .controlSize(.small)
+                                .disabled(isVerifying || isRepairing)
                             }
                         }
-                        .buttonStyle(.bordered)
-                        .controlSize(.small)
-                        .disabled(isVerifying)
                     }
                     .appleCardStyle()
                 }
 
-                if let verifyRes = integrityMessage {
+                // Diagnostics Report Output
+                if let report = healthReport {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Image(systemName: report.isHealthy ? "checkmark.circle.fill" : "exclamationmark.triangle.fill")
+                                .foregroundStyle(report.isHealthy ? AppTheme.successGreen : AppTheme.warningOrange)
+                            Text(report.isHealthy ? "Diagnose abgeschlossen: Dateisystem ist vollkommen intakt." : "Diagnose abgeschlossen: Auffälligkeiten festgestellt.")
+                                .font(.headline)
+                        }
+
+                        Divider()
+
+                        HStack(spacing: 24) {
+                            Label("Haupt-Bootsektor: \(report.bootSectorValid ? "OK" : "Fehlerhaft")", systemImage: report.bootSectorValid ? "checkmark.circle" : "xmark.circle")
+                                .foregroundStyle(report.bootSectorValid ? Color.secondary : Color.red)
+                            Label("Backup-Bootsektor: \(report.backupBootSectorValid ? "OK" : "Fehlerhaft")", systemImage: report.backupBootSectorValid ? "checkmark.circle" : "xmark.circle")
+                                .foregroundStyle(report.backupBootSectorValid ? Color.secondary : Color.red)
+                            Label("MFT 0 ($MFT): \(report.mft0Valid ? "OK" : "Fehlerhaft")", systemImage: report.mft0Valid ? "checkmark.circle" : "xmark.circle")
+                                .foregroundStyle(report.mft0Valid ? Color.secondary : Color.red)
+                        }
+                        .font(.caption)
+
+                        if !report.issues.isEmpty {
+                            VStack(alignment: .leading, spacing: 4) {
+                                ForEach(report.issues, id: \.self) { issue in
+                                    Text("• \(issue)")
+                                        .font(.caption)
+                                        .foregroundStyle(AppTheme.warningOrange)
+                                }
+                            }
+                            .padding(.top, 4)
+                        }
+                    }
+                    .appleCardStyle()
+                }
+
+                if let repairMsg = repairStatusMessage {
                     HStack {
-                        Image(systemName: "info.circle.fill")
-                            .foregroundStyle(AppTheme.ntfsBlue)
-                        Text(verifyRes)
+                        Image(systemName: "checkmark.seal.fill")
+                            .foregroundStyle(AppTheme.successGreen)
+                        Text(repairMsg)
                             .font(.subheadline)
                         Spacer()
                     }
@@ -210,6 +274,9 @@ struct DriveDetailView: View {
         .sheet(isPresented: $showingBrowser) {
             FileBrowserSheet(drive: drive, volume: driveManager.getNTFSVolume(for: drive))
         }
+        .sheet(isPresented: $showingFormatSheet) {
+            FormatVolumeSheet(drive: drive, driveManager: driveManager)
+        }
     }
 
     private func openInFinder(path: String) {
@@ -218,21 +285,219 @@ struct DriveDetailView: View {
 
     private func runIntegrityCheck() {
         isVerifying = true
-        integrityMessage = nil
+        repairStatusMessage = nil
 
         Task {
-            if let vol = driveManager.getNTFSVolume(for: drive) {
-                let boot = vol.bootSector
-                let runs = vol.mftRecordRuns.count
-                try? await Task.sleep(nanoseconds: 400_000_000)
+            do {
+                let dev = try FileBlockDevice(path: drive.devicePath, writable: false)
+                let rep = try NTFSVolumeChecker.verify(device: dev)
                 await MainActor.run {
-                    self.integrityMessage = "Boot Sector intakt (\(boot.clusterSizeBytes / 1024) KB Cluster). MFT Record 0 erfolgreich verifiziert (\(runs) Datenläufe). Volume-Name: '\(vol.volumeName)'."
+                    self.healthReport = rep
                     self.isVerifying = false
                 }
-            } else {
+            } catch {
                 await MainActor.run {
-                    self.integrityMessage = "Volume konnte für die Analyse nicht geöffnet werden."
+                    self.repairStatusMessage = "Diagnose fehlgeschlagen: \(error.localizedDescription)"
                     self.isVerifying = false
+                }
+            }
+        }
+    }
+
+    private func runRepair() {
+        isRepairing = true
+        repairStatusMessage = nil
+
+        Task {
+            do {
+                let dev = try FileBlockDevice(path: drive.devicePath, writable: true)
+                let actions = try NTFSVolumeChecker.repair(device: dev)
+                await MainActor.run {
+                    self.repairStatusMessage = actions.joined(separator: " ")
+                    self.isRepairing = false
+                    self.healthReport = nil
+                    self.driveManager.refreshDrives()
+                }
+            } catch {
+                await MainActor.run {
+                    self.repairStatusMessage = "Reparatur fehlgeschlagen: \(error.localizedDescription)"
+                    self.isRepairing = false
+                }
+            }
+        }
+    }
+}
+
+// MARK: - Format Volume Sheet (Apple Disk Utility HIG style)
+
+struct FormatVolumeSheet: View {
+    let drive: DiscoveredDrive
+    @ObservedObject var driveManager: DriveManager
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var volumeName: String = ""
+    @State private var selectedClusterSize: UInt32 = 4096
+    @State private var isFormatting: Bool = false
+    @State private var errorMessage: String?
+    @State private var showingConfirmation: Bool = false
+
+    let clusterOptions: [(String, UInt32)] = [
+        ("512 Bytes", 512),
+        ("1024 Bytes (1 KB)", 1024),
+        ("2048 Bytes (2 KB)", 2048),
+        ("4096 Bytes (4 KB - Standard)", 4096),
+        ("8192 Bytes (8 KB)", 8192),
+        ("16384 Bytes (16 KB)", 16384),
+        ("32768 Bytes (32 KB)", 32768),
+        ("65536 Bytes (64 KB)", 65536)
+    ]
+
+    var body: some View {
+        VStack(spacing: 20) {
+            // Header
+            HStack(spacing: 12) {
+                Image(systemName: "eraser.line.dashed")
+                    .font(.system(size: 28))
+                    .foregroundStyle(AppTheme.ntfsBlue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Volume formatieren")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                    Text("Initialisiert '\(drive.name)' als NTFS-Dateisystem")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            Divider()
+
+            // Warning Banner
+            HStack(alignment: .top, spacing: 10) {
+                Image(systemName: "exclamationmark.triangle.fill")
+                    .foregroundStyle(.orange)
+                    .font(.title3)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Achtung: Datenverlust")
+                        .font(.subheadline)
+                        .fontWeight(.semibold)
+                    Text("Beim Formatieren werden alle vorhandenen Daten auf diesem Volume unwiderruflich gelöscht.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+            .padding(12)
+            .background(Color.orange.opacity(0.1))
+            .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+
+            // Form
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Name des Volumes:")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    TextField("UNTITLED", text: $volumeName)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Clustergröße (Zuordnungseinheit):")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Picker("", selection: $selectedClusterSize) {
+                        ForEach(clusterOptions, id: \.1) { opt in
+                            Text(opt.0).tag(opt.1)
+                        }
+                    }
+                    .labelsHidden()
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Dateisystem-Format:")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Text("Windows NT File System (NTFS 3.1) • Voll kompatibel mit Windows & Mac")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let err = errorMessage {
+                Text(err)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            Divider()
+
+            // Bottom Buttons
+            HStack {
+                Button("Abbrechen") {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button(action: { showingConfirmation = true }) {
+                    if isFormatting {
+                        HStack(spacing: 6) {
+                            ProgressView().controlSize(.small)
+                            Text("Formatiere...")
+                        }
+                    } else {
+                        Text("Formatieren")
+                    }
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .disabled(isFormatting)
+            }
+        }
+        .padding(24)
+        .frame(width: 480)
+        .onAppear {
+            self.volumeName = drive.name
+        }
+        .confirmationDialog(
+            "Möchtest du '\(drive.name)' wirklich löschen und in NTFS formatieren?",
+            isPresented: $showingConfirmation,
+            titleVisibility: .visible
+        ) {
+            Button("Formatieren & Daten löschen", role: .destructive) {
+                performFormat()
+            }
+            Button("Abbrechen", role: .cancel) {}
+        } message: {
+            Text("Alle Dateien auf '\(drive.devicePath)' gehen dauerhaft verloren.")
+        }
+    }
+
+    private func performFormat() {
+        isFormatting = true
+        errorMessage = nil
+
+        let targetName = volumeName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "UNTITLED" : volumeName
+        let cluster = selectedClusterSize
+
+        Task {
+            do {
+                let dev = try FileBlockDevice(path: drive.devicePath, writable: true)
+                try NTFSFormatter.format(
+                    device: dev,
+                    options: .init(volumeName: targetName, clusterSize: cluster)
+                )
+                await MainActor.run {
+                    self.isFormatting = false
+                    self.driveManager.refreshDrives()
+                    self.dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "Fehler beim Formatieren: \(error.localizedDescription)"
+                    self.isFormatting = false
                 }
             }
         }

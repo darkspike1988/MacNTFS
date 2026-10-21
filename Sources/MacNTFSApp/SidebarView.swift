@@ -1,8 +1,10 @@
 import SwiftUI
 import AppKit
+import NTFSCore
 
 struct SidebarView: View {
     @ObservedObject var driveManager: DriveManager
+    @State private var showingCreateImageSheet: Bool = false
 
     var body: some View {
         List(selection: $driveManager.selectedDriveID) {
@@ -50,20 +52,40 @@ struct SidebarView: View {
             }
 
             ToolbarItem(placement: .secondaryAction) {
-                Button(action: openImagePicker) {
-                    Image(systemName: "plus.circle")
+                Menu {
+                    Button(action: openImagePicker) {
+                        Label("Vorhandenes Image öffnen...", systemImage: "folder")
+                    }
+                    Button(action: { showingCreateImageSheet = true }) {
+                        Label("Neues NTFS-Image erstellen...", systemImage: "plus.circle")
+                    }
+                } label: {
+                    Image(systemName: "plus")
                 }
-                .help("NTFS Disk-Image öffnen (.img, .raw)")
+                .help("Disk-Image verwalten")
             }
         }
         .safeAreaInset(edge: .bottom) {
-            Button(action: openImagePicker) {
-                Label("Disk Image öffnen...", systemImage: "plus")
-                    .frame(maxWidth: .infinity)
+            VStack(spacing: 8) {
+                Button(action: { showingCreateImageSheet = true }) {
+                    Label("Neues NTFS-Image...", systemImage: "plus.circle.fill")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(AppTheme.ntfsBlue)
+                .controlSize(.regular)
+
+                Button(action: openImagePicker) {
+                    Label("Image öffnen...", systemImage: "folder")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.regular)
             }
-            .buttonStyle(.bordered)
-            .controlSize(.regular)
             .padding(12)
+        }
+        .sheet(isPresented: $showingCreateImageSheet) {
+            CreateImageSheet(driveManager: driveManager)
         }
     }
 
@@ -77,6 +99,153 @@ struct SidebarView: View {
 
         if openPanel.runModal() == .OK, let url = openPanel.url {
             driveManager.loadDiskImage(at: url)
+        }
+    }
+}
+
+// MARK: - Create NTFS Disk Image Sheet
+
+struct CreateImageSheet: View {
+    @ObservedObject var driveManager: DriveManager
+    @Environment(\.dismiss) private var dismiss
+
+    @State private var volumeName: String = "NTFS_IMAGE"
+    @State private var selectedSizeMB: UInt64 = 50
+    @State private var isCreating: Bool = false
+    @State private var errorMessage: String?
+
+    let sizeOptions: [(String, UInt64)] = [
+        ("20 MB (Kompakt)", 20),
+        ("50 MB (Standard)", 50),
+        ("100 MB", 100),
+        ("250 MB", 250),
+        ("500 MB", 500),
+        ("1 GB", 1024),
+        ("2 GB", 2048),
+        ("5 GB", 5120)
+    ]
+
+    var body: some View {
+        VStack(spacing: 20) {
+            HStack(spacing: 12) {
+                Image(systemName: "doc.zipper")
+                    .font(.system(size: 28))
+                    .foregroundStyle(AppTheme.ntfsBlue)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Neues NTFS Disk-Image")
+                        .font(.title3)
+                        .fontWeight(.bold)
+                    Text("Erstellt eine virtuelle NTFS-Festplattendatei (.img)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+                Spacer()
+            }
+
+            Divider()
+
+            VStack(alignment: .leading, spacing: 14) {
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Volume-Name:")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    TextField("NTFS_IMAGE", text: $volumeName)
+                        .textFieldStyle(.roundedBorder)
+                }
+
+                VStack(alignment: .leading, spacing: 6) {
+                    Text("Kapazität:")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Picker("", selection: $selectedSizeMB) {
+                        ForEach(sizeOptions, id: \.1) { opt in
+                            Text(opt.0).tag(opt.1)
+                        }
+                    }
+                    .labelsHidden()
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Dateisystem:")
+                        .font(.subheadline)
+                        .fontWeight(.medium)
+                    Text("Windows NTFS 3.1 • Automatisch formatiert mit 4 KB Clustergröße")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+
+            if let err = errorMessage {
+                Text(err)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+            }
+
+            Divider()
+
+            HStack {
+                Button("Abbrechen") {
+                    dismiss()
+                }
+                .keyboardShortcut(.cancelAction)
+
+                Spacer()
+
+                Button("Erstellen & Speichern...") {
+                    promptSaveAndCreate()
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(AppTheme.ntfsBlue)
+                .disabled(isCreating)
+            }
+        }
+        .padding(24)
+        .frame(width: 440)
+    }
+
+    private func promptSaveAndCreate() {
+        let savePanel = NSSavePanel()
+        savePanel.nameFieldStringValue = "\(volumeName).img"
+        savePanel.prompt = "Image erstellen"
+        savePanel.canCreateDirectories = true
+
+        if savePanel.runModal() == .OK, let targetURL = savePanel.url {
+            createImage(at: targetURL)
+        }
+    }
+
+    private func createImage(at url: URL) {
+        isCreating = true
+        errorMessage = nil
+
+        let totalBytes = selectedSizeMB * 1024 * 1024
+        let name = volumeName.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "NTFS_IMAGE" : volumeName
+
+        Task {
+            do {
+                FileManager.default.createFile(atPath: url.path, contents: nil)
+                let handle = try FileHandle(forWritingTo: url)
+                try handle.truncate(atOffset: totalBytes)
+                try handle.close()
+
+                let dev = try FileBlockDevice(path: url.path, writable: true)
+                try NTFSFormatter.format(
+                    device: dev,
+                    options: .init(volumeName: name, clusterSize: 4096)
+                )
+
+                await MainActor.run {
+                    self.isCreating = false
+                    self.driveManager.loadDiskImage(at: url)
+                    self.dismiss()
+                }
+            } catch {
+                await MainActor.run {
+                    self.errorMessage = "Fehler beim Erstellen: \(error.localizedDescription)"
+                    self.isCreating = false
+                }
+            }
         }
     }
 }
@@ -104,19 +273,11 @@ struct DriveRow: View {
             Spacer()
 
             if drive.isDirty {
-                Image(systemName: "exclamationmark.triangle.fill")
-                    .foregroundStyle(AppTheme.warningOrange)
-                    .font(.caption)
-            } else if drive.isNTFS {
-                Text("NTFS")
-                    .font(.system(size: 9, weight: .bold))
-                    .padding(.horizontal, 5)
-                    .padding(.vertical, 2)
-                    .background(AppTheme.ntfsBlue.opacity(0.12))
-                    .foregroundStyle(AppTheme.ntfsBlue)
-                    .clipShape(Capsule())
+                Circle()
+                    .fill(AppTheme.warningOrange)
+                    .frame(width: 8, height: 8)
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 }

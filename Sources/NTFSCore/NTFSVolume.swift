@@ -49,8 +49,9 @@ public final class NTFSVolume: Sendable {
             if let infoAttr = volRecord.attribute(ofType: .volumeInformation),
                let resData = infoAttr.residentData,
                resData.count >= 12 {
-                // Bytes 8-9 are flags (0x0001 = Dirty flag)
-                let flags = UInt16(resData[resData.startIndex + 8]) | (UInt16(resData[resData.startIndex + 9]) << 8)
+                // Byte 8 is Major Version, Byte 9 is Minor Version
+                // Bytes 10-11 are Flags (UInt16 LE: 0x0001 = Dirty flag)
+                let flags = UInt16(resData[resData.startIndex + 10]) | (UInt16(resData[resData.startIndex + 11]) << 8)
                 dirty = (flags & 0x0001) != 0
             }
         }
@@ -180,6 +181,32 @@ public final class NTFSVolume: Sendable {
             throw NTFSError.unsupportedFeature("Cannot read raw file data of directory '\(path)'")
         }
         return try readData(record: record)
+    }
+
+    /// Writes or imports a file into a given directory path on this NTFS volume.
+    @discardableResult
+    public func writeFile(fileName: String, data: Data, directoryPath: String = "/") throws -> UInt64 {
+        let (dirRecord, isDir) = try lookup(path: directoryPath)
+        guard isDir else {
+            throw NTFSError.notADirectory(directoryPath)
+        }
+        return try NTFSVolumeWriter.writeFile(
+            volume: self,
+            directoryRecordNumber: dirRecord.recordNumber,
+            fileName: fileName,
+            data: data
+        )
+    }
+
+    /// Performs an integrity check on this volume.
+    public func verifyHealth() throws -> NTFSHealthReport {
+        return try NTFSVolumeChecker.verify(device: blockDevice)
+    }
+
+    /// Automatically repairs recoverable file system issues (e.g. dirty flag, backup boot sector).
+    @discardableResult
+    public func repairVolume() throws -> [String] {
+        return try NTFSVolumeChecker.repair(device: blockDevice)
     }
 
     private static func readFromRuns(

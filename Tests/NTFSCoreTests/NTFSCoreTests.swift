@@ -283,4 +283,138 @@ final class NTFSCoreTests: XCTestCase {
         }
         XCTAssertEqual(resData, expectedPayload)
     }
+
+    // MARK: - NTFS Formatter Tests
+
+    func testFormatAndMountNewNTFSVolume() throws {
+        // Create 20 MB blank mock device
+        let totalBytes = 20 * 1024 * 1024
+        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
+
+        let targetName = "TUXERA_KILLER"
+        try NTFSFormatter.format(
+            device: memDevice,
+            options: NTFSFormatter.FormatOptions(volumeName: targetName)
+        )
+
+        // 1. Verify Boot Sector
+        let bootSectorData = try memDevice.read(offset: 0, count: 512)
+        let boot = try BootSector(data: bootSectorData)
+        XCTAssertEqual(boot.oemID, "NTFS    ")
+        XCTAssertEqual(boot.clusterSizeBytes, 4096)
+        XCTAssertEqual(boot.mftClusterNumber, 4)
+
+        // 2. Mount with NTFSVolume
+        let volume = try NTFSVolume(blockDevice: memDevice)
+        XCTAssertEqual(volume.volumeName, targetName)
+        XCTAssertFalse(volume.isDirty)
+        XCTAssertFalse(volume.mftRecordRuns.isEmpty)
+
+        // 3. Verify root directory listing
+        let items = try volume.listDirectory(at: "/")
+        XCTAssertEqual(items.count, 0) // Brand new formatted volume has 0 user files
+    }
+
+    // MARK: - Health Check & Repair Tests
+
+    func testVolumeIntegrityCheckAndRepair() throws {
+        let totalBytes = 20 * 1024 * 1024
+        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
+        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "CHECK_ME"))
+
+        // Initial check: perfectly healthy
+        var report = try NTFSVolumeChecker.verify(device: memDevice)
+        XCTAssertTrue(report.isHealthy)
+        XCTAssertFalse(report.isDirty)
+        XCTAssertTrue(report.bootSectorValid)
+        XCTAssertTrue(report.backupBootSectorValid)
+        XCTAssertTrue(report.mft0Valid)
+
+        // Artificially corrupt: set dirty bit in $VOLUME_INFORMATION (Record 3)
+        // Record 3 is at cluster 4 (offset 16384) + 3072 = byte 19456
+        let rec3Offset: UInt64 = (4 * 4096) + 3072
+        var rec3Data = try memDevice.read(offset: rec3Offset, count: 1024)
+        try FixupApplier.applyFixup(data: &rec3Data, updateSequenceOffset: 0x30, updateSequenceSize: 3)
+
+        // Find $VOLUME_INFORMATION (0x70)
+        var offset = 0x38
+        while offset + 16 <= rec3Data.count {
+            let type = UInt32(rec3Data[offset]) | (UInt32(rec3Data[offset+1]) << 8) | (UInt32(rec3Data[offset+2]) << 16) | (UInt32(rec3Data[offset+3]) << 24)
+            if type == 0x70 {
+                let valOff = Int(UInt16(rec3Data[offset+20]) | (UInt16(rec3Data[offset+21]) << 8))
+                let flagsOff = offset + valOff + 10
+                rec3Data[flagsOff] = 0x01 // Set dirty bit
+                break
+            }
+            let len = Int(UInt32(rec3Data[offset+4]) | (UInt32(rec3Data[offset+5]) << 8) | (UInt32(rec3Data[offset+6]) << 16) | (UInt32(rec3Data[offset+7]) << 24))
+            guard len > 0 else { break }
+            offset += len
+        }
+
+        FixupApplier.prepareForWrite(data: &rec3Data, updateSequenceOffset: 0x30, updateSequenceSize: 3)
+        try memDevice.write(offset: rec3Offset, data: rec3Data)
+
+        // Verify should now flag dirty
+        report = try NTFSVolumeChecker.verify(device: memDevice)
+        XCTAssertFalse(report.isHealthy)
+        XCTAssertTrue(report.isDirty)
+        XCTAssertEqual(report.repairsAvailable.count, 1)
+
+        // Execute repair
+        let actions = try NTFSVolumeChecker.repair(device: memDevice)
+        XCTAssertFalse(actions.isEmpty)
+
+        // Re-check: must be clean and healthy again
+        report = try NTFSVolumeChecker.verify(device: memDevice)
+        XCTAssertTrue(report.isHealthy)
+        XCTAssertFalse(report.isDirty)
+    }
+
+    // MARK: - File Writing & Directory Index Tests
+
+    func testFileWritingResidentAndNonResident() throws {
+        let totalBytes = 30 * 1024 * 1024
+        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
+        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "WRITE_TEST"))
+
+        let volume = try NTFSVolume(blockDevice: memDevice)
+
+        // 1. Write small resident file (120 bytes)
+        let smallContent = "Hello from Pure Swift MacNTFS driver! This file is resident inside the MFT record directly.".data(using: .utf8)!
+        let rec1 = try volume.writeFile(fileName: "Welcome.txt", data: smallContent)
+        XCTAssertGreaterThanOrEqual(rec1, 16)
+
+        // 2. Read back small file
+        let readSmall = try volume.readFile(at: "/Welcome.txt")
+        XCTAssertEqual(readSmall, smallContent)
+
+        // 3. Write non-resident file (12 KB = 3 clusters)
+        var largeContent = Data()
+        for i in 0..<(12 * 1024) {
+            largeContent.append(UInt8(i & 0xFF))
+        }
+        let rec2 = try volume.writeFile(fileName: "TestData.bin", data: largeContent)
+        XCTAssertGreaterThan(rec2, rec1)
+
+        // 4. Read back non-resident file
+        let readLarge = try volume.readFile(at: "/TestData.bin")
+        XCTAssertEqual(readLarge, largeContent)
+
+        // 5. Test filename sanitization
+        let illegalName = "Mac:Report*2026?.log"
+        let logContent = "System log entry".data(using: .utf8)!
+        try volume.writeFile(fileName: illegalName, data: logContent)
+
+        // Should be sanitized to "Mac_Report_2026_.log"
+        let readSanitized = try volume.readFile(at: "/Mac_Report_2026_.log")
+        XCTAssertEqual(readSanitized, logContent)
+
+        // 6. Verify directory listing has all 3 files
+        let list = try volume.listDirectory(at: "/")
+        XCTAssertEqual(list.count, 3)
+        let names = Set(list.map { $0.name })
+        XCTAssertTrue(names.contains("Welcome.txt"))
+        XCTAssertTrue(names.contains("TestData.bin"))
+        XCTAssertTrue(names.contains("Mac_Report_2026_.log"))
+    }
 }

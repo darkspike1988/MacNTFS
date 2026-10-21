@@ -6,8 +6,7 @@ cd "$(dirname "$0")/.."
 
 # MacNTFS DMG Packaging Script
 APP_NAME="MacNTFS"
-VERSION="${1:-0.1.0}"
-BUILD_DIR=".build/release"
+VERSION="${1:-0.1.3}"
 OUTPUT_DIR="build/dist"
 STAGING_DIR="build/dmg-staging"
 DMG_NAME="${APP_NAME}-${VERSION}-arm64.dmg"
@@ -15,6 +14,11 @@ APP_BUNDLE="${STAGING_DIR}/${APP_NAME}.app"
 
 echo "==> Building ${APP_NAME} in release configuration..."
 swift build -c release
+
+BUILD_DIR=".build/release"
+if [ ! -f "${BUILD_DIR}/MacNTFSApp" ] && [ -f ".build/out/Products/Release/MacNTFSApp" ]; then
+    BUILD_DIR=".build/out/Products/Release"
+fi
 
 echo "==> Preparing DMG staging area..."
 rm -rf "${STAGING_DIR}" "${OUTPUT_DIR}"

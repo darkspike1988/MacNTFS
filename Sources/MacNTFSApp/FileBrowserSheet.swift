@@ -1,5 +1,6 @@
 import SwiftUI
 import NTFSCore
+import UniformTypeIdentifiers
 
 struct FileBrowserSheet: View {
     let drive: DiscoveredDrive
@@ -9,9 +10,10 @@ struct FileBrowserSheet: View {
     @State private var currentPath: String = "/"
     @State private var items: [DirectoryItem] = []
     @State private var isLoading: Bool = false
+    @State private var isDropTargeted: Bool = false
     @State private var errorMessage: String?
     @State private var selectedItemID: UInt64?
-    @State private var exportedMessage: String?
+    @State private var statusMessage: String?
 
     var selectedItem: DirectoryItem? {
         guard let id = selectedItemID else { return nil }
@@ -34,6 +36,12 @@ struct FileBrowserSheet: View {
                 }
 
                 Spacer()
+
+                Button(action: importFile) {
+                    Label("Datei hinzufügen...", systemImage: "plus")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(AppTheme.ntfsBlue)
 
                 Button("Schließen") {
                     dismiss()
@@ -80,62 +88,91 @@ struct FileBrowserSheet: View {
 
             Divider()
 
-            // Content Area
-            if isLoading {
-                VStack(spacing: 12) {
-                    ProgressView()
-                    Text("Lese NTFS-Verzeichnis...")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else if let error = errorMessage {
-                VStack(spacing: 8) {
-                    Image(systemName: "exclamationmark.triangle.fill")
-                        .font(.largeTitle)
-                        .foregroundStyle(.orange)
-                    Text(error)
-                        .font(.body)
-                        .foregroundStyle(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                Table(items, selection: $selectedItemID) {
-                    TableColumn("Name") { item in
-                        HStack(spacing: 8) {
-                            Image(systemName: item.isDirectory ? "folder.fill" : fileIcon(for: item.name))
-                                .foregroundStyle(item.isDirectory ? AppTheme.ntfsBlue : .secondary)
-                            Text(item.name)
-                                .fontWeight(item.isDirectory ? .medium : .regular)
-                        }
-                    }
-                    TableColumn("Größe") { item in
-                        Text(item.isDirectory ? "--" : ByteCountFormatter.string(fromByteCount: Int64(item.fileSize), countStyle: .file))
+            // Content Area / Drop Target
+            ZStack {
+                if isLoading {
+                    VStack(spacing: 12) {
+                        ProgressView()
+                        Text("Lese NTFS-Verzeichnis...")
+                            .font(.caption)
                             .foregroundStyle(.secondary)
                     }
-                    TableColumn("Geändert") { item in
-                        Text(item.modificationDate, style: .date)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if let error = errorMessage {
+                    VStack(spacing: 8) {
+                        Image(systemName: "exclamationmark.triangle.fill")
+                            .font(.largeTitle)
+                            .foregroundStyle(.orange)
+                        Text(error)
+                            .font(.body)
                             .foregroundStyle(.secondary)
                     }
-                }
-                .contextMenu {
-                    if let selected = selectedItem {
-                        if !selected.isDirectory {
-                            Button("Auf Mac exportieren...") {
-                                exportFile(item: selected)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else if items.isEmpty {
+                    VStack(spacing: 12) {
+                        Image(systemName: "arrow.down.doc.fill")
+                            .font(.system(size: 40))
+                            .foregroundStyle(isDropTargeted ? AppTheme.ntfsBlue : .secondary.opacity(0.6))
+
+                        Text("Ordner ist leer")
+                            .font(.headline)
+
+                        Text("Dateien aus dem Mac Finder hierher ziehen oder 'Datei hinzufügen' nutzen, um Daten direkt auf das NTFS-Volume zu schreiben.")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                            .multilineTextAlignment(.center)
+                            .frame(maxWidth: 320)
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    Table(items, selection: $selectedItemID) {
+                        TableColumn("Name") { item in
+                            HStack(spacing: 8) {
+                                Image(systemName: item.isDirectory ? "folder.fill" : fileIcon(for: item.name))
+                                    .foregroundStyle(item.isDirectory ? AppTheme.ntfsBlue : .secondary)
+                                Text(item.name)
+                                    .fontWeight(item.isDirectory ? .medium : .regular)
                             }
-                        } else {
-                            Button("Öffnen") {
-                                let newPath = currentPath == "/" ? "/\(selected.name)" : "\(currentPath)/\(selected.name)"
-                                navigateTo(newPath)
+                        }
+                        TableColumn("Größe") { item in
+                            Text(item.isDirectory ? "--" : ByteCountFormatter.string(fromByteCount: Int64(item.fileSize), countStyle: .file))
+                                .foregroundStyle(.secondary)
+                        }
+                        TableColumn("Geändert") { item in
+                            Text(item.modificationDate, style: .date)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                    .contextMenu {
+                        if let selected = selectedItem {
+                            if !selected.isDirectory {
+                                Button("Auf Mac exportieren...") {
+                                    exportFile(item: selected)
+                                }
+                            } else {
+                                Button("Öffnen") {
+                                    let newPath = currentPath == "/" ? "/\(selected.name)" : "\(currentPath)/\(selected.name)"
+                                    navigateTo(newPath)
+                                }
                             }
                         }
                     }
+                }
+
+                // Drop overlay highlight
+                if isDropTargeted {
+                    RoundedRectangle(cornerRadius: 12, style: .continuous)
+                        .strokeBorder(AppTheme.ntfsBlue, style: StrokeStyle(lineWidth: 3, dash: [8]))
+                        .background(AppTheme.ntfsBlue.opacity(0.06))
+                        .padding(8)
                 }
             }
+            .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
+                handleDroppedProviders(providers)
+            }
 
-            // Bottom Bar
-            if let msg = exportedMessage {
+            // Bottom Bar / Feedback
+            if let msg = statusMessage {
                 HStack {
                     Image(systemName: "checkmark.circle.fill")
                         .foregroundStyle(.green)
@@ -148,7 +185,7 @@ struct FileBrowserSheet: View {
                 .background(Color.green.opacity(0.1))
             }
         }
-        .frame(minWidth: 680, minHeight: 460)
+        .frame(minWidth: 700, minHeight: 480)
         .onAppear {
             loadDirectory()
         }
@@ -193,6 +230,56 @@ struct FileBrowserSheet: View {
         }
     }
 
+    private func importFile() {
+        guard let vol = volume else { return }
+
+        let openPanel = NSOpenPanel()
+        openPanel.canChooseFiles = true
+        openPanel.canChooseDirectories = false
+        openPanel.allowsMultipleSelection = true
+        openPanel.prompt = "Importieren"
+
+        if openPanel.runModal() == .OK {
+            for url in openPanel.urls {
+                do {
+                    let data = try Data(contentsOf: url)
+                    try vol.writeFile(fileName: url.lastPathComponent, data: data, directoryPath: currentPath)
+                } catch {
+                    self.errorMessage = "Import fehlgeschlagen: \(error.localizedDescription)"
+                    return
+                }
+            }
+            self.statusMessage = "\(openPanel.urls.count) Datei(en) erfolgreich auf NTFS-Volume übertragen!"
+            loadDirectory()
+        }
+    }
+
+    private func handleDroppedProviders(_ providers: [NSItemProvider]) -> Bool {
+        guard let vol = volume else { return false }
+        let targetPath = currentPath
+
+        for provider in providers {
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                guard let fileURL = url else { return }
+                Task {
+                    do {
+                        let data = try Data(contentsOf: fileURL)
+                        try vol.writeFile(fileName: fileURL.lastPathComponent, data: data, directoryPath: targetPath)
+                        await MainActor.run {
+                            self.statusMessage = "'\(fileURL.lastPathComponent)' erfolgreich auf NTFS übertragen!"
+                            self.loadDirectory()
+                        }
+                    } catch {
+                        await MainActor.run {
+                            self.errorMessage = "Fehler beim Schreiben von '\(fileURL.lastPathComponent)': \(error.localizedDescription)"
+                        }
+                    }
+                }
+            }
+        }
+        return true
+    }
+
     private func exportFile(item: DirectoryItem) {
         guard let vol = volume else { return }
         let fullPath = currentPath == "/" ? "/\(item.name)" : "\(currentPath)/\(item.name)"
@@ -208,7 +295,7 @@ struct FileBrowserSheet: View {
                         let data = try vol.readFile(at: fullPath)
                         try data.write(to: targetURL)
                         await MainActor.run {
-                            self.exportedMessage = "'\(item.name)' erfolgreich exportiert!"
+                            self.statusMessage = "'\(item.name)' erfolgreich exportiert!"
                         }
                     } catch {
                         await MainActor.run {

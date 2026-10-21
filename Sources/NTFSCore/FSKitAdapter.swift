@@ -89,6 +89,10 @@ public final class FSResourceBlockDevice: BlockDevice, @unchecked Sendable {
     private let resource: FSBlockDeviceResource
     public let size: UInt64
 
+    public var isWritable: Bool {
+        resource.isWritable
+    }
+
     public init(resource: FSBlockDeviceResource) {
         self.resource = resource
         self.size = resource.blockCount * resource.blockSize
@@ -121,6 +125,39 @@ public final class FSResourceBlockDevice: BlockDevice, @unchecked Sendable {
         }
 
         return resultData
+    }
+
+    public func write(offset: UInt64, data toWrite: Data) throws {
+        guard isWritable else {
+            throw BlockDeviceError.readOnlyDevice
+        }
+        guard !toWrite.isEmpty else { return }
+
+        let semaphore = DispatchSemaphore(value: 0)
+        var writeError: (any Error)?
+
+        Task {
+            let bufferPtr = UnsafeMutableRawPointer.allocate(byteCount: toWrite.count, alignment: 1)
+            defer { bufferPtr.deallocate() }
+            toWrite.copyBytes(to: bufferPtr.assumingMemoryBound(to: UInt8.self), count: toWrite.count)
+
+            do {
+                _ = try await self.resource.__write(from: bufferPtr, startingAt: off_t(offset), length: toWrite.count)
+            } catch {
+                writeError = error
+            }
+            semaphore.signal()
+        }
+
+        semaphore.wait()
+
+        if let err = writeError {
+            throw BlockDeviceError.writeFailed(errno: 5, message: err.localizedDescription)
+        }
+    }
+
+    public func flush() throws {
+        // Handled by FSKit metadata sync
     }
 }
 

@@ -9,6 +9,8 @@ public enum MFTRecordBuilder {
         parentDirectoryRecordNumber: UInt64 = 5,
         fileName: String,
         fileContent: Data,
+        dataRuns: [DataRun]? = nil,
+        clusterSize: UInt64 = 4096,
         creationDate: Date = Date(),
         modificationDate: Date = Date()
     ) throws -> Data {
@@ -67,13 +69,27 @@ public enum MFTRecordBuilder {
         record.replaceSubrange(attrOffset..<(attrOffset + fnAttr.count), with: fnAttr)
         attrOffset += fnAttr.count
 
-        // --- $DATA (0x80) (Resident) ---
-        let dataAttr = buildResidentDataAttribute(content: fileContent, attributeID: 2)
-        guard attrOffset + dataAttr.count + 8 <= 1020 else {
-            throw NTFSError.unsupportedFeature("File size exceeds resident MFT capacity; non-resident write required")
+        // --- $DATA (0x80) (Resident or Non-Resident) ---
+        if let runs = dataRuns, !runs.isEmpty {
+            let dataAttr = buildNonResidentDataAttribute(
+                runs: runs,
+                realSize: UInt64(fileContent.count),
+                clusterSize: clusterSize,
+                attributeID: 2
+            )
+            guard attrOffset + dataAttr.count + 8 <= 1020 else {
+                throw NTFSError.unsupportedFeature("MFT record capacity exceeded for non-resident runlist")
+            }
+            record.replaceSubrange(attrOffset..<(attrOffset + dataAttr.count), with: dataAttr)
+            attrOffset += dataAttr.count
+        } else {
+            let dataAttr = buildResidentDataAttribute(content: fileContent, attributeID: 2)
+            guard attrOffset + dataAttr.count + 8 <= 1020 else {
+                throw NTFSError.unsupportedFeature("File size exceeds resident MFT capacity; non-resident write required")
+            }
+            record.replaceSubrange(attrOffset..<(attrOffset + dataAttr.count), with: dataAttr)
+            attrOffset += dataAttr.count
         }
-        record.replaceSubrange(attrOffset..<(attrOffset + dataAttr.count), with: dataAttr)
-        attrOffset += dataAttr.count
 
         // --- End Marker (0xFFFFFFFF) ---
         let endMarker: [UInt8] = [0xFF, 0xFF, 0xFF, 0xFF, 0x00, 0x00, 0x00, 0x00]
@@ -87,30 +103,11 @@ public enum MFTRecordBuilder {
         withUnsafeBytes(of: &allocSize) { record.replaceSubrange(0x1C..<0x20, with: $0) }
 
         // 3. Calculate and apply Fixup Array (USA)
-        let usn: UInt16 = 0x4242 // Update Sequence Number
-
-        // Save original sector tails:
-        // Sector 0 end: bytes 510..511
-        // Sector 1 end: bytes 1022..1023
-        let sec0Byte0 = record[510]
-        let sec0Byte1 = record[511]
-        let sec1Byte0 = record[1022]
-        let sec1Byte1 = record[1023]
-
-        // Write USA into header at usaOffset (0x30)
-        let uOffset = Int(usaOffset)
-        record[uOffset] = UInt8(usn & 0xFF)
-        record[uOffset + 1] = UInt8((usn >> 8) & 0xFF)
-        record[uOffset + 2] = sec0Byte0
-        record[uOffset + 3] = sec0Byte1
-        record[uOffset + 4] = sec1Byte0
-        record[uOffset + 5] = sec1Byte1
-
-        // Replace sector tails with USN
-        record[510] = UInt8(usn & 0xFF)
-        record[511] = UInt8((usn >> 8) & 0xFF)
-        record[1022] = UInt8(usn & 0xFF)
-        record[1023] = UInt8((usn >> 8) & 0xFF)
+        FixupApplier.prepareForWrite(
+            data: &record,
+            updateSequenceOffset: Int(usaOffset),
+            updateSequenceSize: Int(usaSize)
+        )
 
         return record
     }
@@ -177,6 +174,65 @@ public enum MFTRecordBuilder {
 
     private static func buildResidentDataAttribute(content: Data, attributeID: UInt16) -> Data {
         return wrapResidentAttribute(type: 0x80, value: content, attributeID: attributeID)
+    }
+
+    private static func buildNonResidentDataAttribute(
+        runs: [DataRun],
+        realSize: UInt64,
+        clusterSize: UInt64,
+        attributeID: UInt16
+    ) -> Data {
+        let encodedRuns = DataRunEncoder.encode(runs: runs)
+        let nonResidentHeaderSize = 64
+        let unalignedTotal = nonResidentHeaderSize + encodedRuns.count
+        let alignedTotal = (unalignedTotal + 7) & ~7
+
+        var totalClusters: UInt64 = 0
+        for run in runs {
+            totalClusters += run.clusterCount
+        }
+        let allocatedSize = totalClusters * clusterSize
+
+        var attr = Data()
+        var rawType = UInt32(0x80).littleEndian
+        var recLen = UInt32(alignedTotal).littleEndian
+        let nonRes: UInt8 = 1
+        let nameLen: UInt8 = 0
+        var nameOff: UInt16 = 0
+        var flags: UInt16 = 0
+        var aID = attributeID.littleEndian
+        var startVCN: UInt64 = 0
+        var endVCN = UInt64(max(0, Int64(totalClusters) - 1)).littleEndian
+        var runOff = UInt16(nonResidentHeaderSize).littleEndian
+        var compUnit: UInt16 = 0
+        var pad32: UInt32 = 0
+        var allocBytes = allocatedSize.littleEndian
+        var realBytes = realSize.littleEndian
+        var initBytes = realSize.littleEndian
+
+        withUnsafeBytes(of: &rawType) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &recLen) { attr.append(contentsOf: $0) }
+        attr.append(nonRes)
+        attr.append(nameLen)
+        withUnsafeBytes(of: &nameOff) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &flags) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &aID) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &startVCN) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &endVCN) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &runOff) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &compUnit) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &pad32) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &allocBytes) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &realBytes) { attr.append(contentsOf: $0) }
+        withUnsafeBytes(of: &initBytes) { attr.append(contentsOf: $0) }
+
+        attr.append(encodedRuns)
+        let padding = alignedTotal - unalignedTotal
+        if padding > 0 {
+            attr.append(contentsOf: [UInt8](repeating: 0, count: padding))
+        }
+
+        return attr
     }
 
     private static func wrapResidentAttribute(type: UInt32, value: Data, attributeID: UInt16) -> Data {
