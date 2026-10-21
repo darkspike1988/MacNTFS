@@ -6,15 +6,21 @@ public struct DiscoveredDrive: Identifiable, Hashable {
     public let id: UUID
     public var name: String
     public var devicePath: String
+    public var bsdName: String
     public var isDiskImage: Bool
     public var mountPoint: String?
     public var totalCapacity: UInt64
     public var freeSpace: UInt64
     public var isNTFS: Bool
+    public var fileSystemName: String
+    public var modelName: String
+    public var vendor: String
+    public var busProtocol: String
+    public var serialNumber: String
     public var isDirty: Bool
     public var clusterSize: UInt32
-    public var serialNumber: String
     public var isReadOnly: Bool
+    public var isSSD: Bool
 
     public var usedSpace: UInt64 {
         totalCapacity > freeSpace ? totalCapacity - freeSpace : 0
@@ -84,13 +90,12 @@ public final class DriveManager: ObservableObject {
                 let total = UInt64((try? url.resourceValues(forKeys: [.volumeTotalCapacityKey]).volumeTotalCapacity) ?? 0)
                 let available = UInt64((try? url.resourceValues(forKeys: [.volumeAvailableCapacityKey]).volumeAvailableCapacity) ?? 0)
                 let isReadOnly = (try? url.resourceValues(forKeys: [.volumeIsReadOnlyKey]).volumeIsReadOnly) ?? false
-                let isInternal = (try? url.resourceValues(forKeys: [.volumeIsInternalKey]).volumeIsInternal) ?? true
 
                 // Check BSD name via statfs
                 var stat = statfs()
                 let pathStr = url.path
                 var bsdPath = ""
-                var fsTypeName = ""
+                var rawFsType = ""
                 if statfs(pathStr, &stat) == 0 {
                     let mntFrom = withUnsafeBytes(of: &stat.f_mntfromname) { rawPtr -> String in
                         guard let ptr = rawPtr.baseAddress?.assumingMemoryBound(to: CChar.self) else { return "" }
@@ -101,21 +106,47 @@ public final class DriveManager: ObservableObject {
                         return String(cString: ptr)
                     }
                     bsdPath = mntFrom
-                    fsTypeName = fstype.lowercased()
+                    rawFsType = fstype.lowercased()
                 }
 
-                let isNtfsType = fsTypeName.contains("ntfs") || bsdPath.contains("ntfs")
+                // Query Apple IOKit hardware registry for real model, vendor, bus protocol, and serial number
+                let hwInfo = DiskHardwareProbe.query(bsdPath: bsdPath)
 
-                // Probe with our native NTFSCore if device is accessible
+                // Probe with our native NTFSCore if device has an NTFS Boot Sector
+                var isNtfsType = rawFsType.contains("ntfs") || bsdPath.contains("ntfs")
                 var isClean = true
                 var clusterSize: UInt32 = 4096
-                var serialStr = "N/A"
-                if !bsdPath.isEmpty && (isNtfsType || !isInternal) {
+                var serialStr = hwInfo.serialNumber
+
+                if !bsdPath.isEmpty {
                     if let rawDev = try? FileBlockDevice(path: bsdPath),
                        let ntfsVol = try? NTFSVolume(blockDevice: rawDev) {
+                        isNtfsType = true
                         isClean = !ntfsVol.isDirty
                         clusterSize = ntfsVol.bootSector.clusterSizeBytes
-                        serialStr = String(format: "%016llX", ntfsVol.bootSector.volumeSerialNumber)
+                        let ntfsSerial = String(format: "%016llX", ntfsVol.bootSector.volumeSerialNumber)
+                        if ntfsSerial != "0000000000000000" && (serialStr == "N/A" || serialStr.isEmpty) {
+                            serialStr = ntfsSerial
+                        }
+                    }
+                }
+
+                // Map human-readable file system name
+                let fsDisplayName: String
+                if isNtfsType {
+                    fsDisplayName = "Windows NT File System (NTFS)"
+                } else {
+                    switch rawFsType {
+                    case "apfs":
+                        fsDisplayName = "Apple File System (APFS)"
+                    case "exfat":
+                        fsDisplayName = "Extensible File Allocation Table (ExFAT)"
+                    case "msdos":
+                        fsDisplayName = "MS-DOS (FAT32)"
+                    case "hfs":
+                        fsDisplayName = "Mac OS Extended (HFS+)"
+                    default:
+                        fsDisplayName = rawFsType.isEmpty ? "Unbekannt" : rawFsType.uppercased()
                     }
                 }
 
@@ -123,15 +154,21 @@ public final class DriveManager: ObservableObject {
                     id: UUID(),
                     name: name,
                     devicePath: bsdPath.isEmpty ? url.path : bsdPath,
+                    bsdName: bsdPath.replacingOccurrences(of: "/dev/", with: ""),
                     isDiskImage: false,
                     mountPoint: url.path,
                     totalCapacity: total,
                     freeSpace: available,
                     isNTFS: isNtfsType,
-                    isDirty: !isClean,
-                    clusterSize: clusterSize,
+                    fileSystemName: fsDisplayName,
+                    modelName: hwInfo.model,
+                    vendor: hwInfo.vendor,
+                    busProtocol: hwInfo.busProtocol,
                     serialNumber: serialStr,
-                    isReadOnly: isReadOnly
+                    isDirty: isNtfsType ? !isClean : false,
+                    clusterSize: clusterSize,
+                    isReadOnly: isReadOnly,
+                    isSSD: hwInfo.isSSD
                 )
                 found.append(drive)
             }
@@ -160,15 +197,21 @@ public final class DriveManager: ObservableObject {
                 id: UUID(),
                 name: vol.volumeName.isEmpty ? url.deletingPathExtension().lastPathComponent : vol.volumeName,
                 devicePath: url.path,
+                bsdName: url.lastPathComponent,
                 isDiskImage: true,
                 mountPoint: nil,
                 totalCapacity: boot.totalSizeBytes,
                 freeSpace: 0, // In pure read-only image, assume filled or calculate from $Bitmap
                 isNTFS: true,
+                fileSystemName: "Windows NT File System (NTFS)",
+                modelName: "Virtuelles NTFS Image",
+                vendor: "MacNTFS",
+                busProtocol: "Disk Image",
+                serialNumber: String(format: "%016llX", boot.volumeSerialNumber),
                 isDirty: vol.isDirty,
                 clusterSize: boot.clusterSizeBytes,
-                serialNumber: String(format: "%016llX", boot.volumeSerialNumber),
-                isReadOnly: true
+                isReadOnly: true,
+                isSSD: true
             )
 
             volumeCache[drive.id] = vol

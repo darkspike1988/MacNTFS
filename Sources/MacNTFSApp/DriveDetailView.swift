@@ -50,45 +50,76 @@ struct DriveDetailView: View {
                                     .background(AppTheme.ntfsBlue.opacity(0.15))
                                     .foregroundStyle(AppTheme.ntfsBlue)
                                     .clipShape(Capsule())
+                            } else {
+                                Text(drive.fileSystemName.components(separatedBy: " ").first ?? "Volume")
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(Color.secondary.opacity(0.15))
+                                    .foregroundStyle(.secondary)
+                                    .clipShape(Capsule())
                             }
 
-                            if drive.isDirty {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "exclamationmark.triangle.fill")
-                                    Text("Unclean Unmount")
+                            if drive.isNTFS {
+                                if drive.isDirty {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "exclamationmark.triangle.fill")
+                                        Text("Unclean Unmount")
+                                    }
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(AppTheme.warningOrange.opacity(0.15))
+                                    .foregroundStyle(AppTheme.warningOrange)
+                                    .clipShape(Capsule())
+                                } else {
+                                    HStack(spacing: 4) {
+                                        Image(systemName: "checkmark.seal.fill")
+                                        Text("Clean")
+                                    }
+                                    .font(.caption2)
+                                    .fontWeight(.bold)
+                                    .padding(.horizontal, 6)
+                                    .padding(.vertical, 2)
+                                    .background(AppTheme.successGreen.opacity(0.15))
+                                    .foregroundStyle(AppTheme.successGreen)
+                                    .clipShape(Capsule())
                                 }
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(AppTheme.warningOrange.opacity(0.15))
-                                .foregroundStyle(AppTheme.warningOrange)
-                                .clipShape(Capsule())
-                            } else {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "checkmark.seal.fill")
-                                    Text("Clean")
-                                }
-                                .font(.caption2)
-                                .fontWeight(.bold)
-                                .padding(.horizontal, 6)
-                                .padding(.vertical, 2)
-                                .background(AppTheme.successGreen.opacity(0.15))
-                                .foregroundStyle(AppTheme.successGreen)
-                                .clipShape(Capsule())
                             }
                         }
 
-                        Text(drive.devicePath)
-                            .font(.subheadline)
-                            .foregroundStyle(.secondary)
+                        HStack(spacing: 6) {
+                            Text(drive.modelName)
+                                .fontWeight(.medium)
+                            if !drive.vendor.isEmpty && drive.vendor != drive.modelName {
+                                Text("(\(drive.vendor))")
+                                    .foregroundStyle(.secondary)
+                            }
+                            Text("•")
+                                .foregroundStyle(.tertiary)
+                            Text(drive.busProtocol)
+                                .foregroundStyle(.secondary)
+                            Text("•")
+                                .foregroundStyle(.tertiary)
+                            Text(drive.devicePath)
+                                .foregroundStyle(.secondary)
+                        }
+                        .font(.subheadline)
                     }
 
                     Spacer()
 
                     // Action Buttons
                     HStack(spacing: 8) {
-                        Button(action: { showingBrowser = true }) {
+                        Button(action: {
+                            if drive.isNTFS {
+                                showingBrowser = true
+                            } else if let mount = drive.mountPoint {
+                                openInFinder(path: mount)
+                            }
+                        }) {
                             Label("Durchsuchen", systemImage: "folder.fill")
                         }
                         .buttonStyle(.borderedProminent)
@@ -98,6 +129,8 @@ struct DriveDetailView: View {
                             Label("Forensik & Rettung", systemImage: "waveform.path.ecg")
                         }
                         .buttonStyle(.bordered)
+                        .disabled(!drive.isNTFS)
+                        .help(drive.isNTFS ? "NTFS Forensik & MFT-Carving öffnen" : "Forensik & MFT-Carving ist nur für NTFS-Dateisysteme verfügbar")
 
                         Button(action: { showingFormatSheet = true }) {
                             Label("Formatieren...", systemImage: "eraser.line.dashed")
@@ -161,6 +194,35 @@ struct DriveDetailView: View {
                 }
                 .appleCardStyle()
 
+                // Non-NTFS Compatibility Notice Card
+                if !drive.isNTFS && !drive.isDiskImage {
+                    HStack(spacing: 16) {
+                        Image(systemName: "info.circle.fill")
+                            .font(.system(size: 32))
+                            .foregroundStyle(AppTheme.ntfsBlue)
+
+                        VStack(alignment: .leading, spacing: 4) {
+                            Text("Nicht-NTFS Dateisystem: \(drive.fileSystemName)")
+                                .font(.headline)
+                                .fontWeight(.semibold)
+
+                            Text("Dieses Laufwerk ist derzeit als \(drive.fileSystemName) formatiert. Für nahtlosen plattformübergreifenden High-Speed-Zugriff unter Windows und macOS kannst du dieses Volume mit MacNTFS nach NTFS konvertieren.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+
+                        Button(action: { showingFormatSheet = true }) {
+                            Label("In NTFS formatieren...", systemImage: "eraser.line.dashed")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(AppTheme.ntfsBlue)
+                        .controlSize(.regular)
+                    }
+                    .appleCardStyle()
+                }
+
                 // Information Grid
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     // Card 1: Volume Parameters
@@ -170,10 +232,15 @@ struct DriveDetailView: View {
 
                         Divider()
 
-                        DetailRow(label: "Format", value: "Windows NT File System (NTFS)")
-                        DetailRow(label: "Clustergröße", value: "\(drive.clusterSize / 1024) KB (\(drive.clusterSize) Bytes)")
+                        DetailRow(label: "Format", value: drive.fileSystemName)
+                        DetailRow(label: "Modell", value: drive.modelName.isEmpty ? "Allgemeines Speichermedium" : drive.modelName)
+                        if !drive.vendor.isEmpty && drive.vendor != drive.modelName {
+                            DetailRow(label: "Hersteller", value: drive.vendor)
+                        }
+                        DetailRow(label: "Schnittstelle", value: drive.busProtocol.isEmpty ? "Lokal" : drive.busProtocol)
                         DetailRow(label: "Seriennummer", value: drive.serialNumber)
-                        DetailRow(label: "Zugriff", value: drive.isReadOnly ? "Nur Lesen" : "Lesen & Schreiben (Nativ)")
+                        DetailRow(label: "Clustergröße", value: drive.isNTFS ? "\(drive.clusterSize / 1024) KB (\(drive.clusterSize) Bytes)" : "Standard (\(drive.clusterSize) Bytes)")
+                        DetailRow(label: "Zugriff", value: drive.isReadOnly ? "Nur Lesen" : (drive.isNTFS ? "Lesen & Schreiben (Nativ FSKit)" : "Lesen & Schreiben (macOS)"))
                     }
                     .appleCardStyle()
 
@@ -184,45 +251,60 @@ struct DriveDetailView: View {
 
                         Divider()
 
-                        DetailRow(
-                            label: "Dirty Flag",
-                            value: drive.isDirty ? "Aktiv (Unsauber getrennt)" : "Sauber ausgehängt",
-                            color: drive.isDirty ? AppTheme.warningOrange : AppTheme.successGreen
-                        )
-                        DetailRow(label: "Treiber-Architektur", value: "Native FSKit User-Space")
-                        DetailRow(label: "SIP / Kernel Extension", value: "Keine KEXT nötig (100% sicher)")
+                        if drive.isNTFS {
+                            DetailRow(
+                                label: "Dirty Flag",
+                                value: drive.isDirty ? "Aktiv (Unsauber getrennt)" : "Sauber ausgehängt",
+                                color: drive.isDirty ? AppTheme.warningOrange : AppTheme.successGreen
+                            )
+                            DetailRow(label: "Treiber-Architektur", value: "Native FSKit User-Space")
+                            DetailRow(label: "SIP / Kernel Extension", value: "Keine KEXT nötig (100% sicher)")
 
-                        HStack(spacing: 10) {
-                            Button(action: runIntegrityCheck) {
-                                HStack(spacing: 4) {
-                                    if isVerifying {
-                                        ProgressView().controlSize(.small)
-                                    } else {
-                                        Image(systemName: "wrench.and.screwdriver")
+                            HStack(spacing: 10) {
+                                Button(action: runIntegrityCheck) {
+                                    HStack(spacing: 4) {
+                                        if isVerifying {
+                                            ProgressView().controlSize(.small)
+                                        } else {
+                                            Image(systemName: "wrench.and.screwdriver")
+                                        }
+                                        Text("Überprüfen")
                                     }
-                                    Text("Überprüfen")
+                                }
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                                .disabled(isVerifying || isRepairing)
+
+                                if drive.isDirty || (healthReport != nil && !healthReport!.repairsAvailable.isEmpty) {
+                                    Button(action: runRepair) {
+                                        HStack(spacing: 4) {
+                                            if isRepairing {
+                                                ProgressView().controlSize(.small)
+                                            } else {
+                                                Image(systemName: "sparkles")
+                                            }
+                                            Text("Volume reparieren")
+                                        }
+                                    }
+                                    .buttonStyle(.borderedProminent)
+                                    .tint(AppTheme.ntfsBlue)
+                                    .controlSize(.small)
+                                    .disabled(isVerifying || isRepairing)
+                                }
+                            }
+                        } else {
+                            DetailRow(label: "Dateisystem", value: drive.fileSystemName)
+                            DetailRow(label: "Treiber-Status", value: "Aktiv durch macOS gemountet")
+                            DetailRow(label: "Integritätsprüfung", value: "Exklusiv für NTFS-Volumes")
+
+                            Button(action: { showingFormatSheet = true }) {
+                                HStack(spacing: 4) {
+                                    Image(systemName: "eraser.line.dashed")
+                                    Text("Laufwerk in NTFS formatieren...")
                                 }
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.small)
-                            .disabled(isVerifying || isRepairing)
-
-                            if drive.isDirty || (healthReport != nil && !healthReport!.repairsAvailable.isEmpty) {
-                                Button(action: runRepair) {
-                                    HStack(spacing: 4) {
-                                        if isRepairing {
-                                            ProgressView().controlSize(.small)
-                                        } else {
-                                            Image(systemName: "sparkles")
-                                        }
-                                        Text("Volume reparieren")
-                                    }
-                                }
-                                .buttonStyle(.borderedProminent)
-                                .tint(AppTheme.ntfsBlue)
-                                .controlSize(.small)
-                                .disabled(isVerifying || isRepairing)
-                            }
                         }
                     }
                     .appleCardStyle()

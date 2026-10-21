@@ -32,7 +32,7 @@ struct SidebarView: View {
 
             let otherDrives = driveManager.drives.filter { !$0.isNTFS && !$0.isDiskImage }
             if !otherDrives.isEmpty {
-                Section("Andere Laufwerke") {
+                Section("Andere Laufwerke (APFS / ExFAT)") {
                     ForEach(otherDrives) { drive in
                         NavigationLink(value: drive.id) {
                             DriveRow(drive: drive)
@@ -255,7 +255,7 @@ struct DriveRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: drive.isDiskImage ? "doc.zipper" : "externaldrive.fill")
+            Image(systemName: drive.isDiskImage ? "doc.zipper" : (drive.isNTFS ? "externaldrive.fill.badge.checkmark" : "externaldrive.fill"))
                 .foregroundStyle(drive.isNTFS ? AppTheme.ntfsBlue : .secondary)
                 .font(.system(size: 18))
 
@@ -265,12 +265,26 @@ struct DriveRow: View {
                     .fontWeight(.medium)
                     .lineLimit(1)
 
-                Text(ByteCountFormatter.string(fromByteCount: Int64(drive.totalCapacity), countStyle: .file))
-                    .font(.caption2)
-                    .foregroundStyle(.secondary)
+                HStack(spacing: 4) {
+                    Text(ByteCountFormatter.string(fromByteCount: Int64(drive.totalCapacity), countStyle: .file))
+                    Text("•")
+                    Text(drive.fileSystemName.components(separatedBy: " ").first ?? "Volume")
+                }
+                .font(.caption2)
+                .foregroundStyle(.secondary)
             }
 
             Spacer()
+
+            if drive.isNTFS {
+                Text("NTFS")
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(AppTheme.ntfsBlue.opacity(0.15))
+                    .foregroundStyle(AppTheme.ntfsBlue)
+                    .clipShape(Capsule())
+            }
 
             if drive.isDirty {
                 Circle()
