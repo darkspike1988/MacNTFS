@@ -1,5 +1,8 @@
 import Foundation
 import Combine
+import Cocoa
+import DiskArbitration
+import UserNotifications
 import NTFSCore
 
 public struct DiscoveredDrive: Identifiable, Hashable {
@@ -51,9 +54,82 @@ public final class DriveManager: ObservableObject {
 
     // Keep active NTFS volume instances
     private var volumeCache: [UUID: NTFSVolume] = [:]
+    private var daSession: DASession?
 
     public init() {
         refreshDrives()
+        setupDiskWatcher()
+    }
+
+    private func setupDiskWatcher() {
+        // 1. Listen to macOS NSWorkspace volume mount / unmount notifications
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didMountNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] notif in
+            Task { @MainActor in
+                self?.handleVolumeMounted(notification: notif)
+            }
+        }
+
+        NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.didUnmountNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            Task { @MainActor in
+                self?.refreshDrives()
+            }
+        }
+
+        // 2. Register Apple DiskArbitration session for live hardware plug-in / removal
+        if let session = DASessionCreate(kCFAllocatorDefault) {
+            self.daSession = session
+            DASessionSetDispatchQueue(session, DispatchQueue.main)
+
+            DARegisterDiskAppearedCallback(session, nil, { disk, context in
+                guard let ctx = context else { return }
+                let manager = Unmanaged<DriveManager>.fromOpaque(ctx).takeUnretainedValue()
+                Task { @MainActor in
+                    manager.refreshDrives()
+                }
+            }, Unmanaged.passUnretained(self).toOpaque())
+
+            DARegisterDiskDisappearedCallback(session, nil, { disk, context in
+                guard let ctx = context else { return }
+                let manager = Unmanaged<DriveManager>.fromOpaque(ctx).takeUnretainedValue()
+                Task { @MainActor in
+                    manager.refreshDrives()
+                }
+            }, Unmanaged.passUnretained(self).toOpaque())
+        }
+    }
+
+    private func handleVolumeMounted(notification: Notification) {
+        refreshDrives()
+
+        if let url = notification.userInfo?[NSWorkspace.volumeURLUserInfoKey] as? URL {
+            let name = (try? url.resourceValues(forKeys: [.volumeNameKey]).volumeName) ?? url.lastPathComponent
+            // If an NTFS drive was just plugged in and mounted
+            if let matching = self.drives.first(where: { $0.mountPoint == url.path && $0.isNTFS }) {
+                self.selectedDriveID = matching.id
+                sendNotification(
+                    title: "NTFS-Laufwerk erkannt",
+                    body: "'\(name)' ist einsatzbereit. Du kannst jetzt direkt Dateien per Drag & Drop schreiben."
+                )
+            }
+        }
+    }
+
+    private func sendNotification(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.sound = .default
+
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        UNUserNotificationCenter.current().add(request, withCompletionHandler: nil)
     }
 
     public func getNTFSVolume(for drive: DiscoveredDrive) -> NTFSVolume? {

@@ -1,4 +1,5 @@
 import SwiftUI
+import UniformTypeIdentifiers
 import NTFSCore
 
 struct DriveDetailView: View {
@@ -12,6 +13,11 @@ struct DriveDetailView: View {
     @State private var isVerifying: Bool = false
     @State private var isRepairing: Bool = false
     @State private var repairStatusMessage: String?
+
+    // Drag-and-drop write states
+    @State private var isDragTargeted: Bool = false
+    @State private var isWritingDroppedFiles: Bool = false
+    @State private var dropSuccessMessage: String? = nil
 
     var body: some View {
         ScrollView {
@@ -214,6 +220,64 @@ struct DriveDetailView: View {
                 }
                 .appleCardStyle()
 
+                // Drag & Drop High-Speed Write Dropzone (exklusiv für NTFS)
+                if drive.isNTFS {
+                    VStack(alignment: .leading, spacing: 10) {
+                        HStack {
+                            Label("High-Speed Dateitransfer (Drag & Drop)", systemImage: "arrow.down.doc.fill")
+                                .font(.headline)
+                            Spacer()
+                            if isWritingDroppedFiles {
+                                ProgressView()
+                                    .controlSize(.small)
+                            }
+                        }
+
+                        ZStack {
+                            RoundedRectangle(cornerRadius: 12, style: .continuous)
+                                .strokeBorder(
+                                    isDragTargeted ? AppTheme.ntfsBlue : Color.primary.opacity(0.12),
+                                    style: StrokeStyle(lineWidth: 2, dash: isDragTargeted ? [6] : [])
+                                )
+                                .background(isDragTargeted ? AppTheme.ntfsBlue.opacity(0.08) : Color.primary.opacity(0.02))
+
+                            VStack(spacing: 8) {
+                                Image(systemName: isWritingDroppedFiles ? "arrow.triangle.2.circlepath" : (isDragTargeted ? "arrow.down.circle.fill" : "plus.square.dashed"))
+                                    .font(.system(size: 28))
+                                    .foregroundStyle(isDragTargeted ? AppTheme.ntfsBlue : .secondary)
+
+                                if isWritingDroppedFiles {
+                                    Text("Schreibe Dateien auf NTFS-Volume...")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                } else {
+                                    Text("Dateien aus dem Mac Finder hierher ziehen")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+
+                                    Text("Einfach Dateien oder Ordner per Drag & Drop hier ablegen, um sie direkt auf '\(drive.name)' zu schreiben.")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                if let success = dropSuccessMessage {
+                                    Text(success)
+                                        .font(.caption)
+                                        .fontWeight(.semibold)
+                                        .foregroundStyle(AppTheme.successGreen)
+                                        .padding(.top, 2)
+                                }
+                            }
+                            .padding(.vertical, 20)
+                            .frame(maxWidth: .infinity)
+                        }
+                        .onDrop(of: [.fileURL], isTargeted: $isDragTargeted) { providers in
+                            handleDroppedFiles(providers)
+                        }
+                    }
+                    .appleCardStyle()
+                }
+
                 // Information Grid
                 LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible())], spacing: 16) {
                     // Card 1: Volume Parameters
@@ -365,6 +429,39 @@ struct DriveDetailView: View {
 
     private func openInFinder(path: String) {
         NSWorkspace.shared.selectFile(nil, inFileViewerRootedAtPath: path)
+    }
+
+    private func handleDroppedFiles(_ providers: [NSItemProvider]) -> Bool {
+        guard let vol = driveManager.getNTFSVolume(for: drive) else { return false }
+        isWritingDroppedFiles = true
+        dropSuccessMessage = nil
+
+        let group = DispatchGroup()
+        var importedCount = 0
+
+        for provider in providers {
+            group.enter()
+            _ = provider.loadObject(ofClass: URL.self) { url, _ in
+                defer { group.leave() }
+                guard let fileURL = url else { return }
+                do {
+                    let data = try Data(contentsOf: fileURL)
+                    try vol.writeFile(fileName: fileURL.lastPathComponent, data: data, directoryPath: "/")
+                    importedCount += 1
+                } catch {
+                    print("Error writing dropped file: \(error)")
+                }
+            }
+        }
+
+        group.notify(queue: .main) {
+            self.isWritingDroppedFiles = false
+            if importedCount > 0 {
+                self.dropSuccessMessage = "✓ \(importedCount) Datei(en) erfolgreich auf '\(self.drive.name)' geschrieben!"
+                self.driveManager.refreshDrives()
+            }
+        }
+        return true
     }
 
     private func runIntegrityCheck() {
