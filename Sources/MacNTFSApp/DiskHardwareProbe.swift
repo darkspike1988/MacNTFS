@@ -8,6 +8,7 @@ public struct DiskHardwareInfo: Sendable {
     public var busProtocol: String
     public var mediumType: String
     public var isSSD: Bool
+    public var isVirtualDisk: Bool
 
     public static let empty = DiskHardwareInfo(
         model: "Allgemeines Speichermedium",
@@ -15,7 +16,8 @@ public struct DiskHardwareInfo: Sendable {
         serialNumber: "N/A",
         busProtocol: "Lokal",
         mediumType: "SSD",
-        isSSD: true
+        isSSD: true,
+        isVirtualDisk: false
     )
 }
 
@@ -39,6 +41,7 @@ public enum DiskHardwareProbe {
         var bus = ""
         var mediumType = ""
         var isSSD = false
+        var isVirtual = false
 
         var parent: io_registry_entry_t = 0
         var current: io_registry_entry_t = service
@@ -47,6 +50,13 @@ public enum DiskHardwareProbe {
         while IORegistryEntryGetParentEntry(current, kIOServicePlane, &parent) == KERN_SUCCESS {
             IOObjectRelease(current)
             current = parent
+
+            var classNameBuf = [CChar](repeating: 0, count: 128)
+            IOObjectGetClass(current, &classNameBuf)
+            let cName = String(cString: classNameBuf)
+            if cName.contains("DiskImage") || cName.contains("IOHDIX") || cName.contains("KDI") {
+                isVirtual = true
+            }
 
             // 1. Device Characteristics dictionary (found on NVMe, SSD, and modern block drivers)
             if let dict = IORegistryEntryCreateCFProperty(current, "Device Characteristics" as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue() as? [String: Any] {
@@ -123,13 +133,18 @@ public enum DiskHardwareProbe {
             serial = "N/A"
         }
 
+        if model.contains("Disk Image") || bus.contains("Disk Image") {
+            isVirtual = true
+        }
+
         return DiskHardwareInfo(
             model: model,
             vendor: vendor,
             serialNumber: serial,
             busProtocol: bus,
             mediumType: mediumType.isEmpty ? (isSSD ? "Solid State (SSD)" : "Festplatte") : mediumType,
-            isSSD: isSSD
+            isSSD: isSSD,
+            isVirtualDisk: isVirtual
         )
     }
 }

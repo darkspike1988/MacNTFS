@@ -10,19 +10,23 @@ public enum PrivilegedDiskBridge {
 
     /// Formats a block device partition to NTFS with specified volume label and cluster size.
     public static func format(devicePath: String, volumeName: String, clusterSize: UInt32) throws {
-        // 1. First attempt: Direct in-process format if app has write access
-        if let dev = try? FileBlockDevice(path: devicePath, writable: true) {
-            try NTFSFormatter.format(
-                device: dev,
-                options: .init(volumeName: volumeName, clusterSize: clusterSize)
-            )
-            return
-        }
+        let cleanDev = devicePath
+            .replacingOccurrences(of: "/dev/r", with: "")
+            .replacingOccurrences(of: "/dev/", with: "")
+        let rDevPath = "/dev/r" + cleanDev
+        let bsdDisk = "/dev/" + cleanDev
 
-        // 2. Second attempt: Privileged helper delegation
+        // 1. Unmount disk first via diskutil to release any macOS kernel locks
+        let unmountProcess = Process()
+        unmountProcess.executableURL = URL(fileURLWithPath: "/usr/sbin/diskutil")
+        unmountProcess.arguments = ["unmountDisk", "force", bsdDisk]
+        try? unmountProcess.run()
+        unmountProcess.waitUntilExit()
+
+        // 2. Format with privileged helper
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
-        process.arguments = [helperBinaryPath, "format", devicePath, volumeName, String(clusterSize)]
+        process.arguments = [helperBinaryPath, "format", rDevPath, volumeName, String(clusterSize)]
 
         let pipe = Pipe()
         process.standardError = pipe
@@ -33,7 +37,7 @@ public enum PrivilegedDiskBridge {
 
         if process.terminationStatus != 0 {
             let data = pipe.fileHandleForReading.readDataToEndOfFile()
-            let errString = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Unknown helper error"
+            let errString = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? "Fehler beim Formatieren"
             throw NSError(
                 domain: "MacNTFS",
                 code: Int(process.terminationStatus),

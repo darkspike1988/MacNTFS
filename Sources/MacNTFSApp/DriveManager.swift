@@ -229,6 +229,18 @@ public final class DriveManager: ObservableObject {
                     }
                 }
 
+                let isVirtual = hwInfo.isVirtualDisk ||
+                    url.path.contains("Simulator") ||
+                    url.path.contains("Cryptex") ||
+                    name.contains("Simulator") ||
+                    name.contains("Cryptex") ||
+                    hwInfo.busProtocol.contains("Disk Image")
+
+                // Skip internal Apple development simulator & cryptex virtual mounts
+                if isVirtual && (name.contains("Simulator") || name.contains("Cryptex") || url.path.contains("Simulator") || url.path.contains("Cryptex")) {
+                    continue
+                }
+
                 let isInternal = (try? url.resourceValues(forKeys: [.volumeIsInternalKey]).volumeIsInternal) ?? (hwInfo.busProtocol.contains("Fabric") || bsdPath.contains("disk0"))
                 let isSystem = url.path == "/" || url.path.starts(with: "/System") || name == "Macintosh HD" || name == "Data"
 
@@ -237,7 +249,7 @@ public final class DriveManager: ObservableObject {
                     name: name,
                     devicePath: bsdPath.isEmpty ? url.path : bsdPath,
                     bsdName: bsdPath.replacingOccurrences(of: "/dev/", with: ""),
-                    isDiskImage: false,
+                    isDiskImage: isVirtual,
                     mountPoint: url.path,
                     totalCapacity: total,
                     freeSpace: available,
