@@ -30,7 +30,7 @@ struct DriveDetailView: View {
                             .frame(width: 72, height: 72)
                             .shadow(color: AppTheme.ntfsBlue.opacity(0.35), radius: 8, x: 0, y: 4)
 
-                        Image(systemName: drive.isDiskImage ? "doc.zipper" : "externaldrive.fill")
+                        Image(systemName: drive.isDiskImage ? "doc.zipper" : (drive.isSystemDisk ? "apple.logo" : "externaldrive.fill"))
                             .font(.system(size: 36))
                             .foregroundStyle(.white)
                     }
@@ -132,10 +132,19 @@ struct DriveDetailView: View {
                         .disabled(!drive.isNTFS)
                         .help(drive.isNTFS ? "NTFS Forensik & MFT-Carving öffnen" : "Forensik & MFT-Carving ist nur für NTFS-Dateisysteme verfügbar")
 
-                        Button(action: { showingFormatSheet = true }) {
-                            Label("Formatieren...", systemImage: "eraser.line.dashed")
+                        if drive.isSystemDisk {
+                            Button(action: {}) {
+                                Label("Geschützt (macOS)", systemImage: "lock.fill")
+                            }
+                            .buttonStyle(.bordered)
+                            .disabled(true)
+                            .help("Das interne macOS-Startvolume ist schreibgeschützt und kann nicht gelöscht werden.")
+                        } else {
+                            Button(action: { showingFormatSheet = true }) {
+                                Label("Formatieren...", systemImage: "eraser.line.dashed")
+                            }
+                            .buttonStyle(.bordered)
                         }
-                        .buttonStyle(.bordered)
 
                         if let mount = drive.mountPoint {
                             Button(action: { openInFinder(path: mount) }) {
@@ -194,33 +203,62 @@ struct DriveDetailView: View {
                 }
                 .appleCardStyle()
 
-                // Non-NTFS Compatibility Notice Card
+                // Non-NTFS Compatibility or System Protection Banner
                 if !drive.isNTFS && !drive.isDiskImage {
-                    HStack(spacing: 16) {
-                        Image(systemName: "info.circle.fill")
-                            .font(.system(size: 32))
-                            .foregroundStyle(AppTheme.ntfsBlue)
+                    if drive.isSystemDisk {
+                        HStack(spacing: 16) {
+                            Image(systemName: "apple.logo")
+                                .font(.system(size: 32))
+                                .foregroundStyle(Color.primary)
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            Text("Nicht-NTFS Dateisystem: \(drive.fileSystemName)")
-                                .font(.headline)
-                                .fontWeight(.semibold)
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("macOS Start- und Systemvolume (\(drive.fileSystemName))")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
 
-                            Text("Dieses Laufwerk ist derzeit als \(drive.fileSystemName) formatiert. Für nahtlosen plattformübergreifenden High-Speed-Zugriff unter Windows und macOS kannst du dieses Volume mit MacNTFS nach NTFS konvertieren.")
+                                Text("Dieses interne Startvolume wird von macOS verwaltet und ist durch APFS-Snapshots sowie die Apple System Integrity Protection (SIP) geschützt.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Text("macOS System")
                                 .font(.caption)
-                                .foregroundStyle(.secondary)
+                                .fontWeight(.bold)
+                                .padding(.horizontal, 10)
+                                .padding(.vertical, 5)
+                                .background(Color.primary.opacity(0.08))
+                                .clipShape(Capsule())
                         }
+                        .appleCardStyle()
+                    } else {
+                        HStack(spacing: 16) {
+                            Image(systemName: "info.circle.fill")
+                                .font(.system(size: 32))
+                                .foregroundStyle(AppTheme.ntfsBlue)
 
-                        Spacer()
+                            VStack(alignment: .leading, spacing: 4) {
+                                Text("Nicht-NTFS Dateisystem: \(drive.fileSystemName)")
+                                    .font(.headline)
+                                    .fontWeight(.semibold)
 
-                        Button(action: { showingFormatSheet = true }) {
-                            Label("In NTFS formatieren...", systemImage: "eraser.line.dashed")
+                                Text("Dieses externe Laufwerk ist derzeit als \(drive.fileSystemName) formatiert. Für nahtlosen plattformübergreifenden High-Speed-Zugriff unter Windows und macOS kannst du dieses Volume mit MacNTFS nach NTFS konvertieren.")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+
+                            Spacer()
+
+                            Button(action: { showingFormatSheet = true }) {
+                                Label("In NTFS formatieren...", systemImage: "eraser.line.dashed")
+                            }
+                            .buttonStyle(.borderedProminent)
+                            .tint(AppTheme.ntfsBlue)
+                            .controlSize(.regular)
                         }
-                        .buttonStyle(.borderedProminent)
-                        .tint(AppTheme.ntfsBlue)
-                        .controlSize(.regular)
+                        .appleCardStyle()
                     }
-                    .appleCardStyle()
                 }
 
                 // Information Grid

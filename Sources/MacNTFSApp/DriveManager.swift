@@ -21,6 +21,8 @@ public struct DiscoveredDrive: Identifiable, Hashable {
     public var clusterSize: UInt32
     public var isReadOnly: Bool
     public var isSSD: Bool
+    public var isSystemDisk: Bool
+    public var isInternal: Bool
 
     public var usedSpace: UInt64 {
         totalCapacity > freeSpace ? totalCapacity - freeSpace : 0
@@ -150,6 +152,9 @@ public final class DriveManager: ObservableObject {
                     }
                 }
 
+                let isInternal = (try? url.resourceValues(forKeys: [.volumeIsInternalKey]).volumeIsInternal) ?? (hwInfo.busProtocol.contains("Fabric") || bsdPath.contains("disk0"))
+                let isSystem = url.path == "/" || url.path.starts(with: "/System") || name == "Macintosh HD" || name == "Data"
+
                 let drive = DiscoveredDrive(
                     id: UUID(),
                     name: name,
@@ -168,7 +173,9 @@ public final class DriveManager: ObservableObject {
                     isDirty: isNtfsType ? !isClean : false,
                     clusterSize: clusterSize,
                     isReadOnly: isReadOnly,
-                    isSSD: hwInfo.isSSD
+                    isSSD: hwInfo.isSSD,
+                    isSystemDisk: isSystem,
+                    isInternal: isInternal
                 )
                 found.append(drive)
             }
@@ -211,7 +218,9 @@ public final class DriveManager: ObservableObject {
                 isDirty: vol.isDirty,
                 clusterSize: boot.clusterSizeBytes,
                 isReadOnly: true,
-                isSSD: true
+                isSSD: true,
+                isSystemDisk: false,
+                isInternal: false
             )
 
             volumeCache[drive.id] = vol

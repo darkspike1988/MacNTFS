@@ -255,7 +255,7 @@ struct DriveRow: View {
 
     var body: some View {
         HStack(spacing: 10) {
-            Image(systemName: drive.isDiskImage ? "doc.zipper" : (drive.isNTFS ? "externaldrive.fill.badge.checkmark" : "externaldrive.fill"))
+            Image(systemName: drive.isDiskImage ? "doc.zipper" : (drive.isSystemDisk ? "apple.logo" : (drive.isNTFS ? "externaldrive.fill.badge.checkmark" : "externaldrive.fill")))
                 .foregroundStyle(drive.isNTFS ? AppTheme.ntfsBlue : .secondary)
                 .font(.system(size: 18))
 
@@ -276,13 +276,29 @@ struct DriveRow: View {
 
             Spacer()
 
-            if drive.isNTFS {
+            if drive.isSystemDisk {
+                Text("macOS")
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Color.primary.opacity(0.1))
+                    .foregroundStyle(.primary)
+                    .clipShape(Capsule())
+            } else if drive.isNTFS {
                 Text("NTFS")
                     .font(.system(size: 9, weight: .bold))
                     .padding(.horizontal, 5)
                     .padding(.vertical, 1)
                     .background(AppTheme.ntfsBlue.opacity(0.15))
                     .foregroundStyle(AppTheme.ntfsBlue)
+                    .clipShape(Capsule())
+            } else {
+                Text(drive.fileSystemName.components(separatedBy: " ").first ?? "Volume")
+                    .font(.system(size: 9, weight: .bold))
+                    .padding(.horizontal, 5)
+                    .padding(.vertical, 1)
+                    .background(Color.secondary.opacity(0.12))
+                    .foregroundStyle(.secondary)
                     .clipShape(Capsule())
             }
 
