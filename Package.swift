@@ -25,7 +25,8 @@ let package = Package(
         .executableTarget(
             name: "MacNTFSApp",
             dependencies: ["NTFSCore"],
-            path: "Sources/MacNTFSApp"
+            path: "Sources/MacNTFSApp",
+            resources: [.process("Resources")]
         ),
         .testTarget(
             name: "NTFSCoreTests",

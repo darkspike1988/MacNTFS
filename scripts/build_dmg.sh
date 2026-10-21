@@ -32,6 +32,11 @@ mkdir -p "${APP_BUNDLE}/Contents/Resources"
 cp "${BUILD_DIR}/MacNTFSApp" "${APP_BUNDLE}/Contents/MacOS/"
 chmod +x "${APP_BUNDLE}/Contents/MacOS/MacNTFSApp"
 
+# Copy App Icon if available
+if [ -f "Sources/MacNTFSApp/Resources/AppIcon.icns" ]; then
+    cp "Sources/MacNTFSApp/Resources/AppIcon.icns" "${APP_BUNDLE}/Contents/Resources/"
+fi
+
 # Create Info.plist
 cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -46,6 +51,8 @@ cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
     <string>MacNTFS</string>
     <key>CFBundleDisplayName</key>
     <string>MacNTFS</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>CFBundleShortVersionString</key>
