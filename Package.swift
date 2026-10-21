@@ -8,7 +8,8 @@ let package = Package(
     ],
     products: [
         .library(name: "NTFSCore", targets: ["NTFSCore"]),
-        .executable(name: "macntfs", targets: ["MacNTFSCli"])
+        .executable(name: "macntfs", targets: ["MacNTFSCli"]),
+        .executable(name: "MacNTFSApp", targets: ["MacNTFSApp"])
     ],
     targets: [
         .target(
@@ -20,6 +21,11 @@ let package = Package(
             name: "MacNTFSCli",
             dependencies: ["NTFSCore"],
             path: "Sources/MacNTFSCli"
+        ),
+        .executableTarget(
+            name: "MacNTFSApp",
+            dependencies: ["NTFSCore"],
+            path: "Sources/MacNTFSApp"
         ),
         .testTarget(
             name: "NTFSCoreTests",

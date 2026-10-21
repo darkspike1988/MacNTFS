@@ -11,15 +11,38 @@
 
 ## 🎯 Overview
 
-**MacNTFS** is an open-source, modern NTFS file system implementation written in Swift. It is designed to replace legacy, kernel-dependent drivers (such as outdated KEXTs or macFUSE workarounds) with a native, user-space architecture built on Apple's **FSKit**.
+**MacNTFS** is an open-source, modern NTFS file system implementation and management utility written in Swift. It is designed to replace legacy, kernel-dependent drivers (such as outdated KEXTs or macFUSE workarounds) with a native, user-space architecture built on Apple's **FSKit**.
 
+* **Apple-Native GUI:** Modern macOS interface built with SwiftUI, SF Pro typography, NavigationSplitView, and translucent Apple materials.
+* **Menu Bar Quick Access:** Live status monitor in the macOS menu bar showing connected NTFS volumes and unmount state.
+* **Built-in File Explorer:** Browse and export files directly from NTFS partitions and raw disk images without third-party drivers.
 * **Zero Kernel Extensions:** Runs fully in user space via Apple's modern `fskitd` ecosystem (no SIP disabling, no Recovery Mode reboots).
 * **Strict Memory Safety:** Implemented in pure Swift with strict concurrency checks and bounds-safe binary streaming.
 * **Clean-Room Engineering:** Built from open specifications ([MS-FSCC], standard forensic documentation) without proprietary third-party code.
 
 ---
 
-## 🏗 Architecture
+## 🖥 The MacNTFS App
+
+The macOS application provides an Apple-like experience:
+1. **Drive Dashboard:** Shows storage capacity gauges, cluster size, MFT offset, and volume serial numbers.
+2. **Integrity Guard:** Warns when a volume was uncleanly disconnected in Windows (Dirty Flag), protecting against corruption.
+3. **Interactive Explorer:** Direct access to directories, file metadata, and export-to-Mac functionality.
+4. **Disk Image Support:** Mount and inspect `.img`, `.raw`, and `.vhd` disk images via drag-and-drop.
+
+---
+
+## 🚀 Installation & Downloads
+
+Download the latest release DMG from the [Releases Page](https://github.com/darkspike1988/MacNTFS/releases):
+
+1. Open `MacNTFS-x.x.x-arm64.dmg`.
+2. Drag `MacNTFS.app` into your **Applications** folder.
+3. Launch MacNTFS from Launchpad or Spotlight.
+
+---
+
+## 🛠 Command-Line Interface (`macntfs`)
 
 ```
 ┌────────────────────────────────────────────────────────┐

@@ -1,12 +1,22 @@
 import Foundation
 
-public struct DirectoryItem: Sendable {
+public struct DirectoryItem: Identifiable, Hashable, Sendable {
+    public var id: UInt64 { mftRecordNumber }
     public let name: String
     public let mftRecordNumber: UInt64
     public let isDirectory: Bool
     public let fileSize: UInt64
     public let modificationDate: Date
     public let creationDate: Date
+
+    public func hash(into hasher: inout Hasher) {
+        hasher.combine(mftRecordNumber)
+        hasher.combine(name)
+    }
+
+    public static func == (lhs: DirectoryItem, rhs: DirectoryItem) -> Bool {
+        lhs.mftRecordNumber == rhs.mftRecordNumber && lhs.name == rhs.name
+    }
 }
 
 public final class DirectoryIndexReader: Sendable {

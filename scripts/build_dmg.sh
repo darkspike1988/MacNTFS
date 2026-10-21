@@ -8,9 +8,10 @@ cd "$(dirname "$0")/.."
 APP_NAME="MacNTFS"
 VERSION="${1:-0.1.0}"
 BUILD_DIR=".build/release"
+OUTPUT_DIR="build/dist"
 STAGING_DIR="build/dmg-staging"
 DMG_NAME="${APP_NAME}-${VERSION}-arm64.dmg"
-OUTPUT_DIR="build/dist"
+APP_BUNDLE="${STAGING_DIR}/${APP_NAME}.app"
 
 echo "==> Building ${APP_NAME} in release configuration..."
 swift build -c release
@@ -19,28 +20,59 @@ echo "==> Preparing DMG staging area..."
 rm -rf "${STAGING_DIR}" "${OUTPUT_DIR}"
 mkdir -p "${STAGING_DIR}" "${OUTPUT_DIR}"
 
-# Copy executable and resources
-cp "${BUILD_DIR}/macntfs" "${STAGING_DIR}/"
+echo "==> Creating macOS App Bundle: ${APP_BUNDLE}..."
+mkdir -p "${APP_BUNDLE}/Contents/MacOS"
+mkdir -p "${APP_BUNDLE}/Contents/Resources"
+
+# Copy binary to App bundle
+cp "${BUILD_DIR}/MacNTFSApp" "${APP_BUNDLE}/Contents/MacOS/"
+chmod +x "${APP_BUNDLE}/Contents/MacOS/MacNTFSApp"
+
+# Create Info.plist
+cat << EOF > "${APP_BUNDLE}/Contents/Info.plist"
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleExecutable</key>
+    <string>MacNTFSApp</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.michaelkatschko.MacNTFS</string>
+    <key>CFBundleName</key>
+    <string>MacNTFS</string>
+    <key>CFBundleDisplayName</key>
+    <string>MacNTFS</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>${VERSION}</string>
+    <key>CFBundleVersion</key>
+    <string>${VERSION}</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>LSApplicationCategoryType</key>
+    <string>public.app-category.utilities</string>
+</dict>
+</plist>
+EOF
+
+# Create PkgInfo
+echo -n "APPL????" > "${APP_BUNDLE}/Contents/PkgInfo"
+
+# Create classic Apple drag-and-drop Applications symlink
+ln -s /Applications "${STAGING_DIR}/Applications"
+
+# Also include CLI tool and docs in DMG
+mkdir -p "${STAGING_DIR}/Command-Line Tools"
+cp "${BUILD_DIR}/macntfs" "${STAGING_DIR}/Command-Line Tools/"
 cp "README.md" "${STAGING_DIR}/"
 cp "LICENSE" "${STAGING_DIR}/"
 
-# Create a symlink to Applications or local bin if app bundle, or provide README
-cat << 'EOF' > "${STAGING_DIR}/INSTALL.txt"
-MacNTFS Installation:
-
-1. Copy 'macntfs' to /usr/local/bin or ~/.local/bin:
-   sudo cp macntfs /usr/local/bin/
-
-2. Verify installation:
-   macntfs --help
-
-For documentation and updates:
-https://github.com/darkspike1988/MacNTFS
-EOF
-
-echo "==> Creating DMG image: ${DMG_NAME}..."
+echo "==> Creating Apple DMG image: ${DMG_NAME}..."
 hdiutil create \
-  -volname "${APP_NAME} ${VERSION}" \
+  -volname "${APP_NAME}" \
   -srcfolder "${STAGING_DIR}" \
   -ov \
   -format UDZO \
