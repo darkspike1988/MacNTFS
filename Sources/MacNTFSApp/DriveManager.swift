@@ -234,10 +234,11 @@ public final class DriveManager: ObservableObject {
                     url.path.contains("Cryptex") ||
                     name.contains("Simulator") ||
                     name.contains("Cryptex") ||
-                    hwInfo.busProtocol.contains("Disk Image")
+                    hwInfo.busProtocol.contains("Disk Image") ||
+                    hwInfo.model.contains("Disk Image")
 
-                // Skip internal Apple development simulator & cryptex virtual mounts
-                if isVirtual && (name.contains("Simulator") || name.contains("Cryptex") || url.path.contains("Simulator") || url.path.contains("Cryptex")) {
+                // Completely skip all virtual / digital disks
+                if isVirtual {
                     continue
                 }
 
@@ -350,11 +351,6 @@ public final class DriveManager: ObservableObject {
                 entry = IOIteratorNext(iterator)
             }
             IOObjectRelease(iterator)
-        }
-
-        // Keep any previously loaded disk images
-        for existing in self.drives where existing.isDiskImage {
-            found.append(existing)
         }
 
         self.drives = found

@@ -5,60 +5,24 @@ import NTFSCore
 struct SidebarView: View {
     @ObservedObject var driveManager: DriveManager
     @State private var showingCreateImageSheet: Bool = false
-    @State private var filterMode: Int = 0 // 0: Übersicht (Alle), 1: Nur NTFS
 
     var body: some View {
-        VStack(spacing: 0) {
-            Picker("", selection: $filterMode) {
-                Text("Übersicht").tag(0)
-                Text("Nur NTFS").tag(1)
+        List(selection: $driveManager.selectedDriveID) {
+            let realDrives = driveManager.drives.filter {
+                !$0.isDiskImage &&
+                !$0.busProtocol.contains("Disk Image") &&
+                !$0.modelName.contains("Disk Image")
             }
-            .pickerStyle(.segmented)
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
 
-            Divider()
-
-            List(selection: $driveManager.selectedDriveID) {
-                // 1. NTFS Volumes
-                let ntfsDrives = driveManager.drives.filter { $0.isNTFS && !$0.isDiskImage }
-                if !ntfsDrives.isEmpty {
-                    Section("NTFS Volumes") {
-                        ForEach(ntfsDrives) { drive in
-                            NavigationLink(value: drive.id) {
-                                DriveRow(drive: drive)
-                            }
-                        }
-                    }
-                }
-
-                // 2. Physische Laufwerke & Volumes (ohne digitale/virtuelle Festplatten)
-                if filterMode == 0 {
-                    let otherDrives = driveManager.drives.filter { !$0.isNTFS && !$0.isDiskImage }
-                    if !otherDrives.isEmpty {
-                        Section("Laufwerke & Volumes") {
-                            ForEach(otherDrives) { drive in
-                                NavigationLink(value: drive.id) {
-                                    DriveRow(drive: drive)
-                                }
-                            }
-                        }
-                    }
-
-                    let diskImages = driveManager.drives.filter { $0.isDiskImage }
-                    if !diskImages.isEmpty {
-                        Section("Virtuelle Images") {
-                            ForEach(diskImages) { drive in
-                                NavigationLink(value: drive.id) {
-                                    DriveRow(drive: drive)
-                                }
-                            }
-                        }
+            Section("Laufwerke") {
+                ForEach(realDrives) { drive in
+                    NavigationLink(value: drive.id) {
+                        DriveRow(drive: drive)
                     }
                 }
             }
-            .listStyle(.sidebar)
         }
+        .listStyle(.sidebar)
         .navigationTitle("MacNTFS")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
