@@ -1,0 +1,65 @@
+{
+  "at": "2026-10-21T19:31:16.072555+00:00",
+  "results": [
+    {
+      "cluster": 1024,
+      "mode": "fresh",
+      "path": "/private/tmp/native-validation-1024-fresh.img",
+      "formatExit": 0,
+      "checkerExit": 0,
+      "sha256": "e2c573de7e9a26eced6034be32cb8a4e1cf7437ebd8c5c54262bffbcbecd13a9",
+      "simulationDidNotWrite": true,
+      "output": "ntfsck (Microsoft NTFS by Tuxera v27.0.1)\nChecking NTFS Superblock ...\nDevice name        : /private/tmp/native-validation-1024-fresh.img\nNTFS volume version: 3.1\nCluster size       : 1024 bytes\nCurrent volume size: 67108352 bytes (68 MB)\nChecking system files ...\nCurrent device size: 67108864 bytes (68 MB)\nChecking for bad sectors ...\nChecking attributes ...\nChecking directory structure ...\nChecking $MFT bitmap ...\nChecking for orphaned files ...\nScanning orphaned files completed.\nChecking cluster allocation ...\nChecking cluster allocation bitmap ...\nSpace in use       : 3 MB (3.5%)\nDone NTFS checking and simulating repair on device '/private/tmp/native-validation-1024-fresh.img'.\nSyncing device ...\n"
+    },
+    {
+      "cluster": 1024,
+      "mode": "writes",
+      "path": "/private/tmp/native-validation-1024-writes.img",
+      "formatExit": 0,
+      "checkerExit": 0,
+      "sha256": "fdbd6da53dc6c6f765371f181b332ead5bf3db9961b8869269832c4614eccad5",
+      "simulationDidNotWrite": true,
+      "output": "ntfsck (Microsoft NTFS by Tuxera v27.0.1)\nChecking NTFS Superblock ...\nDevice name        : /private/tmp/native-validation-1024-writes.img\nNTFS volume version: 3.1\nCluster size       : 1024 bytes\nCurrent volume size: 67108352 bytes (68 MB)\nChecking system files ...\nCurrent device size: 67108864 bytes (68 MB)\nChecking for bad sectors ...\nChecking attributes ...\nChecking directory structure ...\nChecking $MFT bitmap ...\nChecking for orphaned files ...\nScanning orphaned files completed.\nChecking cluster allocation ...\nChecking cluster allocation bitmap ...\nSpace in use       : 3 MB (4.4%)\nDone NTFS checking and simulating repair on device '/private/tmp/native-validation-1024-writes.img'.\nSyncing device ...\n"
+    },
+    {
+      "cluster": 4096,
+      "mode": "fresh",
+      "path": "/private/tmp/native-validation-4096-fresh.img",
+      "formatExit": 0,
+      "checkerExit": 0,
+      "sha256": "03126993e42c12c94a287c6fcdac6028a0a45d3b2a66426e4ef6c0eb83da2c25",
+      "simulationDidNotWrite": true,
+      "output": "ntfsck (Microsoft NTFS by Tuxera v27.0.1)\nChecking NTFS Superblock ...\nDevice name        : /private/tmp/native-validation-4096-fresh.img\nNTFS volume version: 3.1\nCluster size       : 4096 bytes\nCurrent volume size: 67105280 bytes (68 MB)\nChecking system files ...\nCurrent device size: 67108864 bytes (68 MB)\nChecking for bad sectors ...\nChecking attributes ...\nChecking directory structure ...\nChecking $MFT bitmap ...\nChecking for orphaned files ...\nScanning orphaned files completed.\nChecking cluster allocation ...\nChecking cluster allocation bitmap ...\nSpace in use       : 3 MB (3.5%)\nDone NTFS checking and simulating repair on device '/private/tmp/native-validation-4096-fresh.img'.\nSyncing device ...\n"
+    },
+    {
+      "cluster": 4096,
+      "mode": "writes",
+      "path": "/private/tmp/native-validation-4096-writes.img",
+      "formatExit": 0,
+      "checkerExit": 0,
+      "sha256": "a9ae21e0795e4239f70ec12aef0b3687447ead6efc1967526dc34074967d9802",
+      "simulationDidNotWrite": true,
+      "output": "ntfsck (Microsoft NTFS by Tuxera v27.0.1)\nChecking NTFS Superblock ...\nDevice name        : /private/tmp/native-validation-4096-writes.img\nNTFS volume version: 3.1\nCluster size       : 4096 bytes\nCurrent volume size: 67105280 bytes (68 MB)\nChecking system files ...\nCurrent device size: 67108864 bytes (68 MB)\nChecking for bad sectors ...\nChecking attributes ...\nChecking directory structure ...\nChecking $MFT bitmap ...\nChecking for orphaned files ...\nScanning orphaned files completed.\nChecking cluster allocation ...\nChecking cluster allocation bitmap ...\nSpace in use       : 4 MB (4.7%)\nDone NTFS checking and simulating repair on device '/private/tmp/native-validation-4096-writes.img'.\nSyncing device ...\n"
+    },
+    {
+      "cluster": 65536,
+      "mode": "fresh",
+      "path": "/private/tmp/native-validation-65536-fresh.img",
+      "formatExit": 0,
+      "checkerExit": 0,
+      "sha256": "ffd59ec5e1c806aa540a8f1b48520341d1886a0b401bbbc0b2a01516b630b32b",
+      "simulationDidNotWrite": true,
+      "output": "ntfsck (Microsoft NTFS by Tuxera v27.0.1)\nChecking NTFS Superblock ...\nDevice name        : /private/tmp/native-validation-65536-fresh.img\nNTFS volume version: 3.1\nCluster size       : 65536 bytes\nCurrent volume size: 67043840 bytes (68 MB)\nChecking system files ...\nCurrent device size: 67108864 bytes (68 MB)\nChecking for bad sectors ...\nChecking attributes ...\nChecking directory structure ...\nChecking $MFT bitmap ...\nChecking for orphaned files ...\nScanning orphaned files completed.\nChecking cluster allocation ...\nChecking cluster allocation bitmap ...\nSpace in use       : 3 MB (4.0%)\nDone NTFS checking and simulating repair on device '/private/tmp/native-validation-65536-fresh.img'.\nSyncing device ...\n"
+    },
+    {
+      "cluster": 65536,
+      "mode": "writes",
+      "path": "/private/tmp/native-validation-65536-writes.img",
+      "formatExit": 0,
+      "checkerExit": 0,
+      "sha256": "e40208bce4e8582edf04bed7f3e65de33aa8b11a6ffcd36223b068befe954699",
+      "simulationDidNotWrite": true,
+      "output": "ntfsck (Microsoft NTFS by Tuxera v27.0.1)\nChecking NTFS Superblock ...\nDevice name        : /private/tmp/native-validation-65536-writes.img\nNTFS volume version: 3.1\nCluster size       : 65536 bytes\nCurrent volume size: 67043840 bytes (68 MB)\nChecking system files ...\nCurrent device size: 67108864 bytes (68 MB)\nChecking for bad sectors ...\nChecking attributes ...\nChecking directory structure ...\nChecking $MFT bitmap ...\nChecking for orphaned files ...\nScanning orphaned files completed.\nChecking cluster allocation ...\nChecking cluster allocation bitmap ...\nSpace in use       : 7 MB (10.3%)\nDone NTFS checking and simulating repair on device '/private/tmp/native-validation-65536-writes.img'.\nSyncing device ...\n"
+    }
+  ]
+}

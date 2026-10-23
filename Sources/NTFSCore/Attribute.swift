@@ -31,6 +31,8 @@ public struct NTFSAttribute: Sendable {
     public let name: String?
     public let flags: AttributeHeaderFlags
     public let attributeID: UInt16
+    /// log2 of the clusters per compression unit; zero for uncompressed streams.
+    public let compressionUnit: UInt8
     public let payload: AttributeData
 
     public var residentData: Data? {
@@ -72,6 +74,7 @@ public struct NTFSAttribute: Sendable {
             self.name = nil
             self.flags = []
             self.attributeID = 0
+            self.compressionUnit = 0
             self.payload = .resident(Data())
             return
         }
@@ -108,13 +111,14 @@ public struct NTFSAttribute: Sendable {
                 throw NTFSError.outOfBounds(offset: UInt64(valueStart), requested: valueLength, available: data.count)
             }
             let resData = data.subdata(in: valueStart..<(valueStart + valueLength))
+            self.compressionUnit = 0
             self.payload = .resident(resData)
         } else {
             // Non-resident attribute
             let startingVCN = try reader.readUInt64()
             let endingVCN = try reader.readUInt64()
             let runlistOffset = Int(try reader.readUInt16())
-            let _ = try reader.readUInt16() // compression unit size
+            self.compressionUnit = UInt8(truncatingIfNeeded: try reader.readUInt16())
             let _ = try reader.readUInt32() // padding
             let allocatedSize = try reader.readUInt64()
             let realSize = try reader.readUInt64()
@@ -137,5 +141,43 @@ public struct NTFSAttribute: Sendable {
                 runs: runs
             )
         }
+    }
+
+    /// Joins the extents of one non-resident stream, ordered by starting VCN.
+    /// Sizes are stored only in the extent that starts at VCN zero.
+    init(merging extents: [NTFSAttribute]) throws {
+        let ordered = extents.sorted { ($0.startingVCN ?? 0) < ($1.startingVCN ?? 0) }
+        guard let first = ordered.first, case .nonResident(let start, _, let allocated, let real, let initialized, _) = first.payload,
+              start == 0 else {
+            throw NTFSError.corruptRunlist("Stream extents do not start at VCN 0")
+        }
+        var runs: [DataRun] = []
+        var nextVCN: UInt64 = 0
+        for extent in ordered {
+            guard case .nonResident(let lowest, let highest, _, _, _, let extentRuns) = extent.payload,
+                  extent.type == first.type, extent.name == first.name, lowest == nextVCN else {
+                throw NTFSError.corruptRunlist("Stream extents are not contiguous")
+            }
+            let count = extentRuns.reduce(UInt64(0)) { $0 + $1.clusterCount }
+            guard count == highest &+ 1 &- lowest else {
+                throw NTFSError.corruptRunlist("Stream extent length does not match its VCN range")
+            }
+            runs += extentRuns
+            nextVCN = lowest + count
+        }
+        type = first.type
+        recordLength = first.recordLength
+        isNonResident = true
+        name = first.name
+        flags = first.flags
+        attributeID = first.attributeID
+        compressionUnit = first.compressionUnit
+        payload = .nonResident(startingVCN: 0, endingVCN: nextVCN &- 1, allocatedSize: allocated,
+                               realSize: real, initializedSize: initialized, runs: runs)
+    }
+
+    var startingVCN: UInt64? {
+        if case .nonResident(let start, _, _, _, _, _) = payload { return start }
+        return nil
     }
 }

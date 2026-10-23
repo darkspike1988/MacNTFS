@@ -45,6 +45,13 @@ public struct MFTRecord: Sendable {
         self.attributes = parsedAttributes
     }
 
+    /// A logical view whose attributes were gathered from the base and extension records.
+    init(resolving base: MFTRecord, attributes: [NTFSAttribute]) {
+        recordNumber = base.recordNumber
+        header = base.header
+        self.attributes = attributes
+    }
+
     public func attribute(ofType type: AttributeType, name: String? = nil) -> NTFSAttribute? {
         attributes.first { attr in
             guard attr.type == type else { return false }

@@ -7,18 +7,25 @@ cd "$(dirname "$0")/.."
 # MacNTFS DMG Packaging Script
 APP_NAME="MacNTFS"
 VERSION="${1:-0.1.5}"
+if [[ ! "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+([.-][A-Za-z0-9.-]+)?$ ]]; then
+    echo "Invalid version: use a numeric semantic version with an optional development suffix." >&2
+    exit 1
+fi
+IDENTITY="${MACNTFS_SIGNING_IDENTITY:--}"
 OUTPUT_DIR="build/dist"
 STAGING_DIR="build/dmg-staging"
-DMG_NAME="${APP_NAME}-${VERSION}-arm64.dmg"
 APP_BUNDLE="${STAGING_DIR}/${APP_NAME}.app"
 
 echo "==> Building ${APP_NAME} in release configuration..."
 swift build -c release
-
-BUILD_DIR=".build/release"
-if [ ! -f "${BUILD_DIR}/MacNTFSApp" ] && [ -f ".build/out/Products/Release/MacNTFSApp" ]; then
-    BUILD_DIR=".build/out/Products/Release"
-fi
+BUILD_DIR="$(swift build -c release --show-bin-path)"
+ARCHITECTURES="$(lipo -archs "${BUILD_DIR}/MacNTFSApp")"
+case "$ARCHITECTURES" in
+    arm64|x86_64) ARTIFACT_ARCH="$ARCHITECTURES" ;;
+    "arm64 x86_64"|"x86_64 arm64") ARTIFACT_ARCH="universal" ;;
+    *) echo "Unsupported artifact architectures: $ARCHITECTURES" >&2; exit 1 ;;
+esac
+DMG_NAME="${APP_NAME}-${VERSION}-${ARTIFACT_ARCH}.dmg"
 
 echo "==> Preparing DMG staging area..."
 rm -rf "${STAGING_DIR}" "${OUTPUT_DIR}"
@@ -31,6 +38,17 @@ mkdir -p "${APP_BUNDLE}/Contents/Resources"
 # Copy binary to App bundle
 cp "${BUILD_DIR}/MacNTFSApp" "${APP_BUNDLE}/Contents/MacOS/"
 chmod +x "${APP_BUNDLE}/Contents/MacOS/MacNTFSApp"
+
+# Ship the matching helper version with the app, ahead of user-installed helpers.
+cp "${BUILD_DIR}/macntfs" "${APP_BUNDLE}/Contents/MacOS/"
+chmod +x "${APP_BUNDLE}/Contents/MacOS/macntfs"
+
+# Bundle.module checks Bundle.main.resourceURL for app resources.
+for resource_bundle in "${BUILD_DIR}"/*.bundle; do
+    if [ -d "${resource_bundle}" ]; then
+        cp -R "${resource_bundle}" "${APP_BUNDLE}/Contents/Resources/"
+    fi
+done
 
 # Copy App Icon if available
 if [ -f "Sources/MacNTFSApp/Resources/AppIcon.icns" ]; then
@@ -81,6 +99,13 @@ cp "${BUILD_DIR}/macntfs" "${STAGING_DIR}/Command-Line Tools/"
 cp "README.md" "${STAGING_DIR}/"
 cp "LICENSE" "${STAGING_DIR}/"
 
+# Sign nested executables first, then the extension, and finally its host.
+codesign --force --sign "$IDENTITY" "${APP_BUNDLE}/Contents/MacOS/macntfs"
+codesign --force --sign "$IDENTITY" "${STAGING_DIR}/Command-Line Tools/macntfs"
+./scripts/build_fskit_extension.sh "$APP_BUNDLE" release
+codesign --force --sign "$IDENTITY" "$APP_BUNDLE"
+codesign --verify --deep --strict "$APP_BUNDLE"
+
 echo "==> Creating Apple DMG image: ${DMG_NAME}..."
 hdiutil create \
   -volname "${APP_NAME}" \
@@ -91,3 +116,4 @@ hdiutil create \
 
 echo "==> DMG successfully created at: ${OUTPUT_DIR}/${DMG_NAME}"
 ls -lh "${OUTPUT_DIR}/${DMG_NAME}"
+(cd "$OUTPUT_DIR" && shasum -a 256 "$DMG_NAME" > SHA256SUMS)

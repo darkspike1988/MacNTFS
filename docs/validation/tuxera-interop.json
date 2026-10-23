@@ -1,0 +1,3134 @@
+{
+  "files": 134,
+  "tuxera_listing": "passed",
+  "swift_readback": "passed",
+  "tuxera_full_simulated_check": "passed",
+  "checker_changed_image": false,
+  "image_sha256": "95921ed3bac264b33cf348fb6b3af753f94b75d2802d2755d09d37f225c5d976",
+  "cli_sha256": "e6cad27359cb850467eef9e2a26681c0c9ee9203449df29d96ef33971f2e40c9",
+  "tool_sha256": {
+    "mkntfs": "e0c7de35f63566a38a52fc8cab9ed8699f34e3ff4d4775b2c36963331767547b",
+    "ntfsls": "e17e6316530d7430e5665550be46a72918cbdfc26771ba6bde1ad54a8b5389bd",
+    "ntfsck": "428aa8e8dfa6457f141df74628ce252b0bf6a9aad4189d2bcd0dabd48c4f61ae"
+  },
+  "commands": [
+    {
+      "command": [
+        "/Library/Filesystems/tuxera_ntfs.fs/Contents/Resources/Support/10.9/mkntfs",
+        "-F",
+        "-Q",
+        "-L",
+        "SWIFT_INTEROP",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img"
+      ],
+      "exit": 0,
+      "stdout": "Cluster size has been automatically set to 4096 bytes.\nCreating NTFS volume structures.\nmkntfs completed successfully. Have a nice day.\n",
+      "stderr": "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img is not a block device.\nmkntfs forced anyway.\nThe sector size was not specified for $TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img and it could not be obtained automatically.  It has been set to 512 bytes.\nThe partition start sector was not specified for $TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img and it could not be obtained automatically.  It has been set to 0.\nThe number of sectors per track was not specified for $TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img and it could not be obtained automatically.  It has been set to 0.\nThe number of heads was not specified for $TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img and it could not be obtained automatically.  It has been set to 0.\nTo boot from a device, Windows needs the 'partition start sector', the 'sectors per track' and the 'number of heads' to be set.\nWindows will not be able to boot from this device.\n"
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-000.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-000.txt' (Allocated MFT Record #27).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-001.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-001.txt' (Allocated MFT Record #28).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-002.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-002.txt' (Allocated MFT Record #29).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-003.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-003.txt' (Allocated MFT Record #30).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-004.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-004.txt' (Allocated MFT Record #31).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-005.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-005.txt' (Allocated MFT Record #32).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-006.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-006.txt' (Allocated MFT Record #33).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-007.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-007.txt' (Allocated MFT Record #34).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-008.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-008.txt' (Allocated MFT Record #35).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-009.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-009.txt' (Allocated MFT Record #36).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-010.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-010.txt' (Allocated MFT Record #37).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-011.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-011.txt' (Allocated MFT Record #38).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-012.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-012.txt' (Allocated MFT Record #39).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-013.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-013.txt' (Allocated MFT Record #40).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-014.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-014.txt' (Allocated MFT Record #41).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-015.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-015.txt' (Allocated MFT Record #42).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-016.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-016.txt' (Allocated MFT Record #43).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-017.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-017.txt' (Allocated MFT Record #44).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-018.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-018.txt' (Allocated MFT Record #45).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-019.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-019.txt' (Allocated MFT Record #46).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-020.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-020.txt' (Allocated MFT Record #47).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-021.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-021.txt' (Allocated MFT Record #48).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-022.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-022.txt' (Allocated MFT Record #49).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-023.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-023.txt' (Allocated MFT Record #50).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-024.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-024.txt' (Allocated MFT Record #51).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-025.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-025.txt' (Allocated MFT Record #52).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-026.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-026.txt' (Allocated MFT Record #53).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-027.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-027.txt' (Allocated MFT Record #54).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-028.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-028.txt' (Allocated MFT Record #55).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-029.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-029.txt' (Allocated MFT Record #56).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-030.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-030.txt' (Allocated MFT Record #57).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-031.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-031.txt' (Allocated MFT Record #58).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-032.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-032.txt' (Allocated MFT Record #59).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-033.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-033.txt' (Allocated MFT Record #60).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-034.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-034.txt' (Allocated MFT Record #61).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-035.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-035.txt' (Allocated MFT Record #62).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-036.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-036.txt' (Allocated MFT Record #63).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-037.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-037.txt' (Allocated MFT Record #64).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-038.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-038.txt' (Allocated MFT Record #65).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-039.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-039.txt' (Allocated MFT Record #66).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-040.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-040.txt' (Allocated MFT Record #67).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-041.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-041.txt' (Allocated MFT Record #68).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-042.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-042.txt' (Allocated MFT Record #69).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-043.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-043.txt' (Allocated MFT Record #70).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-044.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-044.txt' (Allocated MFT Record #71).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-045.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-045.txt' (Allocated MFT Record #72).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-046.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-046.txt' (Allocated MFT Record #73).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-047.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-047.txt' (Allocated MFT Record #74).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-048.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-048.txt' (Allocated MFT Record #75).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-049.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-049.txt' (Allocated MFT Record #76).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-050.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-050.txt' (Allocated MFT Record #77).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-051.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-051.txt' (Allocated MFT Record #78).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-052.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-052.txt' (Allocated MFT Record #79).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-053.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-053.txt' (Allocated MFT Record #80).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-054.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-054.txt' (Allocated MFT Record #81).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-055.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-055.txt' (Allocated MFT Record #82).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-056.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-056.txt' (Allocated MFT Record #83).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-057.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-057.txt' (Allocated MFT Record #84).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-058.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-058.txt' (Allocated MFT Record #85).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-059.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-059.txt' (Allocated MFT Record #86).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-060.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-060.txt' (Allocated MFT Record #87).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-061.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-061.txt' (Allocated MFT Record #88).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-062.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-062.txt' (Allocated MFT Record #89).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-063.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-063.txt' (Allocated MFT Record #90).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-064.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-064.txt' (Allocated MFT Record #91).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-065.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-065.txt' (Allocated MFT Record #92).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-066.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-066.txt' (Allocated MFT Record #93).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-067.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-067.txt' (Allocated MFT Record #94).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-068.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-068.txt' (Allocated MFT Record #95).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-069.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-069.txt' (Allocated MFT Record #96).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-070.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-070.txt' (Allocated MFT Record #97).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-071.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-071.txt' (Allocated MFT Record #98).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-072.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-072.txt' (Allocated MFT Record #99).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-073.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-073.txt' (Allocated MFT Record #100).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-074.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-074.txt' (Allocated MFT Record #101).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-075.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-075.txt' (Allocated MFT Record #102).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-076.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-076.txt' (Allocated MFT Record #103).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-077.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-077.txt' (Allocated MFT Record #104).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-078.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-078.txt' (Allocated MFT Record #105).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-079.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-079.txt' (Allocated MFT Record #106).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-080.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-080.txt' (Allocated MFT Record #107).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-081.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-081.txt' (Allocated MFT Record #108).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-082.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-082.txt' (Allocated MFT Record #109).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-083.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-083.txt' (Allocated MFT Record #110).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-084.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-084.txt' (Allocated MFT Record #111).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-085.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-085.txt' (Allocated MFT Record #112).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-086.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-086.txt' (Allocated MFT Record #113).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-087.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-087.txt' (Allocated MFT Record #114).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-088.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-088.txt' (Allocated MFT Record #115).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-089.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-089.txt' (Allocated MFT Record #116).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-090.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-090.txt' (Allocated MFT Record #117).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-091.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-091.txt' (Allocated MFT Record #118).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-092.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-092.txt' (Allocated MFT Record #119).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-093.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-093.txt' (Allocated MFT Record #120).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-094.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-094.txt' (Allocated MFT Record #121).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-095.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-095.txt' (Allocated MFT Record #122).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-096.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-096.txt' (Allocated MFT Record #123).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-097.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-097.txt' (Allocated MFT Record #124).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-098.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-098.txt' (Allocated MFT Record #125).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-099.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (17 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-099.txt' (Allocated MFT Record #126).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-100.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-100.txt' (Allocated MFT Record #127).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-101.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-101.txt' (Allocated MFT Record #128).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-102.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-102.txt' (Allocated MFT Record #129).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-103.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-103.txt' (Allocated MFT Record #130).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-104.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-104.txt' (Allocated MFT Record #131).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-105.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-105.txt' (Allocated MFT Record #132).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-106.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-106.txt' (Allocated MFT Record #133).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-107.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-107.txt' (Allocated MFT Record #134).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-108.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-108.txt' (Allocated MFT Record #135).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-109.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-109.txt' (Allocated MFT Record #136).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-110.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-110.txt' (Allocated MFT Record #137).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-111.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-111.txt' (Allocated MFT Record #138).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-112.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-112.txt' (Allocated MFT Record #139).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-113.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-113.txt' (Allocated MFT Record #140).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-114.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-114.txt' (Allocated MFT Record #141).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-115.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-115.txt' (Allocated MFT Record #142).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-116.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-116.txt' (Allocated MFT Record #143).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-117.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-117.txt' (Allocated MFT Record #144).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-118.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-118.txt' (Allocated MFT Record #145).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-119.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-119.txt' (Allocated MFT Record #146).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-120.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-120.txt' (Allocated MFT Record #147).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-121.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-121.txt' (Allocated MFT Record #148).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-122.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-122.txt' (Allocated MFT Record #149).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-123.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-123.txt' (Allocated MFT Record #150).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-124.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-124.txt' (Allocated MFT Record #151).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-125.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-125.txt' (Allocated MFT Record #152).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-126.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-126.txt' (Allocated MFT Record #153).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-127.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-127.txt' (Allocated MFT Record #154).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-128.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-128.txt' (Allocated MFT Record #155).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "file-129.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (18 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'file-129.txt' (Allocated MFT Record #156).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "Äpfel.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (16 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'Äpfel.txt' (Allocated MFT Record #157).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "larger.bin"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (20 KB) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'larger.bin' (Allocated MFT Record #158).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "empty.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (Zero KB) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'empty.txt' (Allocated MFT Record #159).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "write",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/source",
+        "Résumé.txt"
+      ],
+      "exit": 0,
+      "stdout": "Importing 'source' (14 bytes) into NTFS volume at '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'...\nSuccessfully wrote 'Résumé.txt' (Allocated MFT Record #160).\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Library/Filesystems/tuxera_ntfs.fs/Contents/Resources/Support/10.9/ntfsls",
+        "-i",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img"
+      ],
+      "exit": 0,
+      "stdout": "    159 empty.txt\n     27 file-000.txt\n     28 file-001.txt\n     29 file-002.txt\n     30 file-003.txt\n     31 file-004.txt\n     32 file-005.txt\n     33 file-006.txt\n     34 file-007.txt\n     35 file-008.txt\n     36 file-009.txt\n     37 file-010.txt\n     38 file-011.txt\n     39 file-012.txt\n     40 file-013.txt\n     41 file-014.txt\n     42 file-015.txt\n     43 file-016.txt\n     44 file-017.txt\n     45 file-018.txt\n     46 file-019.txt\n     47 file-020.txt\n     48 file-021.txt\n     49 file-022.txt\n     51 file-024.txt\n     52 file-025.txt\n     53 file-026.txt\n     54 file-027.txt\n     55 file-028.txt\n     56 file-029.txt\n     57 file-030.txt\n     58 file-031.txt\n     59 file-032.txt\n     60 file-033.txt\n     61 file-034.txt\n     62 file-035.txt\n     63 file-036.txt\n     64 file-037.txt\n     65 file-038.txt\n     66 file-039.txt\n     67 file-040.txt\n     68 file-041.txt\n     69 file-042.txt\n     70 file-043.txt\n     71 file-044.txt\n     72 file-045.txt\n     73 file-046.txt\n     74 file-047.txt\n     75 file-048.txt\n     76 file-049.txt\n     77 file-050.txt\n     78 file-051.txt\n     79 file-052.txt\n     80 file-053.txt\n     81 file-054.txt\n     82 file-055.txt\n     83 file-056.txt\n     84 file-057.txt\n     86 file-059.txt\n     87 file-060.txt\n     88 file-061.txt\n     89 file-062.txt\n     90 file-063.txt\n     91 file-064.txt\n     92 file-065.txt\n     93 file-066.txt\n     94 file-067.txt\n     95 file-068.txt\n     96 file-069.txt\n     97 file-070.txt\n     98 file-071.txt\n     99 file-072.txt\n    100 file-073.txt\n    101 file-074.txt\n    102 file-075.txt\n    103 file-076.txt\n    104 file-077.txt\n    105 file-078.txt\n    106 file-079.txt\n    107 file-080.txt\n    108 file-081.txt\n    109 file-082.txt\n    110 file-083.txt\n    111 file-084.txt\n    112 file-085.txt\n    113 file-086.txt\n    114 file-087.txt\n    115 file-088.txt\n    116 file-089.txt\n    117 file-090.txt\n    118 file-091.txt\n    119 file-092.txt\n    121 file-094.txt\n    122 file-095.txt\n    123 file-096.txt\n    124 file-097.txt\n    125 file-098.txt\n    126 file-099.txt\n    127 file-100.txt\n    128 file-101.txt\n    129 file-102.txt\n    130 file-103.txt\n    131 file-104.txt\n    132 file-105.txt\n    133 file-106.txt\n    134 file-107.txt\n    135 file-108.txt\n    136 file-109.txt\n    137 file-110.txt\n    138 file-111.txt\n    139 file-112.txt\n    140 file-113.txt\n    141 file-114.txt\n    142 file-115.txt\n    143 file-116.txt\n    144 file-117.txt\n    145 file-118.txt\n    146 file-119.txt\n    147 file-120.txt\n    148 file-121.txt\n    149 file-122.txt\n    150 file-123.txt\n    151 file-124.txt\n    152 file-125.txt\n    153 file-126.txt\n    154 file-127.txt\n    156 file-129.txt\n    158 larger.bin\n    160 Résumé.txt\n    157 Äpfel.txt\n     50 file-023.txt\n     85 file-058.txt\n    120 file-093.txt\n    155 file-128.txt\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-000.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 0\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-001.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 1\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-002.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 2\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-003.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 3\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-004.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 4\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-005.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 5\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-006.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 6\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-007.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 7\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-008.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 8\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-009.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 9\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-010.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 10\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-011.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 11\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-012.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 12\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-013.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 13\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-014.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 14\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-015.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 15\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-016.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 16\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-017.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 17\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-018.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 18\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-019.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 19\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-020.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 20\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-021.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 21\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-022.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 22\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-023.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 23\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-024.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 24\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-025.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 25\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-026.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 26\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-027.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 27\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-028.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 28\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-029.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 29\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-030.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 30\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-031.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 31\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-032.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 32\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-033.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 33\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-034.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 34\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-035.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 35\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-036.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 36\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-037.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 37\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-038.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 38\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-039.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 39\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-040.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 40\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-041.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 41\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-042.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 42\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-043.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 43\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-044.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 44\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-045.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 45\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-046.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 46\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-047.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 47\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-048.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 48\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-049.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 49\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-050.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 50\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-051.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 51\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-052.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 52\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-053.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 53\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-054.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 54\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-055.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 55\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-056.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 56\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-057.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 57\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-058.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 58\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-059.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 59\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-060.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 60\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-061.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 61\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-062.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 62\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-063.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 63\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-064.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 64\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-065.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 65\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-066.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 66\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-067.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 67\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-068.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 68\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-069.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 69\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-070.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 70\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-071.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 71\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-072.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 72\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-073.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 73\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-074.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 74\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-075.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 75\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-076.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 76\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-077.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 77\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-078.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 78\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-079.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 79\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-080.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 80\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-081.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 81\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-082.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 82\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-083.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 83\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-084.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 84\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-085.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 85\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-086.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 86\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-087.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 87\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-088.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 88\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-089.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 89\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-090.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 90\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-091.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 91\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-092.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 92\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-093.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 93\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-094.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 94\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-095.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 95\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-096.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 96\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-097.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 97\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-098.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 98\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-099.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 99\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-100.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 100\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-101.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 101\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-102.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 102\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-103.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 103\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-104.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 104\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-105.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 105\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-106.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 106\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-107.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 107\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-108.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 108\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-109.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 109\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-110.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 110\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-111.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 111\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-112.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 112\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-113.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 113\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-114.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 114\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-115.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 115\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-116.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 116\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-117.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 117\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-118.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 118\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-119.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 119\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-120.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 120\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-121.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 121\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-122.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 122\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-123.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 123\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-124.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 124\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-125.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 125\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-126.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 126\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-127.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 127\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-128.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 128\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/file-129.txt"
+      ],
+      "exit": 0,
+      "stdout": "Swift payload 129\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/Äpfel.txt"
+      ],
+      "exit": 0,
+      "stdout": "Unicode payload\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/larger.bin"
+      ],
+      "exit": 0,
+      "stdout": "\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������\u0000\u0001\u0002\u0003\u0004\u0005\u0006\u0007\b\t\n\u000b\f\r\u000e\u000f\u0010\u0011\u0012\u0013\u0014\u0015\u0016\u0017\u0018\u0019\u001a\u001b\u001c\u001d\u001e\u001f !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~��������������������������������������������������������������������������������������������������������������������������������",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/empty.txt"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "~/Projects/MacNTFS/.build/out/Products/Debug/macntfs",
+        "cat",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img",
+        "/Résumé.txt"
+      ],
+      "exit": 0,
+      "stdout": "resume payload",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Library/Filesystems/tuxera_ntfs.fs/Contents/Resources/Support/10.9/ntfsck",
+        "-s",
+        "-P",
+        "-t",
+        "15",
+        "$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img"
+      ],
+      "exit": 0,
+      "stdout": "ntfsck (Microsoft NTFS by Tuxera v27.0.1)\nChecking NTFS Superblock ...\nDevice name        : $TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img\nNTFS volume version: 3.1\nCluster size       : 4096 bytes\nCurrent volume size: 67105280 bytes (68 MB)\nChecking system files ...\nCurrent device size: 67108864 bytes (68 MB)\nChecking for bad sectors ...\nChecking attributes ...\nChecking directory structure ...\nChecking $MFT bitmap ...\nChecking for orphaned files ...\nScanning orphaned files completed.\nChecking cluster allocation ...\nChecking cluster allocation bitmap ...\nSpace in use       : 3 MB (4,1%)\nDone NTFS checking and simulating repair on device '$TMPDIR/macntfs-tuxera-interop-dwh4u2_u/offline.img'.\nSyncing device ...\n",
+      "stderr": ""
+    }
+  ]
+}

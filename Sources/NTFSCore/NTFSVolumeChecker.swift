@@ -181,8 +181,12 @@ public enum NTFSVolumeChecker {
         let backupVbrData = try? device.read(offset: backupOffset, count: Int(sectorSize))
         let backupBoot = backupVbrData != nil ? (try? BootSector(data: backupVbrData!)) : nil
 
-        // If main is invalid but backup is valid -> restore main
-        if mainBoot == nil, let bData = backupVbrData, backupBoot != nil {
+        // If main is invalid but backup is valid -> restore main. Only when sector 0 is a
+        // damaged NTFS boot sector rather than another file system or a partition table,
+        // and the backup sits exactly where NTFS keeps it (one sector past the volume).
+        if mainBoot == nil, let bData = backupVbrData, let backupBoot,
+           backupBoot.totalSectors * UInt64(backupBoot.bytesPerSector) == backupOffset,
+           try mayReplaceBootSector(mainVbrData, device: device) {
             try device.write(offset: 0, data: bData)
             actions.append("Haupt-Bootsektor erfolgreich aus Backup-Bootsektor wiederhergestellt.")
         }
@@ -193,69 +197,18 @@ public enum NTFSVolumeChecker {
             actions.append("Backup-Bootsektor erfolgreich am Partitionsende synchronisiert.")
         }
 
-        // Re-read working boot sector
-        let activeBootData = try device.read(offset: 0, count: 512)
-        let activeBoot = try BootSector(data: activeBootData)
+        // The volume must have a usable boot sector from here on.
+        _ = try BootSector(data: device.read(offset: 0, count: 512))
 
-        // 2. Read MFT Record 0 to get MFT layout
-        let mft0Raw = try device.read(offset: activeBoot.mftByteOffset, count: Int(activeBoot.mftRecordSizeBytes))
-        let mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw, bytesPerSector: Int(activeBoot.bytesPerSector))
-        guard let dataAttr = mft0.defaultDataAttribute, let runs = dataAttr.runs else {
-            throw NTFSError.corruptRunlist("MFT runs not found")
-        }
-
-        // 3. Repair Dirty Flag in $Volume (Record 3)
-        let recordSize = UInt64(activeBoot.mftRecordSizeBytes)
-        let volRecordOffset = 3 * recordSize
-        if var volRaw = try readFromRuns(runs: runs, virtualOffset: volRecordOffset, length: Int(recordSize), bootSector: activeBoot, device: device) {
-            var modified = false
-
-            // Find offset of $VOLUME_INFORMATION (0x70)
-            var offset = Int(UInt16(volRaw[0x14]) | (UInt16(volRaw[0x15]) << 8)) // firstAttrOffset
-            while offset + 16 <= volRaw.count {
-                let attrType = UInt32(volRaw[offset]) | (UInt32(volRaw[offset + 1]) << 8) | (UInt32(volRaw[offset + 2]) << 16) | (UInt32(volRaw[offset + 3]) << 24)
-                if attrType == 0xFFFFFFFF { break }
-
-                let recLen = Int(UInt32(volRaw[offset + 4]) | (UInt32(volRaw[offset + 5]) << 8) | (UInt32(volRaw[offset + 6]) << 16) | (UInt32(volRaw[offset + 7]) << 24))
-                guard recLen > 0 && offset + recLen <= volRaw.count else { break }
-
-                if attrType == 0x70 { // $VOLUME_INFORMATION
-                    let isNonRes = volRaw[offset + 8] != 0
-                    if !isNonRes {
-                        let valOff = Int(UInt16(volRaw[offset + 20]) | (UInt16(volRaw[offset + 21]) << 8))
-                        let flagsOff = offset + valOff + 10
-                        if flagsOff + 1 < volRaw.count {
-                            let oldFlags = UInt16(volRaw[flagsOff]) | (UInt16(volRaw[flagsOff + 1]) << 8)
-                            if (oldFlags & 0x0001) != 0 {
-                                let newFlags = oldFlags & ~0x0001 // Clear dirty bit
-                                volRaw[flagsOff] = UInt8(newFlags & 0xFF)
-                                volRaw[flagsOff + 1] = UInt8((newFlags >> 8) & 0xFF)
-                                modified = true
-                            }
-                        }
-                    }
-                }
-
-                offset += recLen
-            }
-
-            if modified {
-                // Re-apply fixup array to Record 3
-                let usaOffset = Int(UInt16(volRaw[4]) | (UInt16(volRaw[5]) << 8))
-                let usaSize = Int(UInt16(volRaw[6]) | (UInt16(volRaw[7]) << 8))
-                FixupApplier.prepareForWrite(
-                    data: &volRaw,
-                    updateSequenceOffset: usaOffset,
-                    updateSequenceSize: usaSize
-                )
-
-                // Write Record 3 back to disk
-                if let firstRun = runs.first, let startLCN = firstRun.startingLCN {
-                    let clusterSize = UInt64(activeBoot.clusterSizeBytes)
-                    let diskOffset = (startLCN * clusterSize) + volRecordOffset
-                    try device.write(offset: diskOffset, data: volRaw)
-                    actions.append("Dirty Flag in $Volume erfolgreich gelöscht (Volume als 'Sauber' markiert).")
-                }
+        // 3. Clear the dirty flag only when the journal has nothing left to replay. The
+        // record is written to $MFT and $MFTMirr together, with its update sequence intact.
+        let volume = try NTFSVolume(blockDevice: device)
+        if volume.isDirty {
+            if case .unclean(let reason) = try volume.journalState() {
+                actions.append("Dirty-Flag nicht gelöscht: \(reason). Bitte chkdsk unter Windows ausführen.")
+            } else {
+                try NTFSVolumeWriter.clearDirtyFlag(volume)
+                actions.append("Dirty Flag in $Volume erfolgreich gelöscht (Volume als 'Sauber' markiert).")
             }
         }
 
@@ -264,6 +217,20 @@ public enum NTFSVolumeChecker {
             actions.append("Dateisystem-Integrität überprüft: Keine Reparaturen erforderlich.")
         }
         return actions
+    }
+
+    /// Sector 0 may be replaced only if it is not another file system's boot sector, a
+    /// partition table, or an APFS/HFS+ volume.
+    static func mayReplaceBootSector(_ sector: Data, device: BlockDevice) throws -> Bool {
+        guard sector.count >= 512 else { return false }
+        if sector.subdata(in: 3..<11) == Data("NTFS    ".utf8) { return true }
+        if sector[510] == 0x55 && sector[511] == 0xAA { return false }
+        if sector.subdata(in: 32..<36) == Data("NXSB".utf8) { return false }
+        if device.size >= 1026 {
+            let header = try device.read(offset: 1024, count: 2)
+            if header == Data("H+".utf8) || header == Data("HX".utf8) { return false }
+        }
+        return sector.allSatisfy { $0 == 0 }
     }
 
     private static func readFromRuns(
