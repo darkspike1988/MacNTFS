@@ -21,11 +21,8 @@ public final class NTFSVolume: Sendable {
         let mft0Raw = try blockDevice.read(offset: boot.mftByteOffset, count: Int(boot.mftRecordSizeBytes))
         let mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw, bytesPerSector: Int(boot.bytesPerSector))
 
-        // 3. Extract $MFT's own $DATA runlist
-        guard let mftDataAttr = mft0.defaultDataAttribute,
-              let runs = mftDataAttr.runs else {
-            throw NTFSError.corruptRunlist("$MFT record 0 does not contain non-resident $DATA runs")
-        }
+        // 3. Extract $MFT's own $DATA runlist, including extents in extension records
+        let runs = try NTFSVolume.mftRuns(base: mft0, bootSector: boot, device: blockDevice)
         self.mftRecordRuns = runs
 
         // 4. Read $Volume (Record 3) to extract Volume Name and Flags
@@ -62,15 +59,21 @@ public final class NTFSVolume: Sendable {
 
     /// Reads any arbitrary MFT record by its record number.
     public func readMFTRecord(number: UInt64) throws -> MFTRecord {
+        // The writer can extend $MFT. Resolve its current runlist rather than
+        // continuing to read a cached mapping captured when this object opened.
+        let raw = try blockDevice.read(offset: bootSector.mftByteOffset, count: Int(bootSector.mftRecordSizeBytes))
+        let currentMFT = try MFTRecord(recordNumber: 0, rawData: raw, bytesPerSector: Int(bootSector.bytesPerSector))
+        if number == 0 { return currentMFT }
+        let currentRuns = try NTFSVolume.mftRuns(base: currentMFT, bootSector: bootSector, device: blockDevice)
         return try NTFSVolume.readRecord(
             recordNumber: number,
-            runs: mftRecordRuns,
+            runs: currentRuns,
             bootSector: bootSector,
             device: blockDevice
         )
     }
 
-    private static func readRecord(
+    static func readRecord(
         recordNumber: UInt64,
         runs: [DataRun],
         bootSector: BootSector,
@@ -97,7 +100,10 @@ public final class NTFSVolume: Sendable {
     }
 
     /// Reads the payload data for the default $DATA stream of a given MFT record.
+    /// Bytes past the initialized size read as zeros, as do sparse ranges; compressed
+    /// streams are decompressed and EFS-encrypted streams are refused.
     public func readData(record: MFTRecord, offset: UInt64 = 0, length: Int? = nil) throws -> Data {
+        let record = try resolvedRecord(record)
         guard let dataAttr = record.defaultDataAttribute else {
             return Data()
         }
@@ -108,30 +114,49 @@ public final class NTFSVolume: Sendable {
             guard offset < total else { return Data() }
             let available = total - offset
             let toRead = length != nil ? min(UInt64(length!), available) : available
-            let start = Int(offset)
-            let end = start + Int(toRead)
-            return resData.subdata(in: start..<end)
+            let start = resData.startIndex + Int(offset)
+            return resData.subdata(in: start..<(start + Int(toRead)))
 
-        case .nonResident(_, _, _, let realSize, _, let runs):
+        case .nonResident(_, _, _, let realSize, let initializedSize, let runs):
+            guard !dataAttr.flags.contains(.encrypted) else {
+                throw NTFSError.unsupportedFeature("EFS-encrypted files can only be read on Windows")
+            }
             guard offset < realSize else { return Data() }
             let available = realSize - offset
-            let toRead = length != nil ? min(UInt64(length!), available) : available
-            guard let bytes = try NTFSVolume.readFromRuns(
-                runs: runs,
-                virtualOffset: offset,
-                length: Int(toRead),
-                bootSector: bootSector,
-                device: blockDevice
-            ) else {
-                throw NTFSError.outOfBounds(offset: offset, requested: Int(toRead), available: 0)
+            let toRead = Int(length != nil ? min(UInt64(length!), available) : available)
+            let initialized = min(initializedSize, realSize)
+            var result = Data()
+            if offset < initialized {
+                let count = Int(min(UInt64(toRead), initialized - offset))
+                if dataAttr.flags.contains(.compressed) {
+                    result = try NTFSCompression.read(runs: runs, compressionUnit: dataAttr.compressionUnit,
+                                                      offset: offset, length: count,
+                                                      cluster: UInt64(bootSector.clusterSizeBytes), device: blockDevice)
+                } else {
+                    guard let bytes = try NTFSVolume.readFromRuns(runs: runs, virtualOffset: offset, length: count,
+                                                                  bootSector: bootSector, device: blockDevice) else {
+                        throw NTFSError.outOfBounds(offset: offset, requested: count, available: 0)
+                    }
+                    result = bytes
+                }
             }
-            return bytes
+            if result.count < toRead { result.append(Data(count: toRead - result.count)) }
+            return result
+        }
+    }
+
+    /// Logical size and allocation of the default $DATA stream.
+    public func dataSize(record: MFTRecord) throws -> (size: UInt64, allocated: UInt64) {
+        guard let data = try resolvedRecord(record).defaultDataAttribute else { return (0, 0) }
+        switch data.payload {
+        case .resident(let bytes): return (UInt64(bytes.count), UInt64(bytes.count))
+        case .nonResident(_, _, let allocated, let size, _, _): return (size, allocated)
         }
     }
 
     /// Lists directory contents for a given MFT record number (defaults to 5 for Root directory).
     public func listDirectory(recordNumber: UInt64 = 5) throws -> [DirectoryItem] {
-        let record = try readMFTRecord(number: recordNumber)
+        let record = try resolvedRecord(readMFTRecord(number: recordNumber))
         return try directoryIndexReader.readEntries(from: record)
     }
 
@@ -141,7 +166,7 @@ public final class NTFSVolume: Sendable {
         guard isDir else {
             throw NTFSError.notADirectory(path)
         }
-        return try directoryIndexReader.readEntries(from: record)
+        return try directoryIndexReader.readEntries(from: resolvedRecord(record))
     }
 
     /// Resolves a path to its corresponding MFT record.
@@ -156,14 +181,26 @@ public final class NTFSVolume: Sendable {
 
         let components = trimmed.split(separator: "/").map(String.init)
         var currentRecord = try readMFTRecord(number: currentRecordNumber)
+        let upcaseRecord = try readMFTRecord(number: 10)
+        let upcase = try readData(record: upcaseRecord)
+        func key(_ name: String) -> [UInt16] {
+            name.utf16.map { unit in
+                let offset = upcase.startIndex + Int(unit) * 2
+                return UInt16(upcase[offset]) | UInt16(upcase[offset + 1]) << 8
+            }
+        }
 
         for (index, component) in components.enumerated() {
             guard currentRecord.isDirectory else {
                 throw NTFSError.notADirectory(components.prefix(index).joined(separator: "/"))
             }
 
-            let entries = try directoryIndexReader.readEntries(from: currentRecord)
-            guard let match = entries.first(where: { $0.name.caseInsensitiveCompare(component) == .orderedSame }) else {
+            let entries = try directoryIndexReader.readEntries(from: resolvedRecord(currentRecord), includeSystem: true)
+            let match = entries.first { entry in
+                if upcase.count == 131072 { return key(entry.name) == key(component) }
+                return entry.name.caseInsensitiveCompare(component) == .orderedSame
+            }
+            guard let match else {
                 throw NTFSError.pathNotFound(path)
             }
 
@@ -219,7 +256,7 @@ public final class NTFSVolume: Sendable {
         return try NTFSForensicsEngine.recoverDeletedFile(volume: self, recordNumber: recordNumber)
     }
 
-    private static func readFromRuns(
+    static func readFromRuns(
         runs: [DataRun],
         virtualOffset: UInt64,
         length: Int,

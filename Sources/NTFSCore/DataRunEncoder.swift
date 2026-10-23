@@ -12,7 +12,12 @@ public enum DataRunEncoder {
 
         for run in runs {
             // Encode cluster count
-            let lengthBytes = encodeUnsigned(value: run.clusterCount)
+            var lengthBytes = encodeUnsigned(value: run.clusterCount)
+            // Mapping-pair lengths must stay positive when readers sign-extend
+            // the encoded field. Keep a leading zero for 128...255, etc.
+            if lengthBytes.count < 8, let last = lengthBytes.last, last & 0x80 != 0 {
+                lengthBytes.append(0)
+            }
             let lengthSize = lengthBytes.count
 
             if let lcn = run.startingLCN {

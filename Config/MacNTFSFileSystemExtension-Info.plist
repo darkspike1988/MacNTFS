@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>CFBundleExecutable</key>
+	<string>MacNTFSFileSystemExtension</string>
+	<key>CFBundleIdentifier</key>
+	<string>org.macntfs.MacNTFS.filesystem</string>
+	<key>CFBundleName</key>
+	<string>MacNTFS File System</string>
+	<key>CFBundlePackageType</key>
+	<string>XPC!</string>
+	<key>CFBundleShortVersionString</key>
+	<string>1.0.0</string>
+	<key>CFBundleVersion</key>
+	<string>1</string>
+	<key>EXAppExtensionAttributes</key>
+	<dict>
+		<key>EXExtensionPointIdentifier</key>
+		<string>com.apple.fskit.fsmodule</string>
+		<key>FSActivateOptionSyntax</key>
+		<dict>
+			<key>shortOptions</key>
+			<string>o:</string>
+		</dict>
+		<key>FSCheckOptionSyntax</key>
+		<dict>
+			<key>shortOptions</key>
+			<string>nqy</string>
+		</dict>
+		<key>FSFormatOptionSyntax</key>
+		<dict>
+			<key>shortOptions</key>
+			<string>L:</string>
+		</dict>
+		<key>FSMediaTypes</key>
+		<dict>
+			<key>EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</key>
+			<dict>
+				<key>FSMediaProperties</key>
+				<dict>
+					<key>Content Hint</key>
+					<string>EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</string>
+					<key>Leaf</key>
+					<true/>
+				</dict>
+				<key>FSProbeOrder</key>
+				<integer>1000</integer>
+			</dict>
+			<key>Windows_NTFS</key>
+			<dict>
+				<key>FSMediaProperties</key>
+				<dict>
+					<key>Content Hint</key>
+					<string>Windows_NTFS</string>
+					<key>Leaf</key>
+					<true/>
+				</dict>
+				<key>FSProbeOrder</key>
+				<integer>1000</integer>
+			</dict>
+		</dict>
+		<key>FSName</key>
+		<string>MacNTFS</string>
+		<key>FSPersonalities</key>
+		<dict>
+			<key>MacNTFS</key>
+			<dict>
+				<key>FSFormat</key>
+				<string>Windows NTFS</string>
+				<key>FSName</key>
+				<string>MacNTFS</string>
+				<key>FSSubType</key>
+				<integer>0</integer>
+			</dict>
+		</dict>
+		<key>FSShortName</key>
+		<string>macntfs</string>
+		<key>FSSupportsBlockResources</key>
+		<true/>
+		<key>FSSupportsPathURLs</key>
+		<false/>
+		<key>FSVolumeAlwaysIgnoreOwnership</key>
+		<true/>
+	</dict>
+	<key>LSMinimumSystemVersion</key>
+	<string>15.4</string>
+</dict>
+</plist>

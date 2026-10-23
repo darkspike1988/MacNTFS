@@ -1,0 +1,20 @@
+ntfsck (Microsoft NTFS by Tuxera v27.0.1)
+Checking NTFS Superblock ...
+$LogFile is too small.
+Resident $LogFile $DATA attribute: Input/output error
+Correcting errors... 
+Reading $MFT... 
+Reading $MFTMirr... 
+Comparing $MFTMirr to $MFT... 
+$MFT error: Missing attributes in $MFT.
+$MFTMirr error: Missing attributes in $MFT.
+$MFT error: Missing attributes in $MFTMirr.
+$MFTMirr error: Missing attributes in $MFTMirr.
+Processing of $MFT and $MFTMirr completed successfully.
+Going to empty the journal ($LogFile)... 
+Resident $LogFile $DATA attribute: Input/output error
+ntfs_logfile_reset: Failed to reset $LogFile: Input/output error
+Opening '$TMPDIR/macntfs-verified-zipzoqdw/swift.img' as NTFS failed: Input/output error
+NTFS is inconsistent and repair could not be completed. Please report!
+Done NTFS checking and simulating repair on device '<None>'.
+

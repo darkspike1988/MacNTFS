@@ -43,18 +43,67 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
     public let isWritable: Bool
     public let sectorSize: Int
     private let isSectorAlignedDevice: Bool
+    /// Raw devices need a complete, validated on-disk formatter, unlike test images.
+    public var isRawDevice: Bool { isSectorAlignedDevice }
     private let path: String
+    private static let mountTableLock = NSLock()
+
+    /// Resolve symlinks and the raw/block aliases of the same disk.
+    internal static func canonicalDevicePath(_ path: String) -> String {
+        let resolved = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        return resolved.hasPrefix("/dev/rdisk")
+            ? resolved.replacingOccurrences(of: "/dev/rdisk", with: "/dev/disk")
+            : resolved
+    }
+
+    /// Whole-disk writes also overlap any mounted child partition.
+    internal static func deviceConflictsWithMount(devicePath: String, mountSource: String) -> Bool {
+        let device = canonicalDevicePath(devicePath)
+        let source = canonicalDevicePath(mountSource)
+        if source == device { return true }
+        guard device.hasPrefix("/dev/disk") else { return false }
+        let diskNumber = device.dropFirst("/dev/disk".count)
+        let isWholeDisk = !diskNumber.isEmpty && diskNumber.allSatisfy { $0.isASCII && $0.isNumber }
+        return isWholeDisk && source.hasPrefix(device + "s")
+    }
+
+    /// Only called for descriptors confirmed by fstat to be device nodes.
+    /// Rechecking narrows the mount race; raw access still needs exclusive ownership.
+    internal static func ensureUnmountedDevice(at path: String) throws {
+        let canonical = canonicalDevicePath(path)
+        guard canonical.hasPrefix("/dev/disk"),
+              !canonical.dropFirst("/dev/disk".count).isEmpty else {
+            throw BlockDeviceError.writeFailed(errno: EBUSY, message: "Cannot establish mount safety for device '\(path)'")
+        }
+        mountTableLock.lock()
+        defer { mountTableLock.unlock() }
+        var entries: UnsafeMutablePointer<statfs>?
+        let count = getmntinfo(&entries, MNT_NOWAIT)
+        guard count > 0, let entries else {
+            throw BlockDeviceError.writeFailed(errno: EBUSY, message: "Cannot determine current mount status; raw write refused")
+        }
+        for index in 0..<Int(count) {
+            var entry = entries[index]
+            let source = withUnsafePointer(to: &entry.f_mntfromname) {
+                $0.withMemoryRebound(to: CChar.self, capacity: Int(MNAMELEN)) { String(cString: $0) }
+            }
+            if deviceConflictsWithMount(devicePath: canonical, mountSource: source) {
+                throw BlockDeviceError.writeFailed(errno: EBUSY, message: "Device '\(path)' or a child partition is mounted at '\(source)'; raw write refused")
+            }
+        }
+    }
 
     public init(path: String, writable: Bool = false, allowReadOnlyFallback: Bool = false) throws {
-        self.path = path
+        let openPath = URL(fileURLWithPath: path).resolvingSymlinksInPath().path
+        self.path = Self.canonicalDevicePath(openPath)
 
         let flags = writable ? O_RDWR : O_RDONLY
-        var openFd = Darwin.open(path, flags)
+        var openFd = Darwin.open(openPath, flags)
         var actualWritable = writable
 
         // Fallback to read-only only if explicitly permitted
         if openFd < 0 && writable && allowReadOnlyFallback {
-            openFd = Darwin.open(path, O_RDONLY)
+            openFd = Darwin.open(openPath, O_RDONLY)
             actualWritable = false
         }
 
@@ -67,9 +116,6 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
             throw BlockDeviceError.cannotOpenFile(path: path, message: "\(msg).\(hint)")
         }
 
-        self.fd = openFd
-        self.isWritable = actualWritable
-
         var statBuf = stat()
         if fstat(openFd, &statBuf) != 0 {
             let err = errno
@@ -80,6 +126,22 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         let mode = statBuf.st_mode & S_IFMT
         let isDevice = (mode == S_IFCHR || mode == S_IFBLK)
         self.isSectorAlignedDevice = isDevice
+
+        if isDevice && actualWritable {
+            do {
+                try Self.ensureUnmountedDevice(at: self.path)
+            } catch {
+                Darwin.close(openFd)
+                guard allowReadOnlyFallback else { throw error }
+                openFd = Darwin.open(openPath, O_RDONLY)
+                guard openFd >= 0 else {
+                    throw BlockDeviceError.cannotOpenFile(path: path, message: "Cannot reopen mounted device read-only")
+                }
+                actualWritable = false
+            }
+        }
+        self.fd = openFd
+        self.isWritable = actualWritable
 
         var detectedSectorSize = 512
         if isDevice {
@@ -143,10 +205,11 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
     }
 
     public func read(offset: UInt64, count: Int) throws -> Data {
-        guard count > 0 else { return Data() }
-        if size > 0 && offset + UInt64(count) > size {
+        guard count >= 0, offset <= size, UInt64(count) <= size - offset,
+              offset <= UInt64(Int64.max), UInt64(count) <= UInt64(Int64.max) - offset else {
             throw BlockDeviceError.outOfBounds(offset: offset, requested: count, totalSize: size)
         }
+        guard count > 0 else { return Data() }
 
         if !isSectorAlignedDevice {
             return try alignedReadDirect(offset: offset, count: count)
@@ -175,6 +238,9 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         var totalBytesWritten = 0
 
         while totalBytesWritten < count {
+            if isSectorAlignedDevice {
+                try Self.ensureUnmountedDevice(at: path)
+            }
             let currentOffset = off_t(offset) + off_t(totalBytesWritten)
             let remaining = count - totalBytesWritten
 
@@ -188,6 +254,9 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
                 let err = errno
                 throw BlockDeviceError.writeFailed(errno: err, message: String(cString: strerror(err)))
             }
+            guard bytesWritten > 0 else {
+                throw BlockDeviceError.writeFailed(errno: EIO, message: "pwrite made no progress")
+            }
             totalBytesWritten += bytesWritten
         }
     }
@@ -195,6 +264,10 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
     public func write(offset: UInt64, data toWrite: Data) throws {
         guard isWritable else {
             throw BlockDeviceError.readOnlyDevice
+        }
+        guard offset <= size, UInt64(toWrite.count) <= size - offset,
+              offset <= UInt64(Int64.max), UInt64(toWrite.count) <= UInt64(Int64.max) - offset else {
+            throw BlockDeviceError.outOfBounds(offset: offset, requested: toWrite.count, totalSize: size)
         }
         guard !toWrite.isEmpty else { return }
 
@@ -211,12 +284,17 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
 
         // Sector bounce buffer write (Read-Modify-Write for raw devices)
         let alignedStart = (offset / sSize) * sSize
-        let alignedEnd = ((offset + UInt64(toWrite.count) + sSize - 1) / sSize) * sSize
+        let writeEnd = offset + UInt64(toWrite.count)
+        let padding = (sSize - writeEnd % sSize) % sSize
+        guard padding <= size - writeEnd else {
+            throw BlockDeviceError.outOfBounds(offset: offset, requested: toWrite.count, totalSize: size)
+        }
+        let alignedEnd = writeEnd + padding
         let alignedCount = Int(alignedEnd - alignedStart)
 
-        var bounceBuffer = (try? alignedReadDirect(offset: alignedStart, count: alignedCount)) ?? Data()
-        if bounceBuffer.count < alignedCount {
-            bounceBuffer.append(Data(repeating: 0, count: alignedCount - bounceBuffer.count))
+        var bounceBuffer = try alignedReadDirect(offset: alignedStart, count: alignedCount)
+        guard bounceBuffer.count == alignedCount else {
+            throw BlockDeviceError.readFailed(errno: EIO, message: "Short sector read during read-modify-write")
         }
 
         let subStart = Int(offset - alignedStart)
@@ -227,6 +305,9 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
 
     public func flush() throws {
         guard isWritable else { return }
+        if isSectorAlignedDevice {
+            try Self.ensureUnmountedDevice(at: path)
+        }
         if Darwin.fsync(fd) != 0 {
             let err = errno
             throw BlockDeviceError.writeFailed(errno: err, message: "fsync failed: \(String(cString: strerror(err)))")
@@ -249,11 +330,11 @@ public final class MemoryBlockDevice: BlockDevice, @unchecked Sendable {
     }
 
     public func read(offset: UInt64, count: Int) throws -> Data {
-        guard count > 0 else { return Data() }
         let total = UInt64(data.count)
-        if offset + UInt64(count) > total {
+        guard count >= 0, offset <= total, UInt64(count) <= total - offset else {
             throw BlockDeviceError.outOfBounds(offset: offset, requested: count, totalSize: total)
         }
+        guard count > 0 else { return Data() }
         let start = Int(offset)
         let end = start + count
         return data.subdata(in: start..<end)
@@ -263,10 +344,11 @@ public final class MemoryBlockDevice: BlockDevice, @unchecked Sendable {
         guard isWritable else {
             throw BlockDeviceError.readOnlyDevice
         }
-        let end = Int(offset) + toWrite.count
-        if end > data.count {
-            data.count = end
+        let total = UInt64(data.count)
+        guard offset <= total, UInt64(toWrite.count) <= total - offset else {
+            throw BlockDeviceError.outOfBounds(offset: offset, requested: toWrite.count, totalSize: total)
         }
+        let end = Int(offset) + toWrite.count
         data.replaceSubrange(Int(offset)..<end, with: toWrite)
     }
 

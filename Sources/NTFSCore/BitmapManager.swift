@@ -3,6 +3,8 @@ import Foundation
 /// Manages an NTFS bitmap stream ($Bitmap for cluster allocation or $MFT:$BITMAP for MFT record allocation).
 public struct BitmapManager: Sendable {
     public private(set) var data: Data
+    /// Byte range changed since this manager was created, so writers can stage only those bytes.
+    public private(set) var dirtyBytes: Range<Int>?
 
     public var totalBits: Int {
         data.count * 8
@@ -28,10 +30,19 @@ public struct BitmapManager: Sendable {
         let byteIndex = data.startIndex + (index / 8)
         let bitOffset = index % 8
 
+        let before = data[byteIndex]
         if isAllocated {
             data[byteIndex] |= (1 << bitOffset)
         } else {
             data[byteIndex] &= ~(1 << bitOffset)
+        }
+        if data[byteIndex] != before {
+            let changed = index / 8
+            if let range = dirtyBytes {
+                dirtyBytes = min(range.lowerBound, changed)..<max(range.upperBound, changed + 1)
+            } else {
+                dirtyBytes = changed..<(changed + 1)
+            }
         }
     }
 
@@ -79,5 +90,28 @@ public struct BitmapManager: Sendable {
         for i in startIndex..<(startIndex + count) {
             try setAllocated(at: i, isAllocated: false)
         }
+    }
+
+    /// First free bit at or after `start`, skipping fully allocated bytes.
+    func firstFree(from start: Int, below end: Int) -> Int? {
+        var i = start
+        while i < end {
+            if i % 8 == 0, i + 8 <= end, data[data.startIndex + i / 8] == 0xFF { i += 8; continue }
+            if !isAllocated(at: i) { return i }
+            i += 1
+        }
+        return nil
+    }
+
+    /// Start of the first run of `length` free bits within `start..<end`.
+    func firstFreeRun(length: Int, from start: Int, below end: Int) -> Int? {
+        var i = start
+        while let free = firstFree(from: i, below: end) {
+            var j = free
+            while j < end && j - free < length && !isAllocated(at: j) { j += 1 }
+            if j - free == length { return free }
+            i = j
+        }
+        return nil
     }
 }

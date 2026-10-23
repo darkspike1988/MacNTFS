@@ -29,7 +29,7 @@ public final class DirectoryIndexReader: Sendable {
     }
 
     /// Reads all directory entries from an MFT record representing a directory.
-    public func readEntries(from record: MFTRecord) throws -> [DirectoryItem] {
+    public func readEntries(from record: MFTRecord, includeSystem: Bool = false) throws -> [DirectoryItem] {
         guard record.isDirectory else {
             throw NTFSError.notADirectory("Record \(record.recordNumber) is not a directory")
         }
@@ -60,7 +60,8 @@ public final class DirectoryIndexReader: Sendable {
             }
         }
 
-        return Array(uniqueItems.values).sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
+        return uniqueItems.values.filter { includeSystem || $0.mftRecordNumber >= 16 }
+            .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
     private func parseIndexRoot(
@@ -98,7 +99,12 @@ public final class DirectoryIndexReader: Sendable {
             }
 
             if let vcn = entry.subNodeVCN, let alloc = indexAlloc {
-                try parseIndexBlock(vcn: vcn, indexAlloc: alloc, items: &items, visitedVCNs: &visitedVCNs)
+                var sizeReader = BinaryReader(data: data, offset: 8)
+                let indexSize = Int(try sizeReader.readUInt32())
+                guard indexSize >= 512, indexSize <= 65536, indexSize.nonzeroBitCount == 1 else {
+                    throw NTFSError.corruptDirectoryIndex("Invalid index block size")
+                }
+                try parseIndexBlock(vcn: vcn, indexAlloc: alloc, indexRecordSize: indexSize, items: &items, visitedVCNs: &visitedVCNs)
             }
 
             if entry.isLastEntry || entry.entryLength == 0 {
@@ -111,6 +117,7 @@ public final class DirectoryIndexReader: Sendable {
     private func parseIndexBlock(
         vcn: UInt64,
         indexAlloc: NTFSAttribute,
+        indexRecordSize: Int,
         items: inout [DirectoryItem],
         visitedVCNs: inout Set<UInt64>
     ) throws {
@@ -119,9 +126,9 @@ public final class DirectoryIndexReader: Sendable {
 
         guard let runs = indexAlloc.runs else { return }
 
-        let indexRecordSize = Int(bootSector.indexRecordSizeBytes)
         let clusterSize = Int(bootSector.clusterSizeBytes)
-        let blockByteOffset = vcn * UInt64(clusterSize)
+        let vcnUnit = clusterSize <= indexRecordSize ? clusterSize : Int(bootSector.bytesPerSector)
+        let blockByteOffset = vcn * UInt64(vcnUnit)
 
         // Read index record from non-resident runs
         guard let blockData = try readFromRuns(runs: runs, offset: blockByteOffset, length: indexRecordSize) else {
@@ -171,7 +178,7 @@ public final class DirectoryIndexReader: Sendable {
             }
 
             if let subVCN = entry.subNodeVCN {
-                try parseIndexBlock(vcn: subVCN, indexAlloc: indexAlloc, items: &items, visitedVCNs: &visitedVCNs)
+                try parseIndexBlock(vcn: subVCN, indexAlloc: indexAlloc, indexRecordSize: indexRecordSize, items: &items, visitedVCNs: &visitedVCNs)
             }
 
             if entry.isLastEntry || entry.entryLength == 0 {

@@ -158,6 +158,7 @@ struct DriveDetailView: View {
                             }
                             .buttonStyle(.bordered)
                             .controlSize(.regular)
+                            .help("Das ausgewählte Volume als NTFS formatieren.")
                         }
 
                         if let mount = drive.mountPoint {
@@ -375,6 +376,7 @@ struct DriveDetailView: View {
                                 }
                                 .buttonStyle(.bordered)
                                 .controlSize(.small)
+                                .help("Das ausgewählte Volume als NTFS formatieren.")
                             }
                         }
                     }

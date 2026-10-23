@@ -73,13 +73,24 @@ struct MacNTFSCLI {
 
             case "write":
                 guard args.count >= 4 else {
-                    print("Usage: macntfs write <image-or-device> <local-file-path> [dest-file-name]")
+                    print("Usage: macntfs write <image-or-device> <local-file-path> [dest-file-name] [directory-path]")
                     exit(1)
                 }
                 let devPath = args[2]
                 let localPath = args[3]
                 let destName = args.count >= 5 ? args[4] : URL(fileURLWithPath: localPath).lastPathComponent
-                try await handleWrite(devPath: devPath, localFilePath: localPath, destFileName: destName)
+                let directoryPath = args.count >= 6 ? args[5] : "/"
+                try await handleWrite(devPath: devPath, localFilePath: localPath, destFileName: destName, directoryPath: directoryPath)
+
+            case "append":
+                guard args.count >= 4 else {
+                    print("Usage: macntfs append <image-or-device> <local-file-path> [dest-file-name] [directory-path] [chunk-KiB]")
+                    exit(1)
+                }
+                let destName = args.count >= 5 ? args[4] : URL(fileURLWithPath: args[3]).lastPathComponent
+                let chunk = args.count >= 7 ? Int(args[6]) ?? 1024 : 1024
+                try handleAppend(devPath: args[2], localFilePath: args[3], destFileName: destName,
+                                 directoryPath: args.count >= 6 ? args[5] : "/", chunkKiB: max(1, chunk))
 
             case "forensics":
                 guard args.count >= 3 else {
@@ -159,6 +170,7 @@ struct MacNTFSCLI {
           macntfs create-image <path> <sizeMB> [name]     Create and format a blank NTFS disk image
           macntfs check <image-or-device> [--repair]      Verify filesystem integrity & auto-repair
           macntfs write <image-or-device> <local-file>    Write/import a file into the NTFS volume
+          macntfs append <image-or-device> <local-file>   Stream a file in chunks, appending in place
         """)
     }
 
@@ -171,6 +183,15 @@ struct MacNTFSCLI {
         print("Device Path:         \(path)")
         print("Volume Name:         \(vol.volumeName)")
         print("Dirty Flag:          \(vol.isDirty ? "YES (Unclean unmount)" : "Clean")")
+        let journal: String
+        switch try? vol.journalState() {
+        case .empty?: journal = "Empty"
+        case .clean?: journal = "Clean"
+        case .unclean(let reason)?: journal = "UNCLEAN (\(reason))"
+        case nil: journal = "Unreadable"
+        }
+        print("Journal ($LogFile):  \(journal)")
+        print("Write Access:        \(NTFSVolumeWriter.writeSafetyIssue(vol).map { "Refused: \($0)" } ?? "Allowed")")
         print("OEM ID:              \(boot.oemID)")
         print("Bytes Per Sector:    \(boot.bytesPerSector)")
         print("Sectors Per Cluster: \(boot.sectorsPerCluster)")
@@ -324,7 +345,7 @@ struct MacNTFSCLI {
         }
     }
 
-    static func handleWrite(devPath: String, localFilePath: String, destFileName: String) async throws {
+    static func handleWrite(devPath: String, localFilePath: String, destFileName: String, directoryPath: String = "/") async throws {
         let localURL = URL(fileURLWithPath: localFilePath)
         guard FileManager.default.fileExists(atPath: localFilePath) else {
             print("Error: Local file does not exist at '\(localFilePath)'")
@@ -336,9 +357,42 @@ struct MacNTFSCLI {
 
         let device = try FileBlockDevice(path: devPath, writable: true)
         let vol = try NTFSVolume(blockDevice: device)
-        let recNum = try vol.writeFile(fileName: destFileName, data: fileData)
+        let recNum = try vol.writeFile(fileName: destFileName, data: fileData, directoryPath: directoryPath)
 
         print("Successfully wrote '\(destFileName)' (Allocated MFT Record #\(recNum)).")
+    }
+
+    /// Streams without buffering the whole file: each chunk is appended in place and the
+    /// directory entry is synchronized once at the end, as a mounted file system does on close.
+    static func handleAppend(devPath: String, localFilePath: String, destFileName: String,
+                             directoryPath: String, chunkKiB: Int) throws {
+        guard let input = FileHandle(forReadingAtPath: localFilePath) else {
+            print("Error: Local file does not exist at '\(localFilePath)'")
+            exit(1)
+        }
+        defer { try? input.close() }
+        let device = try FileBlockDevice(path: devPath, writable: true)
+        let vol = try NTFSVolume(blockDevice: device)
+        let path = (directoryPath.hasSuffix("/") ? directoryPath : directoryPath + "/") + destFileName
+        let record: UInt64
+        var offset: UInt64
+        if let existing = try? vol.lookup(path: path) {
+            guard !existing.isDirectory else { print("Error: '\(path)' is a directory"); exit(1) }
+            record = existing.record.recordNumber
+            offset = try vol.dataSize(record: existing.record).size
+        } else {
+            record = try vol.writeFile(fileName: destFileName, data: Data(), directoryPath: directoryPath)
+            offset = 0
+        }
+        let started = Date()
+        while let chunk = try input.read(upToCount: chunkKiB * 1024), !chunk.isEmpty {
+            try vol.writeData(recordNumber: record, offset: offset, data: chunk, updateDirectory: false)
+            offset += UInt64(chunk.count)
+        }
+        try vol.syncDirectoryEntry(recordNumber: record)
+        let seconds = max(Date().timeIntervalSince(started), 0.001)
+        print("Appended to '\(path)': \(offset) bytes total (MFT Record #\(record)), "
+              + String(format: "%.1f MB/s", Double(offset) / seconds / 1_000_000))
     }
 
     static func printForensicsUsage() {
