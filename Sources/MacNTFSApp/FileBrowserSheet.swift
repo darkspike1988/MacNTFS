@@ -37,11 +37,13 @@ struct FileBrowserSheet: View {
 
                 Spacer()
 
-                Button(action: importFile) {
-                    Label("Datei hinzufügen...", systemImage: "plus")
+                if ExperimentalGate.isUnlocked {
+                    Button(action: importFile) {
+                        Label("Datei hinzufügen...", systemImage: "plus")
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.ntfsBlue)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AppTheme.ntfsBlue)
 
                 Button("Schließen") {
                     dismiss()
@@ -117,7 +119,9 @@ struct FileBrowserSheet: View {
                         Text("Ordner ist leer")
                             .font(.headline)
 
-                        Text("Dateien aus dem Mac Finder hierher ziehen oder 'Datei hinzufügen' nutzen, um Daten direkt auf das NTFS-Volume zu schreiben.")
+                        Text(ExperimentalGate.isUnlocked
+                             ? "Dateien aus dem Mac Finder hierher ziehen oder 'Datei hinzufügen' nutzen (experimentell)."
+                             : "Dieser Ordner enthält keine Einträge. MacNTFS liest nur, Schreiben ist deaktiviert.")
                             .font(.caption)
                             .foregroundStyle(.secondary)
                             .multilineTextAlignment(.center)
@@ -252,6 +256,10 @@ struct FileBrowserSheet: View {
     }
 
     private func handleDroppedProviders(_ providers: [NSItemProvider]) -> Bool {
+        guard ExperimentalGate.isUnlocked else {
+            errorMessage = "Schreiben ist deaktiviert (experimentell, siehe docs/SAFETY.md)."
+            return false
+        }
         let targetDev = drive.devicePath
         let mount = drive.mountPoint
 

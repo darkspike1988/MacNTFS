@@ -3,6 +3,24 @@ import XCTest
 
 final class NTFSCoreTests: XCTestCase {
 
+    override func setUp() {
+        super.setUp()
+        setenv(ExperimentalGate.environmentKey, "1", 1)
+    }
+
+    func testExperimentalFeaturesAreLockedByDefault() throws {
+        unsetenv(ExperimentalGate.environmentKey)
+        defer { setenv(ExperimentalGate.environmentKey, "1", 1) }
+        let device = MemoryBlockDevice(data: Data(repeating: 0, count: 20 * 1024 * 1024), writable: true)
+        XCTAssertThrowsError(try NTFSFormatter.format(device: device)) { error in
+            guard case NTFSError.experimentalDisabled = error else { return XCTFail("unexpected error: \(error)") }
+        }
+        XCTAssertThrowsError(try NTFSVolumeChecker.repair(device: device)) { error in
+            guard case NTFSError.experimentalDisabled = error else { return XCTFail("unexpected error: \(error)") }
+        }
+        XCTAssertEqual(Data(repeating: 0, count: 20 * 1024 * 1024), try device.read(offset: 0, count: 20 * 1024 * 1024))
+    }
+
     // MARK: - BinaryReader Tests
 
     func testBinaryReaderPrimitives() throws {
@@ -291,7 +309,7 @@ final class NTFSCoreTests: XCTestCase {
         let totalBytes = 20 * 1024 * 1024
         let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
 
-        let targetName = "TUXERA_KILLER"
+        let targetName = "TEST_VOLUME"
         try NTFSFormatter.format(
             device: memDevice,
             options: NTFSFormatter.FormatOptions(volumeName: targetName)

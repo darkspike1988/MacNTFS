@@ -147,18 +147,19 @@ struct MacNTFSCLI {
 
     static func printUsage() {
         print("""
-        MacNTFS - High-Performance Pure Swift NTFS File System Engine & CLI
+        MacNTFS - experimental Swift NTFS inspector
         Open-Source Project • MIT License
 
-        Usage:
+        Read-only commands:
           macntfs probe <image-or-device>                 Inspect VBR, BPB, and volume metadata
           macntfs ls <image-or-device> [path]             List directory contents
           macntfs cat <image-or-device> <file-path>       Output file contents to stdout
           macntfs info <image-or-device> <record#>        Dump raw MFT record & attributes
-          macntfs format <image-or-device> [name] [clus]  Format partition/file to NTFS
-          macntfs create-image <path> <sizeMB> [name]     Create and format a blank NTFS disk image
-          macntfs check <image-or-device> [--repair]      Verify filesystem integrity & auto-repair
-          macntfs write <image-or-device> <local-file>    Write/import a file into the NTFS volume
+          macntfs forensics ...                           Experimental, see 'macntfs forensics'
+
+        Locked (can destroy data, produce NTFS that Windows may reject; see docs/SAFETY.md).
+        Only usable on throw-away images with MACNTFS_EXPERIMENTAL_UNSAFE=1:
+          macntfs format, create-image, write, check --repair
         """)
     }
 
@@ -267,6 +268,7 @@ struct MacNTFSCLI {
     }
 
     static func handleCreateImage(path: String, sizeMB: UInt64, name: String) async throws {
+        try ExperimentalGate.require("create-image")
         let totalBytes = sizeMB * 1024 * 1024
         print("Creating \(sizeMB) MB NTFS disk image at '\(path)'...")
 

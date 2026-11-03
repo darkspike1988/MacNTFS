@@ -30,6 +30,7 @@ public enum NTFSVolumeWriter {
         fileName: String,
         data: Data
     ) throws -> UInt64 {
+        try ExperimentalGate.require("write file")
         let device = volume.blockDevice
         guard device.isWritable else {
             throw BlockDeviceError.readOnlyDevice

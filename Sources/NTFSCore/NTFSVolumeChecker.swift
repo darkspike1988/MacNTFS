@@ -166,6 +166,7 @@ public enum NTFSVolumeChecker {
     /// - Returns: A list of human-readable repair actions that were completed.
     @discardableResult
     public static func repair(device: BlockDevice) throws -> [String] {
+        try ExperimentalGate.require("repair")
         guard device.isWritable else {
             throw BlockDeviceError.readOnlyDevice
         }

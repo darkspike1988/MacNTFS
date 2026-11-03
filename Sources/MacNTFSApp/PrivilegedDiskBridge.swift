@@ -6,10 +6,13 @@ import NTFSCore
 /// seamlessly without requiring the user to run Terminal commands.
 public enum PrivilegedDiskBridge {
 
-    public static let helperBinaryPath = "/Users/michaelkatschko/.local/bin/macntfs"
+    public static var helperBinaryPath: String {
+        ProcessInfo.processInfo.environment["MACNTFS_HELPER_PATH"] ?? "/usr/local/bin/macntfs"
+    }
 
     /// Formats a block device partition to NTFS with specified volume label and cluster size.
     public static func format(devicePath: String, volumeName: String, clusterSize: UInt32) throws {
+        try ExperimentalGate.require("format")
         let cleanDev = devicePath
             .replacingOccurrences(of: "/dev/r", with: "")
             .replacingOccurrences(of: "/dev/", with: "")
@@ -55,6 +58,7 @@ public enum PrivilegedDiskBridge {
 
     /// Writes/imports a file into the root of an NTFS block device using VFS mount copy, direct I/O, or the helper.
     public static func writeFile(devicePath: String, fileURL: URL, mountPoint: String? = nil) throws {
+        try ExperimentalGate.require("write file")
         // 0. If actively mounted and accessible, copy directly via standard FileManager
         if let mount = mountPoint, FileManager.default.fileExists(atPath: mount) {
             let destURL = URL(fileURLWithPath: mount).appendingPathComponent(fileURL.lastPathComponent)

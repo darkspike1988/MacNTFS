@@ -197,6 +197,10 @@ struct CreateImageSheet: View {
     }
 
     private func createImage(at url: URL) {
+        guard ExperimentalGate.isUnlocked else {
+            errorMessage = "Image-Erstellung ist deaktiviert (experimentell, siehe docs/SAFETY.md)."
+            return
+        }
         isCreating = true
         errorMessage = nil
 
