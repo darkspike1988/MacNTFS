@@ -8,6 +8,9 @@ This version is a break. MacNTFS is now a read-only library and command line too
 - Writing files, formatting and "repair". Releases v0.1.3 to v0.2.2 could produce invalid NTFS data with them. See the [advisory](docs/advisories/2026-11-03-releases-up-to-0.2.2.md).
 - The macOS app, the privileged helper, the FSKit adapter (it only probed a volume and never mounted one), the forensics helpers, and the DMG releases.
 
+### Added
+- A coverage-guided fuzzer (`NTFSFuzz`, `scripts/fuzz.sh`) and a Linux CI job that builds the engine, runs the tests and fuzzes.
+
 ### Changed
 - `macntfs` has the commands `probe`, `ls`, `cat`, `info`, `streams` and `readlink`. Errors go to standard error, `cat` streams large files, exit code 3 means "unsupported NTFS feature".
 - `BlockDevice` has no write method. `FileBlockDevice` opens read-only and treats a short read as an error.

@@ -1,3 +1,5 @@
+// The corpus comparison hashes files with CryptoKit and runs on macOS only (the Linux job skips it).
+#if canImport(CryptoKit)
 import XCTest
 import CryptoKit
 @testable import NTFSCore
@@ -260,3 +262,4 @@ final class CorpusTests: XCTestCase {
         XCTAssertTrue(failures.isEmpty, "\(failures.count) corpus failures:\n" + failures.prefix(40).joined(separator: "\n"))
     }
 }
+#endif

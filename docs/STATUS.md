@@ -27,9 +27,10 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Journal replay | none | |
 | Lookup speed | prototype | The first lookup in a directory reads its whole index into a name table (up to 100,000 entries, 8 directories kept). Later lookups in it are dictionary lookups. Larger directories are scanned for each lookup. No B-tree descent. The table is a snapshot: a volume that changes while it is read is not followed. |
 | Command line tool | checked | `CLITests` run the built binary: output, exit codes 1 to 3, standard error only for errors, warnings for a dirty volume and unreadable flags, unknown commands. Exit code 4 (mounted for writing) is not tested with a real mounted device. |
-| Detection of a device mounted for writing | prototype | `MountCheck` on the list from `getmntinfo`, unit-tested with a synthetic list. Not tried with a real mounted NTFS device. |
+| Detection of a device mounted for writing | prototype | `MountCheck` on the list from `getmntinfo`, unit-tested with a synthetic list. Tried once by hand with a real device and a read-only mount (`hdiutil attach` of an image, mounted by FSKit): `probe` reported "read-only at /Volumes/MINI". Not tried with a writable mount, so exit code 4 is untested on a real device. |
 | Windows-written images | none | |
-| Coverage-guided fuzzing | none | A seeded mutation test exists. |
+| Coverage-guided fuzzing | prototype | `scripts/fuzz.sh` runs libFuzzer with AddressSanitizer on Linux against patched copies of `mini.img` and `mini-attrlist.img` (boot sector, first MFT records, index blocks); CI runs it for two minutes per image. By hand: 12,822 runs on `mini.img` and 1,251 on `mini-attrlist.img` (300 s each) and 5,208 more, no crash. That is a short campaign, not a long one. A seeded mutation test also runs in `swift test`. |
+| Linux | checked | The library, the tool and all tests except the corpus comparison build and pass on Linux (CI job `linux`, Swift 5.10). |
 | Write, format, repair | removed | Removed in this version. See `docs/SAFETY.md` for the old releases. |
 | FSKit driver, macOS app | removed | The FSKit adapter only probed and loaded a volume and never mounted one. |
 

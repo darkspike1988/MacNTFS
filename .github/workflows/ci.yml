@@ -79,3 +79,24 @@ jobs:
           # instead of passing on what is left.
           MACNTFS_CORPUS_REQUIRE: "18"
         run: swift test --filter CorpusTests
+
+  # The engine builds and passes its tests on Linux too, and a coverage-guided fuzzer
+  # (libFuzzer with AddressSanitizer) opens damaged copies of the committed images.
+  linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    container: swift:5.10-jammy
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: swift build
+
+      - name: Run tests (without the reference corpus)
+        run: swift test --skip CorpusTests
+
+      - name: Fuzz the engine (two minutes per image)
+        run: |
+          scripts/fuzz.sh Tests/Fixtures/mini.img 120
+          scripts/fuzz.sh Tests/Fixtures/mini-attrlist.img 120

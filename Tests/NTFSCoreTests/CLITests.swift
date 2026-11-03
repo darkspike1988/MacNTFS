@@ -10,8 +10,12 @@ final class CLITests: XCTestCase {
         let stderr: String
     }
 
+    /// The built tool: next to the test bundle (macOS), or in `.build/debug` of the package (Linux).
     private var binary: URL {
-        Bundle(for: CLITests.self).bundleURL.deletingLastPathComponent().appendingPathComponent("macntfs")
+        let beside = Bundle(for: CLITests.self).bundleURL.deletingLastPathComponent().appendingPathComponent("macntfs")
+        let package = Fixtures.directory.deletingLastPathComponent().deletingLastPathComponent()
+        let built = package.appendingPathComponent(".build/debug/macntfs")
+        return FileManager.default.isExecutableFile(atPath: beside.path) ? beside : built
     }
 
     private var mini: String {

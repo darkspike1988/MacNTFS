@@ -72,6 +72,12 @@ swift test                          # unit tests, hostile-input tests, mutation 
 scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
 ```
 
+The engine builds and passes its tests on Linux as well. A coverage-guided fuzzer (libFuzzer with AddressSanitizer) opens patched copies of an image; it needs a Linux Swift toolchain, on a Mac for example in a container:
+
+```bash
+docker run --rm -v "$PWD":/src:ro -w /src swift:5.10-jammy scripts/fuzz.sh Tests/Fixtures/mini.img 120
+```
+
 `swift test` also runs the command line tool (exit codes, channels, warnings) against the committed image. The strongest check compares the engine with reference images. `scripts/corpus/build.sh` writes 18 NTFS images in a Linux container, 16 with ntfs-3g and two with the Linux kernel driver ntfs3, and two more images are committed in `Tests/Fixtures` (512 and 4096-byte sectors, clusters from 512 bytes to 64 KiB, fragmented, sparse, compressed, links, a directory with 5000 files, files with attribute lists, compressed files, deleted files and more) together with manifests of paths, sizes and SHA-256 hashes computed from the source content. `scripts/corpus/verify.sh` cross-checks each manifest with ntfs-3g and The Sleuth Kit. `swift test` then requires that every file reads back with the same hash or is refused with the expected error. Wrong bytes without an error fail the test. Details: [Tests/Corpus/README.md](Tests/Corpus/README.md). Building the corpus needs Docker (on macOS for example `colima start`).
 
 ## Where this is going

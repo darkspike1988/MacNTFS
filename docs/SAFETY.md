@@ -13,7 +13,7 @@ MacNTFS reads NTFS volumes. This page says what protects your data and what does
 - Reading a device that another driver has mounted for writing can return inconsistent data. The tool refuses such a device (exit code 4) unless you pass `--allow-mounted`. Reading an image is safer.
 - A volume that Windows did not shut down cleanly (dirty flag, hibernation, Fast Startup) can show outdated data. The tool warns about both, but it does not replay the journal and reads the volume as it is.
 - Reading from a device needs root. The tool opens it read-only, but run it only on devices you name explicitly.
-- Hostile images: the parser checks sizes and offsets and is exercised with damaged images, but it has not been fuzzed with a coverage-guided fuzzer.
+- Hostile images: the parser checks sizes and offsets and is exercised with damaged images, but it has been fuzzed with a coverage-guided fuzzer only briefly (minutes per image, no finding). That is no proof. Treat images from untrusted sources with care.
 
 ## If you wrote to a volume with MacNTFS v0.1.3 to v0.2.2
 
