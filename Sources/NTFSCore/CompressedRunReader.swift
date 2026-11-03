@@ -13,6 +13,8 @@ enum CompressedRunReader {
     private static let maxUnitBytes: UInt64 = 1 << 20
 
     /// Reads `length` bytes of the uncompressed content starting at `offset`.
+    /// The run list must map the whole range, as `RunReader` requires. Only the part of the last unit
+    /// after the requested range may lie outside the runs; it counts as holes.
     static func read(
         runs: [DataRun],
         unitShift: Int,
@@ -31,20 +33,15 @@ enum CompressedRunReader {
             throw NTFSError.corruptRunlist("Compression units of \(unitClusters) clusters of \(clusterSize) bytes")
         }
 
-        // Where each run starts, in clusters, for a search by VCN.
-        var starts = [UInt64]()
-        starts.reserveCapacity(runs.count)
-        var totalClusters: UInt64 = 0
-        for run in runs {
-            starts.append(totalClusters)
-            let (sum, sumOverflow) = totalClusters.addingReportingOverflow(run.clusterCount)
-            guard !sumOverflow else { throw NTFSError.corruptRunlist("Run list size overflows") }
-            totalClusters = sum
-        }
-
+        let map = try RunMap(runs: runs)
         let (end, endOverflow) = offset.addingReportingOverflow(UInt64(length))
-        guard !endOverflow else {
+        let (mapped, mappedOverflow) = map.totalClusters.multipliedReportingOverflow(by: clusterSize)
+        guard !endOverflow, !mappedOverflow else {
             throw NTFSError.outOfBounds(offset: offset, requested: length, available: 0)
+        }
+        // Content that the run list does not cover is not a hole, it is missing.
+        guard end <= mapped else {
+            throw NTFSError.outOfBounds(offset: offset, requested: length, available: Int(clamping: mapped))
         }
 
         var result = Data()
@@ -52,18 +49,17 @@ enum CompressedRunReader {
         var unit = offset / unitBytes
         let lastUnit = (end - 1) / unitBytes
         while unit <= lastUnit {
-            let unitStart = unit * unitBytes
+            let unitStart = unit * unitBytes  // not above `end`, so it does not overflow
             let content = try decodeUnit(
                 unit: unit,
                 unitClusters: unitClusters,
                 unitBytes: unitBytes,
-                runs: runs,
-                starts: starts,
+                map: map,
                 clusterSize: clusterSize,
                 device: device
             )
             let from = Int(max(offset, unitStart) - unitStart)
-            let to = Int(min(end, unitStart + unitBytes) - unitStart)
+            let to = Int(min(end - unitStart, unitBytes))
             result.append(content.subdata(in: from..<to))
             unit += 1
         }
@@ -74,8 +70,7 @@ enum CompressedRunReader {
         unit: UInt64,
         unitClusters: UInt64,
         unitBytes: UInt64,
-        runs: [DataRun],
-        starts: [UInt64],
+        map: RunMap,
         clusterSize: UInt64,
         device: BlockDevice
     ) throws -> Data {
@@ -86,14 +81,10 @@ enum CompressedRunReader {
         var allocated: UInt64 = 0
         var sawHole = false
         var vcn = unitVCN
-        var index = firstRun(containing: unitVCN, starts: starts)
-        while vcn < unitEnd, index < runs.count {
-            let run = runs[index]
-            let runEnd = starts[index] + run.clusterCount
-            if vcn >= runEnd {
-                index += 1
-                continue
-            }
+        var index = map.runIndex(containing: unitVCN)
+        while vcn < unitEnd, index < map.runs.count {
+            let run = map.runs[index]
+            let runEnd = map.starts[index] + run.clusterCount
             let taken = min(runEnd, unitEnd) - vcn
             if run.isSparse {
                 sawHole = true
@@ -104,19 +95,20 @@ enum CompressedRunReader {
                 allocated += taken
             }
             vcn += taken
+            index += 1
         }
-        // Clusters after the last run count as holes.
+        // Clusters after the last run count as holes. They matter only in the last unit.
 
         let unitStartByte = unit * unitBytes
         if allocated == 0 {
             return Data(count: Int(unitBytes))
         }
         if allocated == unitClusters {
-            return try RunReader.read(runs: runs, virtualOffset: unitStartByte, length: Int(unitBytes), clusterSize: clusterSize, device: device)
+            return try RunReader.read(map: map, virtualOffset: unitStartByte, length: Int(unitBytes), clusterSize: clusterSize, device: device)
         }
 
         let stored = try RunReader.read(
-            runs: runs,
+            map: map,
             virtualOffset: unitStartByte,
             length: Int(allocated * clusterSize),
             clusterSize: clusterSize,
@@ -127,16 +119,5 @@ enum CompressedRunReader {
             content.append(Data(count: Int(unitBytes) - content.count))
         }
         return content
-    }
-
-    /// Index of the run that contains the cluster `vcn`, or `starts.count` if no run does.
-    private static func firstRun(containing vcn: UInt64, starts: [UInt64]) -> Int {
-        var low = 0
-        var high = starts.count
-        while low < high {
-            let middle = (low + high) / 2
-            if starts[middle] <= vcn { low = middle + 1 } else { high = middle }
-        }
-        return max(0, low - 1) < starts.count ? max(0, low - 1) : starts.count
     }
 }

@@ -42,6 +42,8 @@ scripts/corpus/verify.sh links     # only some images
 
 ## Reproducibility, and its limit
 
+**Labels.** Labels such as `unsupported:attribute-list` and `unsupported:compression` come from the time when the engine could not read these cases. The Swift test now requires such entries to read back correctly. Only `unsupported:reparse` and `unsupported:encryption` may still be refused.
+
 File **content and manifests are stable**: every file is derived from
 `sha256("macntfs-corpus:1:<image>:<key>")`, so the same hashes come out on every
 build and the manifests are byte-identical between builds. The **images

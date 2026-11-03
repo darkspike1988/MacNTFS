@@ -119,6 +119,11 @@ enum AttributeMerger {
             runs.append(contentsOf: extentRuns)
         }
 
+        // The extents must cover everything up to the end of the last one, or a part is missing.
+        guard nextVCN == lastEndVCN &+ 1 else {
+            throw NTFSError.corruptAttributeList("The extents of \(first.type) cover \(nextVCN) clusters, but the last one ends at VCN \(lastEndVCN)")
+        }
+
         return NTFSAttribute(
             type: first.type,
             recordLength: first.recordLength,

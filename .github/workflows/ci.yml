@@ -6,10 +6,40 @@ on:
   pull_request:
 
 jobs:
-  # The reference images are written by ntfs-3g in a Linux container and checked by ntfs-3g
-  # and The Sleuth Kit before the Swift tests compare the engine with them.
+  # Unit tests, the command line tests and the read-only checks need no reference images.
+  unit:
+    runs-on: macos-latest
+    timeout-minutes: 30
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build
+
+      - name: Run tests (without the reference corpus)
+        run: swift test --skip CorpusTests
+
+      - name: Read-only guarantee of the command line tool
+        run: scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
+
+      - name: The release binary has no call that can change files
+        run: |
+          swift build -c release
+          banned='_(pwrite|pwritev|write|writev|ftruncate|truncate|unlink|unlinkat|rename|renameat|mkdir|rmdir|link|symlink|chmod|fchmod|chown|fchown|utimes|futimes|fsync|fcntl|mmap)$'
+          if nm -u .build/release/macntfs | grep -E "$banned"; then
+            echo "The release binary imports a call that can change files" >&2
+            exit 1
+          fi
+
+  # The reference images are written by ntfs-3g and by the Linux kernel driver ntfs3 in a Linux container
+  # and checked by ntfs-3g and The Sleuth Kit before the Swift tests compare the engine with them.
   corpus:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -20,16 +50,17 @@ jobs:
       - name: Cross-check the manifests with two other readers
         run: scripts/corpus/verify.sh
 
-      - name: Keep the images for the test job
+      - name: Keep the images for the comparison job
         uses: actions/upload-artifact@v4
         with:
           name: corpus
           path: Tests/Corpus/out
           retention-days: 7
 
-  test:
+  compare:
     needs: corpus
     runs-on: macos-latest
+    timeout-minutes: 30
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -40,22 +71,9 @@ jobs:
           name: corpus
           path: Tests/Corpus/out
 
-      - name: Show Swift version
-        run: swift --version
-
-      - name: Build
-        run: swift build
-
-      - name: Run tests
-        run: swift test
-
-      - name: Read-only guarantee of the command line tool
-        run: scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
-
-      - name: The release binary has no write calls
-        run: |
-          swift build -c release
-          if nm -u .build/release/macntfs | grep -E '_(pwrite|write|ftruncate|unlink|rename)$'; then
-            echo "The release binary imports a call that can change files" >&2
-            exit 1
-          fi
+      - name: Compare the engine with every image
+        env:
+          # 18 built images (two of them by the kernel driver) and 2 committed fixtures.
+          # With fewer, the test fails instead of passing on what is left.
+          MACNTFS_CORPUS_REQUIRE: "20"
+        run: swift test --filter CorpusTests

@@ -21,6 +21,11 @@ let package = Package(
             dependencies: ["NTFSCore"],
             path: "Sources/MacNTFSCli"
         ),
+        .executableTarget(
+            name: "NTFSFuzz",
+            dependencies: ["NTFSCore"],
+            path: "Sources/NTFSFuzz"
+        ),
         .testTarget(
             name: "NTFSCoreTests",
             dependencies: ["NTFSCore"],

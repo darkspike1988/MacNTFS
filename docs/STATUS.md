@@ -7,15 +7,16 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Feature | Maturity | Evidence and limits |
 |---|---|---|
 | Boot sector and BPB | checked | Corpus: 512 and 4096-byte sectors, 512-byte to 64 KiB clusters. Hostile values are rejected (`ParserHardeningTests`). |
-| MFT records and fixups | checked | Corpus. Fixups use 512-byte blocks on every volume. Mutation test with 3000 damaged images does not crash. |
+| MFT records and fixups | checked | Corpus. Fixups use 512-byte blocks on every volume. Records marked `BAAD`, with a wrong number of update sequence entries or the wrong record number are rejected (`RecordChecksTests`, patched bytes of a real image). Corpus `basic-4kn` has 4096-byte sectors and 4096-byte MFT records (8 update sequence entries). Mutation test with 3000 damaged images does not crash. |
+| Stale directory entries | checked | An index entry that points to a free record, an extension record or a record with another sequence number is not followed (`RecordChecksTests`). |
 | Data runs | checked | Corpus: fragmented and sparse files. Overflow is rejected. |
 | Directory listing and lookup | checked | Corpus: nested directories, directory with 5000 files, Unicode names including NFC and NFD variants, case-insensitive lookup with the volume's `$UpCase` table (`LookupTests`), deleted entries not listed, hard links listed once per name. |
-| File read (`cat`) | checked | Corpus: every file in 20 images reads back with the manifest hash. Reads beyond the initialized size return zeros. |
+| File read (`cat`) | checked | Corpus: every entry that a manifest labels `ok`, and every entry with an older `unsupported:attribute-list` or `unsupported:compression` label, must read back with the manifest hash in all 20 images, or the test fails. Only entries labelled `unsupported:reparse` may be refused. Reads beyond the initialized size return zeros. |
 | Hard links | checked | Corpus `links`. |
 | Sparse files | checked | Corpus `sparse`. |
-| Interix symlinks (written by ntfs-3g as files) | checked | Corpus `links`. Readable as files and recognized by `readlink`. |
-| Attribute list (`$ATTRIBUTE_LIST`) | checked | Corpus `attrlist`, `manydirs` and `mini-attrlist`: extension records are read and split attributes (hard-link names, index blocks, data runs) are merged. Damaged lists are reported as corrupt. A volume whose `$MFT` list points outside the known part of the MFT is refused. |
-| Compressed files (LZNT1) | checked | Corpus `compressed`: text, random, all-zero and odd-sized files up to 1 MiB. Hand-computed LZNT1 vectors in `LZNT1Tests`. Damaged data is reported as corrupt. |
+| Interix symlinks (written by ntfs-3g as files) | checked | Corpus `links`. Readable as files, `cat` returns the raw content, and `readlink` recognizes them (only for system files). |
+| Attribute list (`$ATTRIBUTE_LIST`) | checked | Corpus `attrlist`, `manydirs`, `k-many` (written by the kernel driver) and `mini-attrlist` (the test fails if the engine refuses an entry that needs a list): extension records are read and split attributes (hard-link names, index blocks, data runs) are merged. Damaged lists are reported as corrupt (`ExtensionRecordTests`: wrong base reference, record not in use, entry pointing to an ordinary record, extents with a gap or missing end). A volume whose `$MFT` list points outside the known part of the MFT is refused. |
+| Compressed files (LZNT1) | checked | Corpus `compressed`: text, random, all-zero and odd-sized files up to 1 MiB. Hand-computed LZNT1 vectors in `LZNT1Tests`, the three unit layouts and the error cases in `CompressedReaderTests`. Damaged data and content that the run list does not cover are reported as errors. Other compression formats are refused. |
 | Encrypted files | refused | Unit test. No corpus image. |
 | Links: where they point (`readlink`) | checked | Corpus `links`: Windows file symlink, directory symlink and junction (substitute name, print name, flags), and Interix links written by ntfs-3g. WSL links are parsed but have no corpus image. |
 | Link content and reparse points in general | refused | `cat` of a link and listing a junction stop with exit code 3. Links are never followed. |
@@ -24,6 +25,8 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Hibernation and Fast Startup detection | checked | Corpus `hibernated` and `hiberfil-woken` (a `hiberfil.sys` with and without the `hibr` mark). Reported by `probe` and as a warning. |
 | Dirty flag | prototype | Corpus `dirty`. The flag in that image was set by hand, because neither ntfs-3g nor ntfs3 leaves it set. |
 | Journal replay | none | |
+| Lookup speed | known limit | Names are found by a linear scan of the directory index (about 12 ms in a directory with 5000 entries), not by a B-tree descent. A client that walks a huge tree by path pays that for every step. |
+| Command line tool | checked | `CLITests` run the built binary: output, exit codes 1 to 3, standard error only for errors, warnings for a dirty volume and unreadable flags, unknown commands. Exit code 4 (mounted for writing) is not tested with a real mounted device. |
 | Detection of a device mounted for writing | prototype | `MountCheck` on the list from `getmntinfo`, unit-tested with a synthetic list. Not tried with a real mounted NTFS device. |
 | Windows-written images | none | |
 | Coverage-guided fuzzing | none | A seeded mutation test exists. |

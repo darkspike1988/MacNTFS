@@ -33,6 +33,8 @@ public struct IndexEntry: Sendable {
 /// is much cheaper than building a `FileNameAttribute` (with dates and a string) for every entry.
 struct RawIndexEntry {
     let mftRecordNumber: UInt64
+    /// Sequence number of the record at the time the entry was made. A different number means the entry is stale.
+    let sequenceNumber: UInt16
     let entryLength: Int
     let flags: IndexEntryFlags
     /// Offset of the key (a `$FILE_NAME` structure) inside the data the entry was read from.
@@ -115,6 +117,7 @@ public enum IndexEntryParser {
 
         return RawIndexEntry(
             mftRecordNumber: rawRef & 0x0000_FFFF_FFFF_FFFF,
+            sequenceNumber: UInt16(truncatingIfNeeded: rawRef >> 48),
             entryLength: entryLength,
             flags: flags,
             keyOffset: offset + 16,

@@ -95,11 +95,17 @@ struct MacNTFSCLI {
         let volume = try NTFSVolume(blockDevice: try FileBlockDevice(path: path))
 
         if !quiet {
-            if volume.isDirty {
+            if !volume.volumeFlagsKnown {
+                printError("warning: the volume flags could not be read, so it is not known whether the volume was shut down cleanly.")
+            } else if volume.isDirty {
                 printError("warning: the volume was not shut down cleanly (dirty flag). What it shows can be outdated.")
             }
-            if (try? volume.hibernationState()) == .hibernated {
-                printError("warning: Windows hibernated or used Fast Startup. The volume on disk is not up to date; shut Windows down completely first.")
+            do {
+                if try volume.hibernationState() == .hibernated {
+                    printError("warning: Windows hibernated or used Fast Startup. The volume on disk is not up to date; shut Windows down completely first.")
+                }
+            } catch {
+                printError("warning: could not check whether Windows hibernated (\(error.localizedDescription)).")
             }
         }
         return volume
@@ -111,7 +117,7 @@ struct MacNTFSCLI {
 
         print("Device:              \(path)")
         print("Volume name:         \(vol.volumeName)")
-        print("Dirty flag:          \(vol.isDirty ? "SET (not cleanly unmounted, contents can be outdated)" : "clear")")
+        print("Dirty flag:          \(!vol.volumeFlagsKnown ? "UNKNOWN (the volume flags could not be read)" : vol.isDirty ? "SET (not cleanly unmounted, contents can be outdated)" : "clear")")
         switch (try? vol.hibernationState()) {
         case .some(.hibernated):
             print("Hibernation:         HIBERNATED (Windows saved its state; Fast Startup or hibernate)")

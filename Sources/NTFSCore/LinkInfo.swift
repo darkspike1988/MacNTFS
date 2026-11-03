@@ -112,13 +112,12 @@ extension NTFSVolume {
 
     func linkInfo(of record: MFTRecord) throws -> LinkInfo? {
         if let reparse = record.attribute(ofType: .reparsePoint) {
-            guard let value = reparse.residentData else {
-                return LinkInfo(kind: .other(tag: 0), substituteName: "", printName: "", flags: 0)
-            }
+            let value = try NTFSVolume.attributeValue(reparse, bootSector: bootSector, device: blockDevice)
             return try LinkParser.parseReparsePoint(value)
         }
-        // Interix links are small files with no reparse point.
+        // Interix links are small system files with no reparse point.
         guard !record.isDirectory,
+              (record.standardInformation?.dosFlags ?? 0) & 0x4 != 0,
               let data = record.defaultDataAttribute,
               data.realDataSize > 8, data.realDataSize <= UInt64(LinkParser.maxInterixSize) else { return nil }
         let content = try readData(record: record)

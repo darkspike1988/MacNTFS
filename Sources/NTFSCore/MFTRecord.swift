@@ -34,6 +34,12 @@ public struct MFTRecord: Sendable {
         var dataCopy = rawData
         let headerProbe = try MFTRecordHeader(data: dataCopy)
 
+        // One update sequence entry per 512-byte block, plus the sequence number itself.
+        let expectedEntries = dataCopy.count / FixupApplier.blockSize + 1
+        guard Int(headerProbe.updateSequenceSize) == expectedEntries else {
+            throw NTFSError.corruptRecord("Record \(recordNumber) has \(headerProbe.updateSequenceSize) update sequence entries, expected \(expectedEntries)")
+        }
+
         // Apply Fixup Array to restore block ends and verify integrity
         try FixupApplier.applyFixup(
             data: &dataCopy,

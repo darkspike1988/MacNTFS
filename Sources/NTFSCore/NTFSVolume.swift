@@ -5,6 +5,8 @@ public final class NTFSVolume: Sendable {
     public let bootSector: BootSector
     public let volumeName: String
     public let isDirty: Bool
+    /// False if `$Volume` could not be read. Then `isDirty` is not known, and false only because nothing was found.
+    public let volumeFlagsKnown: Bool
     public let mftRecordRuns: [DataRun]
     private let directoryIndexReader: DirectoryIndexReader
     /// The volume's case folding table, or nil if `$UpCase` could not be read.
@@ -32,7 +34,7 @@ public final class NTFSVolume: Sendable {
                 mft0 = try NTFSVolume.resolveAttributeList(base: mft0, bootSector: boot, device: blockDevice) { number in
                     try NTFSVolume.readRecord(recordNumber: number, runs: firstRuns, bootSector: boot, device: blockDevice)
                 }
-            } catch {
+            } catch NTFSError.outOfBounds {
                 // The extension records lie outside the part of the MFT that is known: not readable.
                 throw NTFSError.unsupported(.attributeList)
             }
@@ -53,6 +55,7 @@ public final class NTFSVolume: Sendable {
         // 4. Read $Volume (Record 3) to extract Volume Name and Flags
         var detectedName = "NTFS"
         var dirty = false
+        var flagsKnown = false
         if let volRecord = try? NTFSVolume.readRecord(
             recordNumber: 3,
             runs: runs,
@@ -75,11 +78,13 @@ public final class NTFSVolume: Sendable {
                 // Bytes 10-11 are Flags (UInt16 LE: 0x0001 = Dirty flag)
                 let flags = UInt16(resData[resData.startIndex + 10]) | (UInt16(resData[resData.startIndex + 11]) << 8)
                 dirty = (flags & 0x0001) != 0
+                flagsKnown = true
             }
         }
 
         self.volumeName = detectedName
         self.isDirty = dirty
+        self.volumeFlagsKnown = flagsKnown
     }
 
     /// Reads any arbitrary MFT record by its record number.
@@ -141,8 +146,10 @@ public final class NTFSVolume: Sendable {
         var attributes = base.attributes
         for number in wanted.keys.sorted() {
             let extensionRecord = try loadRecord(number)
-            guard extensionRecord.isInUse,
-                  extensionRecord.header.baseRecordReference & 0x0000_FFFF_FFFF_FFFF == base.recordNumber else {
+            // The reference holds the record number and its sequence number. Comparing both also keeps
+            // an ordinary record (reference 0) from passing as an extension of the $MFT.
+            let expectedReference = (UInt64(base.header.sequenceNumber) << 48) | base.recordNumber
+            guard extensionRecord.isInUse, extensionRecord.header.baseRecordReference == expectedReference else {
                 throw NTFSError.corruptAttributeList("Record \(number) is not an extension record of record \(base.recordNumber)")
             }
             for entry in wanted[number] ?? [] {
@@ -158,7 +165,10 @@ public final class NTFSVolume: Sendable {
     }
 
     /// The value of a small attribute such as an attribute list, whether it is resident or not.
-    private static func attributeValue(_ attribute: NTFSAttribute, bootSector: BootSector, device: BlockDevice) throws -> Data {
+    static func attributeValue(_ attribute: NTFSAttribute, bootSector: BootSector, device: BlockDevice) throws -> Data {
+        guard !attribute.flags.contains(.compressed), !attribute.flags.contains(.encrypted) else {
+            throw NTFSError.unsupported(.compressionFormat)
+        }
         switch attribute.payload {
         case .resident(let data):
             return data
@@ -196,7 +206,12 @@ public final class NTFSVolume: Sendable {
             device: device
         )
 
-        return try MFTRecord(recordNumber: recordNumber, rawData: rawBytes)
+        let record = try MFTRecord(recordNumber: recordNumber, rawData: rawBytes)
+        // NTFS 3.1 records say which record they are. A different number means the MFT run list points to the wrong place.
+        if record.header.updateSequenceOffset >= 0x30, UInt64(record.header.recordNumber) != recordNumber {
+            throw NTFSError.corruptRecord("The record at position \(recordNumber) says it is record \(record.header.recordNumber)")
+        }
+        return record
     }
 
     /// Largest range `readData` returns in one call. Read bigger files in chunks with `offset` and `length`.
@@ -227,6 +242,10 @@ public final class NTFSVolume: Sendable {
         }
         if dataAttr.flags.contains(.encrypted) {
             throw NTFSError.unsupported(.encryption)
+        }
+        // Bit 0 is LZNT1. Other bits of the compression mask (0x00FF) name formats this library does not know.
+        if dataAttr.flags.rawValue & 0x00FE != 0 {
+            throw NTFSError.unsupported(.compressionFormat)
         }
 
         switch dataAttr.payload {
@@ -321,6 +340,14 @@ public final class NTFSVolume: Sendable {
             }
 
             currentRecord = try readMFTRecord(number: match.mftRecordNumber)
+
+            // An index entry can be left behind when its file was deleted and the record reused.
+            guard currentRecord.isInUse, currentRecord.header.baseRecordReference == 0 else {
+                throw NTFSError.corruptDirectoryIndex("'\(component)' points to record \(match.mftRecordNumber), which is not a file record in use")
+            }
+            if match.sequenceNumber != 0, currentRecord.header.sequenceNumber != match.sequenceNumber {
+                throw NTFSError.corruptDirectoryIndex("'\(component)' points to record \(match.mftRecordNumber) with an old sequence number")
+            }
         }
 
         return (currentRecord, currentRecord.isDirectory)

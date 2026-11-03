@@ -35,33 +35,50 @@ enum Fixtures {
         fatalError("MFT record \(number) is not mapped")
     }
 
-    /// Returns a volume over a copy of the mini image after `patch` changed the raw MFT record of `path`.
+    static func miniAttributeListImage() throws -> Data {
+        try Data(contentsOf: directory.appendingPathComponent("mini-attrlist.img"))
+    }
+
+    /// The offset inside the record of the first attribute of `type`, or nil.
+    static func attributeOffset(type wanted: UInt32, in image: Data, recordOffset: Int) -> Int? {
+        var offset = Int(image[recordOffset + 0x14]) | (Int(image[recordOffset + 0x15]) << 8)
+        while offset + 8 <= 1024 {
+            let at = recordOffset + offset
+            let type = UInt32(image[at]) | (UInt32(image[at + 1]) << 8) | (UInt32(image[at + 2]) << 16) | (UInt32(image[at + 3]) << 24)
+            if type == 0xFFFF_FFFF { return nil }
+            let length = Int(image[at + 4]) | (Int(image[at + 5]) << 8)
+            if type == wanted && image[at + 9] == 0 /* unnamed */ { return offset }
+            guard length > 0 else { return nil }
+            offset += length
+        }
+        return nil
+    }
+
+    /// A copy of an image after `patch` changed the raw MFT record of `path`.
     /// `patch` gets the image, the byte offset of the record, the offset of its first attribute and the
-    /// offset of its unnamed $DATA attribute (or -1). Patch only attribute headers, never the last two
-    /// bytes of a 512-byte block, because those hold the update sequence number.
+    /// offset of its unnamed $DATA attribute (or -1). Patch only headers, never the last two bytes of a
+    /// 512-byte block, because those hold the update sequence number.
+    static func patchedImage(
+        _ original: Data,
+        path: String,
+        patch: (inout Data, _ recordOffset: Int, _ firstAttribute: Int, _ dataAttribute: Int) -> Void
+    ) throws -> Data {
+        var image = original
+        let volume = try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
+        let record = try volume.lookup(path: path).record
+        let recordOffset = diskOffset(ofRecord: record.recordNumber, in: volume)
+        let first = Int(image[recordOffset + 0x14]) | (Int(image[recordOffset + 0x15]) << 8)
+        let dataAttribute = attributeOffset(type: 0x80, in: image, recordOffset: recordOffset) ?? -1
+        patch(&image, recordOffset, first, dataAttribute)
+        return image
+    }
+
+    /// Returns a volume over a copy of the mini image after `patch` changed the raw MFT record of `path`.
     static func patchedVolume(
         path: String,
         patch: (inout Data, _ recordOffset: Int, _ firstAttribute: Int, _ dataAttribute: Int) -> Void
     ) throws -> NTFSVolume {
-        var image = try miniImage()
-        let original = try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
-        let record = try original.lookup(path: path).record
-        let recordOffset = diskOffset(ofRecord: record.recordNumber, in: original)
-
-        let first = Int(image[recordOffset + 0x14]) | (Int(image[recordOffset + 0x15]) << 8)
-        var dataAttribute = -1
-        var offset = first
-        while offset + 8 <= 1024 {
-            let at = recordOffset + offset
-            let type = UInt32(image[at]) | (UInt32(image[at + 1]) << 8) | (UInt32(image[at + 2]) << 16) | (UInt32(image[at + 3]) << 24)
-            if type == 0xFFFF_FFFF { break }
-            let length = Int(image[at + 4]) | (Int(image[at + 5]) << 8)
-            if type == 0x80 && image[at + 9] == 0 /* unnamed */ { dataAttribute = offset; break }
-            guard length > 0 else { break }
-            offset += length
-        }
-
-        patch(&image, recordOffset, first, dataAttribute)
+        let image = try patchedImage(try miniImage(), path: path, patch: patch)
         return try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
     }
 }

@@ -20,6 +20,11 @@ enum LZNT1 {
             guard header & 0x7000 == 0x3000 else {
                 throw NTFSError.corruptCompressedData("Chunk header 0x\(String(header, radix: 16)) has a wrong signature")
             }
+            // Every chunk expands to 4096 bytes, except the last one of the stream. A shorter chunk
+            // before another one is padded with zeros, as ntfs-3g does.
+            if output.count % maxChunkOutput != 0 {
+                output.append(contentsOf: [UInt8](repeating: 0, count: maxChunkOutput - output.count % maxChunkOutput))
+            }
             let chunkSize = (header & 0x0FFF) + 1
             let start = position + 2
             let end = start + chunkSize

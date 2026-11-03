@@ -6,6 +6,8 @@ public enum UnsupportedFeature: String, Sendable, Equatable {
     case encryption
     case attributeList = "attribute-list"
     case reparse
+    /// A compression format other than LZNT1.
+    case compressionFormat = "compression-format"
 }
 
 public enum NTFSError: Error, LocalizedError, Sendable {
@@ -19,6 +21,7 @@ public enum NTFSError: Error, LocalizedError, Sendable {
     case corruptDirectoryIndex(String)
     case corruptAttributeList(String)
     case corruptCompressedData(String)
+    case corruptRecord(String)
     case pathNotFound(String)
     case notADirectory(String)
     case isADirectory(String)
@@ -53,6 +56,8 @@ public enum NTFSError: Error, LocalizedError, Sendable {
             return "Corrupt attribute list: \(msg)"
         case .corruptCompressedData(let msg):
             return "Corrupt compressed data: \(msg)"
+        case .corruptRecord(let msg):
+            return "Corrupt MFT record: \(msg)"
         case .pathNotFound(let path):
             return "Path not found: '\(path)'"
         case .notADirectory(let path):

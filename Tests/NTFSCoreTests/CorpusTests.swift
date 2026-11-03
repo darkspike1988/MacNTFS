@@ -41,6 +41,11 @@ final class CorpusTests: XCTestCase {
     }
 
     /// The built corpus (not committed) and the committed fixtures.
+    /// Features the engine refuses on purpose. A manifest label `unsupported:<x>` is only accepted as a
+    /// refusal for these. For any other label (attribute lists and compression were labelled before the
+    /// engine could read them) the entry must read back correctly, or the test fails.
+    private static let refusedOnPurpose: Set<String> = ["reparse", "encryption"]
+
     private static var manifestDirectories: [URL] {
         let tests = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
         // MACNTFS_CORPUS_DIR points the test at another directory with built images.
@@ -73,6 +78,11 @@ final class CorpusTests: XCTestCase {
                 return only.split(separator: ",").contains { url.lastPathComponent == "\($0).manifest.json" }
             }
             .sorted { $0.lastPathComponent < $1.lastPathComponent }
+        // CI sets MACNTFS_CORPUS_REQUIRE to the number of images it built. Then missing images are a failure,
+        // not a skip, and a lost kernel-written image does not pass unnoticed.
+        if let required = getenv("MACNTFS_CORPUS_REQUIRE").flatMap({ Int(String(cString: $0)) }) {
+            XCTAssertGreaterThanOrEqual(manifestURLs.count, required, "expected at least \(required) corpus manifests")
+        }
         try XCTSkipIf(manifestURLs.isEmpty, "No corpus images. Build them with scripts/corpus/build.sh")
 
         var failures: [String] = []
@@ -102,7 +112,13 @@ final class CorpusTests: XCTestCase {
                 failures.append("\(manifest.image): dirty flag is \(volume.isDirty), manifest says \(dirty)")
             }
             if let hibernated = manifest.hibernated {
-                let state = try? volume.hibernationState()
+                let state: HibernationState?
+                do {
+                    state = try volume.hibernationState()
+                } catch {
+                    state = nil
+                    failures.append("\(manifest.image): hibernationState() threw \(error)")
+                }
                 if (state == .hibernated) != hibernated {
                     bad += 1
                     failures.append("\(manifest.image): hibernation state is \(String(describing: state)), manifest says hibernated=\(hibernated)")
@@ -123,10 +139,10 @@ final class CorpusTests: XCTestCase {
                             ok += 1
                         }
                     } catch NTFSError.unsupported(let feature) {
-                        if expect == "unsupported:\(feature.rawValue)" {
+                        if Self.refusedOnPurpose.contains(feature.rawValue) && expect == "unsupported:\(feature.rawValue)" {
                             refused += 1
                         } else {
-                            fail(entry, "refused as \(feature.rawValue), manifest expects \(expect)")
+                            fail(entry, "refused as \(feature.rawValue), but the engine must read this (manifest label: \(expect))")
                         }
                     } catch {
                         fail(entry, "read failed: \(error) (expected \(expect))")
@@ -149,11 +165,10 @@ final class CorpusTests: XCTestCase {
                             fail(entry, "listing differs: missing \(Array(missing)) extra \(Array(extra)) (\(names.count) listed, \(expected.count) expected)")
                         }
                     } catch NTFSError.unsupported(let feature) {
-                        // Directories that use an attribute list, or are links, are refused by design.
-                        if entry.expect == "unsupported:\(feature.rawValue)" {
+                        if Self.refusedOnPurpose.contains(feature.rawValue) && entry.expect == "unsupported:\(feature.rawValue)" {
                             refused += 1
                         } else {
-                            fail(entry, "listing refused as \(feature.rawValue), manifest expects \(entry.expect ?? "ok")")
+                            fail(entry, "listing refused as \(feature.rawValue), but the engine must read this (manifest label: \(entry.expect ?? "ok"))")
                         }
                     } catch {
                         fail(entry, "listing failed: \(error)")
@@ -162,14 +177,33 @@ final class CorpusTests: XCTestCase {
                 case "deleted":
                     // A name that was deleted and created again resolves to the new file.
                     let recreated = manifest.entries.contains { $0.path == entry.path && $0.type != "deleted" }
-                    if recreated || (try? volume.lookup(path: entry.path)) == nil {
+                    if recreated {
                         ok += 1
                     } else {
-                        fail(entry, "deleted file still resolves")
+                        do {
+                            _ = try volume.lookup(path: entry.path)
+                            fail(entry, "deleted file still resolves")
+                        } catch NTFSError.pathNotFound {
+                            ok += 1
+                        } catch {
+                            fail(entry, "lookup of a deleted file failed with \(error) instead of 'not found'")
+                        }
                     }
 
                 default:
                     fail(entry, "unknown entry type '\(entry.type)'")
+                }
+
+                // A directory link is not listed and not followed.
+                if entry.type == "symlink", let reparse = entry.reparse, reparse.kind != "symlink-file" {
+                    do {
+                        _ = try volume.listDirectory(at: entry.path)
+                        fail(entry, "a \(reparse.kind) was listed as a directory")
+                    } catch NTFSError.unsupported(.reparse) {
+                        ok += 1
+                    } catch {
+                        fail(entry, "listing a \(reparse.kind) failed with \(error) instead of 'unsupported: reparse'")
+                    }
                 }
 
                 // Where links point. Reparse points carry their raw names, Interix links their target path.

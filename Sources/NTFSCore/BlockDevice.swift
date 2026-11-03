@@ -1,5 +1,9 @@
 import Foundation
+#if canImport(Darwin)
 import Darwin
+#elseif canImport(Glibc)
+import Glibc
+#endif
 
 /// A read-only block storage medium: a disk image, a partition or a raw device.
 /// The protocol has no write method, so code that takes a `BlockDevice` cannot change the disk.
@@ -37,7 +41,7 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
     private let isSectorAlignedDevice: Bool
 
     public init(path: String) throws {
-        let openFd = Darwin.open(path, O_RDONLY)
+        let openFd = open(path, O_RDONLY)
         if openFd < 0 {
             throw BlockDeviceError.cannotOpenFile(path: path, message: String(cString: strerror(errno)))
         }
@@ -45,35 +49,41 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         var statBuf = stat()
         if fstat(openFd, &statBuf) != 0 {
             let err = errno
-            Darwin.close(openFd)
+            close(openFd)
             throw BlockDeviceError.cannotOpenFile(path: path, message: "fstat failed: \(String(cString: strerror(err)))")
         }
 
-        let mode = statBuf.st_mode & S_IFMT
-        let isDevice = (mode == S_IFCHR || mode == S_IFBLK)
+        let mode = statBuf.st_mode & mode_t(S_IFMT)
+        let isDevice = (mode == mode_t(S_IFCHR) || mode == mode_t(S_IFBLK))
 
         var detectedSize = UInt64(max(0, statBuf.st_size))
         var detectedSectorSize = 512
         if isDevice {
+            #if os(macOS)
             var blockSize: UInt32 = 0
             var blockCount: UInt64 = 0
             let DKIOCGETBLOCKSIZE: UInt = 0x40046418
             let DKIOCGETBLOCKCOUNT: UInt = 0x40086419
 
-            if Darwin.ioctl(openFd, DKIOCGETBLOCKSIZE, &blockSize) == 0 &&
-                Darwin.ioctl(openFd, DKIOCGETBLOCKCOUNT, &blockCount) == 0 &&
+            if ioctl(openFd, DKIOCGETBLOCKSIZE, &blockSize) == 0 &&
+                ioctl(openFd, DKIOCGETBLOCKCOUNT, &blockCount) == 0 &&
                 blockSize > 0 && blockCount > 0 {
                 detectedSize = blockCount * UInt64(blockSize)
                 detectedSectorSize = Int(blockSize)
             } else {
-                let endPosition = Darwin.lseek(openFd, 0, SEEK_END)
-                Darwin.lseek(openFd, 0, SEEK_SET)
+                let endPosition = lseek(openFd, 0, SEEK_END)
+                lseek(openFd, 0, SEEK_SET)
                 if endPosition > 0 { detectedSize = UInt64(endPosition) }
             }
+            #else
+            let endPosition = lseek(openFd, 0, SEEK_END)
+            lseek(openFd, 0, SEEK_SET)
+            if endPosition > 0 { detectedSize = UInt64(endPosition) }
+            #endif
         }
 
         guard detectedSize > 0 else {
-            Darwin.close(openFd)
+            close(openFd)
             throw BlockDeviceError.cannotOpenFile(path: path, message: "The size is zero or cannot be determined")
         }
 
@@ -84,7 +94,7 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
     }
 
     deinit {
-        Darwin.close(fd)
+        close(fd)
     }
 
     public func read(offset: UInt64, count: Int) throws -> Data {
@@ -111,7 +121,7 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
         var received = 0
         while received < count {
             let n = data.withUnsafeMutableBytes { raw -> Int in
-                Darwin.pread(fd, raw.baseAddress!.advanced(by: received), count - received, off_t(offset) + off_t(received))
+                pread(fd, raw.baseAddress!.advanced(by: received), count - received, off_t(offset) + off_t(received))
             }
             if n < 0 {
                 if errno == EINTR { continue }

@@ -4,6 +4,8 @@ public struct DirectoryItem: Identifiable, Hashable, Sendable {
     public var id: UInt64 { mftRecordNumber }
     public let name: String
     public let mftRecordNumber: UInt64
+    /// Sequence number of the record when the entry was made. Zero if the volume does not record one.
+    public let sequenceNumber: UInt16
     public let isDirectory: Bool
     public let fileSize: UInt64
     public let modificationDate: Date
@@ -104,6 +106,7 @@ public final class DirectoryIndexReader: Sendable {
         return DirectoryItem(
             name: fn.name,
             mftRecordNumber: entry.mftRecordNumber,
+            sequenceNumber: entry.sequenceNumber,
             isDirectory: fn.isDirectory,
             fileSize: fn.realSize,
             modificationDate: fn.modificationTime,
@@ -229,6 +232,9 @@ public final class DirectoryIndexReader: Sendable {
 
         let usaOffset = Int(try reader.readUInt16())
         let usaSize = Int(try reader.readUInt16())
+        guard usaSize == mutableData.count / FixupApplier.blockSize + 1 else {
+            throw NTFSError.corruptDirectoryIndex("Index block at VCN \(vcn) has \(usaSize) update sequence entries")
+        }
 
         // Apply fixups to the INDX block
         try FixupApplier.applyFixup(

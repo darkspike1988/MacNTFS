@@ -33,7 +33,7 @@ swift build -c release
 
 Exit codes: `0` success, `1` error, `2` wrong usage, `3` the data uses an NTFS feature that is not supported, `4` the device is mounted for writing.
 
-**Devices.** `/dev/rdiskN` needs root. A device that another driver has mounted for writing is refused (exit code 4), because its contents can change while you read them; `--allow-mounted` overrides that. A volume that is not clean (dirty flag) or that Windows hibernated (Fast Startup) is read with a warning on standard error. Make an image first and inspect the copy:
+**Devices.** `/dev/rdiskN` needs root. A device that another driver has mounted for writing is refused (exit code 4), because its contents can change while you read them; `--allow-mounted` overrides that. `probe` shows the dirty flag, the hibernation state and the mount state. The other commands print a warning on standard error for a volume that is not clean (dirty flag) or that Windows hibernated (Fast Startup), or when they cannot tell. Make an image first and inspect the copy:
 
 ```bash
 sudo dd if=/dev/rdisk4s1 of=disk.img bs=1m
@@ -55,7 +55,7 @@ let data = try volume.readFile(at: "/hello.txt")
 
 ## Known limits
 
-- Encrypted files (EFS) are refused. Symbolic links, junctions and other reparse points are not followed and their content is not read. `macntfs readlink` shows where a link points.
+- Encrypted files (EFS) are refused. Windows symbolic links, junctions and other reparse points are not followed, their content is not read, and a directory link is not listed. `macntfs readlink` shows where a link points. Links in the Interix format, which ntfs-3g writes, are ordinary small files; `readlink` recognizes them, and `cat` returns their raw content.
 - A volume whose `$MFT` has an attribute list that points outside the part of the MFT known from record 0 is refused.
 - Names are matched by exact UTF-16 first, then ignoring case with the volume's `$UpCase` table. Unicode is not normalized, as in NTFS.
 - The journal is not replayed. A volume that Windows did not shut down cleanly or hibernated can show outdated data. `probe` and the other commands report the dirty flag and Windows hibernation (Fast Startup), but they read the volume as it is.
@@ -72,7 +72,7 @@ swift test                          # unit tests, hostile-input tests, mutation 
 scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
 ```
 
-The strongest check compares the engine with reference images. `scripts/corpus/build.sh` writes 20 NTFS images in a Linux container, most with ntfs-3g and two with the Linux kernel driver ntfs3 (512 and 4096-byte sectors, clusters from 512 bytes to 64 KiB, fragmented, sparse, compressed, links, a directory with 5000 files, files with attribute lists, compressed files, deleted files and more) together with manifests of paths, sizes and SHA-256 hashes computed from the source content. `scripts/corpus/verify.sh` cross-checks each manifest with ntfs-3g and The Sleuth Kit. `swift test` then requires that every file reads back with the same hash or is refused with the expected error. Wrong bytes without an error fail the test. Details: [Tests/Corpus/README.md](Tests/Corpus/README.md). Building the corpus needs Docker (on macOS for example `colima start`).
+`swift test` also runs the command line tool (exit codes, channels, warnings) against the committed image. The strongest check compares the engine with reference images. `scripts/corpus/build.sh` writes 18 NTFS images in a Linux container, 16 with ntfs-3g and two with the Linux kernel driver ntfs3, and two more images are committed in `Tests/Fixtures` (512 and 4096-byte sectors, clusters from 512 bytes to 64 KiB, fragmented, sparse, compressed, links, a directory with 5000 files, files with attribute lists, compressed files, deleted files and more) together with manifests of paths, sizes and SHA-256 hashes computed from the source content. `scripts/corpus/verify.sh` cross-checks each manifest with ntfs-3g and The Sleuth Kit. `swift test` then requires that every file reads back with the same hash or is refused with the expected error. Wrong bytes without an error fail the test. Details: [Tests/Corpus/README.md](Tests/Corpus/README.md). Building the corpus needs Docker (on macOS for example `colima start`).
 
 ## Where this is going
 

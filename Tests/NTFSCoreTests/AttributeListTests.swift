@@ -122,3 +122,134 @@ final class AttributeListTests: XCTestCase {
         XCTAssertThrowsError(try AttributeMerger.merge([first, second]))
     }
 }
+
+// MARK: - Extension records of a real volume
+
+final class ExtensionRecordTests: XCTestCase {
+
+    private struct FragmentedFile {
+        let image: Data
+        let base: UInt64
+        /// Numbers of the extension records the attribute list names.
+        let extensions: [UInt64]
+        /// Where the bytes of the attribute list value are on the device.
+        let listValueOffset: Int
+        let volume: NTFSVolume
+    }
+
+    /// `/frag/f0.bin` of mini-attrlist: a file whose data runs are spread over extension records.
+    private func fragmentedFile() throws -> FragmentedFile {
+        let image = try Fixtures.miniAttributeListImage()
+        let volume = try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
+        let resolved = try volume.lookup(path: "/frag/f0.bin").record
+        let base = resolved.recordNumber
+        let list = try XCTUnwrap(resolved.attribute(ofType: .attributeList))
+        let value = try NTFSVolume.attributeValue(list, bootSector: volume.bootSector, device: volume.blockDevice)
+        let extensions = Set(try AttributeListParser.parse(value).map(\.recordNumber).filter { $0 != base }).sorted()
+        XCTAssertFalse(extensions.isEmpty, "f0.bin must have extension records")
+
+        let valueOffset: Int
+        if let residentValue = list.residentData {
+            // Resident: the value is inside the record. Find it by its bytes.
+            let recordOffset = Fixtures.diskOffset(ofRecord: base, in: volume)
+            let record = image.subdata(in: recordOffset..<(recordOffset + 1024))
+            let range = try XCTUnwrap(record.range(of: residentValue))
+            valueOffset = recordOffset + range.lowerBound
+        } else {
+            let run = try XCTUnwrap(list.runs?.first)
+            valueOffset = Int(try XCTUnwrap(run.startingLCN)) * Int(volume.bootSector.clusterSizeBytes)
+        }
+        return FragmentedFile(image: image, base: base, extensions: extensions, listValueOffset: valueOffset, volume: volume)
+    }
+
+    func testIntactFragmentedFileReads() throws {
+        let file = try fragmentedFile()
+        XCTAssertGreaterThan(try file.volume.readFile(at: "/frag/f0.bin").count, 0)
+    }
+
+    func testExtensionRecordThatBelongsToAnotherRecordIsRejected() throws {
+        let file = try fragmentedFile()
+        var image = file.image
+        let extensionOffset = Fixtures.diskOffset(ofRecord: file.extensions[0], in: file.volume)
+        image[extensionOffset + 0x20] = 0x63  // base record reference: another record
+
+        let broken = try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
+        XCTAssertThrowsError(try broken.readFile(at: "/frag/f0.bin")) { error in
+            guard case NTFSError.corruptAttributeList = error else { return XCTFail("unexpected error \(error)") }
+        }
+    }
+
+    func testExtensionRecordThatIsNotInUseIsRejected() throws {
+        let file = try fragmentedFile()
+        var image = file.image
+        let extensionOffset = Fixtures.diskOffset(ofRecord: file.extensions[0], in: file.volume)
+        image[extensionOffset + 0x16] &= ~0x01
+
+        let broken = try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
+        XCTAssertThrowsError(try broken.readFile(at: "/frag/f0.bin")) { error in
+            guard case NTFSError.corruptAttributeList = error else { return XCTFail("unexpected error \(error)") }
+        }
+    }
+
+    func testListEntryThatPointsToAnOrdinaryRecordIsRejected() throws {
+        // An ordinary file record has the base reference 0, so it is no extension of any file. Point the first
+        // entry that names an extension record at the root directory (record 5).
+        let file = try fragmentedFile()
+        var image = file.image
+        var entry = file.listValueOffset
+        var patched = false
+        for _ in 0..<64 {
+            let length = Int(image[entry + 4]) | (Int(image[entry + 5]) << 8)
+            guard length >= 0x1A else { break }
+            let number = (0..<6).reduce(UInt64(0)) { $0 | (UInt64(image[entry + 0x10 + $1]) << UInt64(8 * $1)) }
+            if number != file.base {
+                image[entry + 0x10] = 5
+                for i in 1..<6 { image[entry + 0x10 + i] = 0 }
+                patched = true
+                break
+            }
+            entry += length
+        }
+        XCTAssertTrue(patched)
+
+        let broken = try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
+        XCTAssertThrowsError(try broken.readFile(at: "/frag/f0.bin")) { error in
+            guard case NTFSError.corruptAttributeList = error else { return XCTFail("unexpected error \(error)") }
+        }
+    }
+
+    func testMftWithADamagedListIsReportedAsDamaged() throws {
+        // Turn the first attribute of record 0 ($MFT) into an attribute list and give its value an entry
+        // that is longer than the value.
+        var image = try Fixtures.miniImage()
+        let boot = try BootSector(data: image.prefix(512))
+        let recordOffset = Int(boot.mftByteOffset)
+        let first = Int(image[recordOffset + 0x14]) | (Int(image[recordOffset + 0x15]) << 8)
+        image[recordOffset + first] = 0x20
+        let valueOffset = Int(image[recordOffset + first + 0x14]) | (Int(image[recordOffset + first + 0x15]) << 8)
+        image[recordOffset + first + valueOffset + 4] = 0xF0
+        image[recordOffset + first + valueOffset + 5] = 0x00
+
+        XCTAssertThrowsError(try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))) { error in
+            // A damaged list is reported as damaged, not as a missing feature.
+            guard case NTFSError.corruptAttributeList = error else { return XCTFail("unexpected error \(error)") }
+        }
+    }
+
+    func testExtentsThatDoNotReachTheEndOfTheAttributeAreRejected() throws {
+        // Two extents cover VCN 0 to 4, but the last one says the attribute ends at VCN 9: a part is missing.
+        func extent(start: UInt64, end: UInt64, clusters: UInt64) -> NTFSAttribute {
+            NTFSAttribute(
+                type: .data, recordLength: 0x48, isNonResident: true, name: nil, flags: [], attributeID: 1,
+                payload: .nonResident(
+                    startingVCN: start, endingVCN: end, allocatedSize: 40_960, realSize: 40_960, initializedSize: 40_960,
+                    runs: [DataRun(clusterCount: clusters, startingLCN: 100 + start)]
+                )
+            )
+        }
+        XCTAssertThrowsError(try AttributeMerger.merge([extent(start: 0, end: 2, clusters: 3), extent(start: 3, end: 9, clusters: 2)])) { error in
+            guard case NTFSError.corruptAttributeList = error else { return XCTFail("unexpected error \(error)") }
+        }
+        XCTAssertNoThrow(try AttributeMerger.merge([extent(start: 0, end: 2, clusters: 3), extent(start: 3, end: 4, clusters: 2)]))
+    }
+}

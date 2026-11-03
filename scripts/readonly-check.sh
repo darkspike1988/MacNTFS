@@ -28,9 +28,11 @@ if [ "$before" != "$after" ]; then
   exit 1
 fi
 
-for command in format write create-image repair; do
-  if "$bin" "$command" "$work/disk.img" >/dev/null 2>&1; then
-    echo "FAIL: the command '$command' exists" >&2
+for command in format write create-image repair check; do
+  status=0
+  "$bin" "$command" "$work/disk.img" >/dev/null 2>&1 || status=$?
+  if [ "$status" -ne 2 ]; then
+    echo "FAIL: '$command' must be an unknown command (exit code 2), but exited with $status" >&2
     exit 1
   fi
 done
