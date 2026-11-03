@@ -148,6 +148,8 @@ Directory names matter in ntfs-3g: a directory called `d` or `ds` with long-name
 
 `k-*` need the `ntfs3` module. The colima VM kernel (6.8.0-117-generic) has it built as a module but not installed. `build-in-container.sh` downloads `linux-modules-extra-<kernel>` (cached in the docker volume `macntfs-corpus-cache`), extracts `ntfs3.ko` and `insmod`s it from the privileged container; this only lives in the VM's memory until reboot. If that fails, `k-*` are reported as `SKIPPED`.
 
+On GitHub's Ubuntu runner (kernel `7.0.0-azure`) the module cannot be loaded, so CI builds and compares 16 ntfs-3g images plus the 2 committed fixtures (`MACNTFS_CORPUS_REQUIRE=18`). The two `k-*` images are only compared on a developer machine with `MACNTFS_CORPUS_REQUIRE=20`.
+
 ## What is NOT covered
 
 * **No Windows-written image.** This corpus was written by `ntfs-3g`, so it is

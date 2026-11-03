@@ -73,7 +73,9 @@ jobs:
 
       - name: Compare the engine with every image
         env:
-          # 18 built images (two of them by the kernel driver) and 2 committed fixtures.
-          # With fewer, the test fails instead of passing on what is left.
-          MACNTFS_CORPUS_REQUIRE: "20"
+          # 16 images written by ntfs-3g and 2 committed fixtures. The two images of the kernel
+          # driver ntfs3 (k-*) are not built here: the runner kernel cannot load the module.
+          # They are checked on a developer machine. With fewer than 18 images the test fails
+          # instead of passing on what is left.
+          MACNTFS_CORPUS_REQUIRE: "18"
         run: swift test --filter CorpusTests

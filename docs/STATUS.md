@@ -11,7 +11,7 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Stale directory entries | checked | An index entry that points to a free record, an extension record or a record with another sequence number is not followed (`RecordChecksTests`). |
 | Data runs | checked | Corpus: fragmented and sparse files. Overflow is rejected. |
 | Directory listing and lookup | checked | Corpus: nested directories, directory with 5000 files, Unicode names including NFC and NFD variants, case-insensitive lookup with the volume's `$UpCase` table (`LookupTests`), deleted entries not listed, hard links listed once per name. |
-| File read (`cat`) | checked | Corpus: every entry that a manifest labels `ok`, and every entry with an older `unsupported:attribute-list` or `unsupported:compression` label, must read back with the manifest hash in all 20 images, or the test fails. Only entries labelled `unsupported:reparse` may be refused. Reads beyond the initialized size return zeros. |
+| File read (`cat`) | checked | Corpus: every entry that a manifest labels `ok`, and every entry with an older `unsupported:attribute-list` or `unsupported:compression` label, must read back with the manifest hash in all 20 images, or the test fails (CI compares 18 of them, because the runner cannot load the `ntfs3` kernel module; the two kernel images are compared locally). Only entries labelled `unsupported:reparse` may be refused. Reads beyond the initialized size return zeros. |
 | Hard links | checked | Corpus `links`. |
 | Sparse files | checked | Corpus `sparse`. |
 | Interix symlinks (written by ntfs-3g as files) | checked | Corpus `links`. Readable as files, `cat` returns the raw content, and `readlink` recognizes them (only for system files). |
