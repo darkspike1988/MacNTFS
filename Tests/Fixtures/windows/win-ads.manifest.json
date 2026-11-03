@@ -1,0 +1,66 @@
+{
+ "schema": 1,
+ "image": "win-ads.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-ADS",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/ads",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": [
+    {
+     "name": "dirstream",
+     "size": 2500,
+     "sha256": "60988dd44c2c1a88c71a907c4e43387ac23b8a54154494cf1e83b79aff42b3a9"
+    }
+   ]
+  },
+  {
+   "path": "/ads/big.bin",
+   "type": "file",
+   "size": 204800,
+   "sha256": "b9eb389a8356ed65c6eda2611976dc9dda9fd0ff9a94e16d9936b6ad0a231d2a",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": [
+    {
+     "name": "meta",
+     "size": 60000,
+     "sha256": "0fc47b61cd8ffd75b01327c70f7bd8bf90d017d101dc92c45a838a5bc4be164e"
+    },
+    {
+     "name": "small",
+     "size": 5,
+     "sha256": "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824"
+    }
+   ]
+  },
+  {
+   "path": "/ads/small.txt",
+   "type": "file",
+   "size": 6,
+   "sha256": "807c4d625ed61d41f6d3661523aff088741f545e7812653be8b39d5ad4906fc3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": [
+    {
+     "name": "s1",
+     "size": 3,
+     "sha256": "7692c3ad3540bb803c020b3aee66cd8887123234ea0c6e7143c0add73ff431ed"
+    },
+    {
+     "name": "s2",
+     "size": 300,
+     "sha256": "d787e4772c919b0294034463352567b1ffa57c04c6611115382c5afbda7c3789"
+    }
+   ]
+  }
+ ]
+}

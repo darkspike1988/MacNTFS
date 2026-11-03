@@ -1,0 +1,119 @@
+{
+ "schema": 1,
+ "image": "win-deleted.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-DELETED",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/del",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f0.txt",
+   "type": "file",
+   "size": 200,
+   "sha256": "536fe0768cd6727164ce61546f6a80d3a61cc387ffb480ff278118d1d10af578",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f1.txt",
+   "type": "deleted",
+   "size": 900,
+   "sha256": "50dd10ee335d4e40f1d58b1dba15d8ef781659850866bd9ebfaa00a21a384282",
+   "expect": "absent",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f2.txt",
+   "type": "file",
+   "size": 1600,
+   "sha256": "ee5e3d105a9581758f28a9c26289ed3a9758d45de4aa1f3e139a771ab346a332",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f3.txt",
+   "type": "deleted",
+   "size": 2300,
+   "sha256": "2b3c5be29ee7bb654e4e22b5e4f8d439ea75eb3f63fced921fa5254460a47a62",
+   "expect": "absent",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f4.txt",
+   "type": "file",
+   "size": 3000,
+   "sha256": "6d82801db38836f7919d9fe396b94c599ed1fd999c4ee883c31a7171d157b0b5",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f5.txt",
+   "type": "deleted",
+   "size": 3700,
+   "sha256": "c7f408e50846e721d969dfe791899280d6014e8be22ae1d1b3692a1c42f281d4",
+   "expect": "absent",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f6.txt",
+   "type": "file",
+   "size": 4400,
+   "sha256": "6c579141385dedef9dd493ce74573df7b7fe300e41a8287694e0559c1f56b0fc",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f7.txt",
+   "type": "deleted",
+   "size": 5100,
+   "sha256": "3545a0f3cce0ec0e1800a07c263334efbe5b61a1534a19f1f79747edbde6d9e2",
+   "expect": "absent",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f8.txt",
+   "type": "file",
+   "size": 5800,
+   "sha256": "6a5dda7d99d3a845246a6bf862c88190df6c003ad1d67d8d25662fae26870561",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/f9.txt",
+   "type": "deleted",
+   "size": 6500,
+   "sha256": "0f9b988d14216e21c417b702bee3e7738678c24dd68eefd10081b5a7b0f9f45e",
+   "expect": "absent",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/del/reused.txt",
+   "type": "file",
+   "size": 3000,
+   "sha256": "f4d4d76096af75ba45bf67995000f7bb4d4b54310bdb1205e037a22665613da9",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

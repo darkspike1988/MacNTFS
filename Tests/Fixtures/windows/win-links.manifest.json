@@ -1,0 +1,116 @@
+{
+ "schema": 1,
+ "image": "win-links.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-LINKS",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/links",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/links/dir",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/links/dir/inner.txt",
+   "type": "file",
+   "size": 300,
+   "sha256": "dd11dd725285f23c16118c745adec6e097d2a4bdb14b7366455ba6738a9baab9",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/links/dsym",
+   "type": "symlink",
+   "size": null,
+   "sha256": null,
+   "expect": "unsupported:reparse",
+   "linkTarget": "dir",
+   "streams": [],
+   "reparse": {
+    "kind": "symlink-dir",
+    "substituteName": "dir",
+    "printName": "dir",
+    "flags": 1
+   }
+  },
+  {
+   "path": "/links/hard",
+   "type": "hardlink",
+   "size": 500,
+   "sha256": "4f71f8326af69adee14701fccd2416dab6d244d9d590bf68ee6f2cb3bca423dc",
+   "expect": "ok",
+   "linkTarget": "/links/target.txt",
+   "streams": []
+  },
+  {
+   "path": "/links/junction",
+   "type": "symlink",
+   "size": null,
+   "sha256": null,
+   "expect": "unsupported:reparse",
+   "linkTarget": "M:\\links\\dir",
+   "streams": [],
+   "reparse": {
+    "kind": "junction",
+    "substituteName": "\\??\\M:\\links\\dir",
+    "printName": "M:\\links\\dir",
+    "flags": 0
+   }
+  },
+  {
+   "path": "/links/sym-abs",
+   "type": "symlink",
+   "size": null,
+   "sha256": null,
+   "expect": "unsupported:reparse",
+   "linkTarget": "M:\\links\\target.txt",
+   "streams": [],
+   "reparse": {
+    "kind": "symlink-file",
+    "substituteName": "\\??\\M:\\links\\target.txt",
+    "printName": "M:\\links\\target.txt",
+    "flags": 0
+   }
+  },
+  {
+   "path": "/links/sym-rel",
+   "type": "symlink",
+   "size": null,
+   "sha256": null,
+   "expect": "unsupported:reparse",
+   "linkTarget": "target.txt",
+   "streams": [],
+   "reparse": {
+    "kind": "symlink-file",
+    "substituteName": "target.txt",
+    "printName": "target.txt",
+    "flags": 1
+   }
+  },
+  {
+   "path": "/links/target.txt",
+   "type": "file",
+   "size": 500,
+   "sha256": "4f71f8326af69adee14701fccd2416dab6d244d9d590bf68ee6f2cb3bca423dc",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

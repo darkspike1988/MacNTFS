@@ -1,0 +1,83 @@
+{
+ "schema": 1,
+ "image": "win-c8k.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 8192,
+ "volumeLabel": "WIN-C8K",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/d",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/d/x.txt",
+   "type": "file",
+   "size": 800,
+   "sha256": "66ac10c4922422dd3e27b5f88c8a4c2a000ecbaf11c646c35a767ab4393b718d",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f0.bin",
+   "type": "file",
+   "size": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f100.bin",
+   "type": "file",
+   "size": 100,
+   "sha256": "459a5443a824b36e1900bf086d18215b064ccd76bc20b8680f6bb63e74ec3306",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f300000.bin",
+   "type": "file",
+   "size": 300000,
+   "sha256": "c911c78bfe6a6d5a7009c9d379dcf6fabb784e36cdf62fecca3c48bc4203123a",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f5000.bin",
+   "type": "file",
+   "size": 5000,
+   "sha256": "7631a78f99244840f330690fb9504b361317ecdc7557e8730fba3a83ae8900c8",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f513.bin",
+   "type": "file",
+   "size": 513,
+   "sha256": "ef9bef19bab7ddfd14325b6c2593fc65c18b6905d98641273e6363c8fd661509",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f70000.bin",
+   "type": "file",
+   "size": 70000,
+   "sha256": "9df5489559d310429e515a93aaa47b05afcf7baca0cfc3863ca3affb1984e0ac",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

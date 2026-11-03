@@ -1,0 +1,2729 @@
+{
+ "schema": 1,
+ "image": "win-fragmented.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-FRAG",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/f",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/big.bin",
+   "type": "file",
+   "size": 3145728,
+   "sha256": "8545a0621f1d821cdea5c0ea0f34c751f042bc69c5b0ef408c28b0da77c62637",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s10.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s100.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s102.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s104.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s106.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s108.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s110.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s112.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s114.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s116.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s118.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s12.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s120.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s122.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s124.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s126.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s128.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s130.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s132.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s134.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s136.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s138.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s14.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s140.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s142.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s144.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s146.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s148.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s150.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s152.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s154.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s156.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s158.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s16.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s160.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s162.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s164.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s166.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s168.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s170.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s172.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s174.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s176.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s178.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s18.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s180.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s182.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s184.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s186.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s188.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s190.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s192.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s194.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s196.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s198.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s2.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s20.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s200.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s202.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s204.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s206.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s208.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s210.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s212.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s214.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s216.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s218.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s22.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s220.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s222.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s224.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s226.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s228.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s230.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s232.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s234.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s236.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s238.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s24.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s240.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s242.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s244.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s246.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s248.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s250.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s252.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s254.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s256.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s258.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s26.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s260.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s262.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s264.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s266.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s268.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s270.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s272.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s274.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s276.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s278.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s28.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s280.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s282.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s284.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s286.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s288.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s290.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s292.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s294.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s296.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s298.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s30.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s300.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s302.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s304.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s306.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s308.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s310.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s312.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s314.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s316.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s318.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s32.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s320.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s322.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s324.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s326.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s328.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s330.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s332.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s334.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s336.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s338.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s34.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s340.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s342.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s344.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s346.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s348.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s350.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s352.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s354.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s356.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s358.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s36.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s360.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s362.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s364.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s366.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s368.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s370.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s372.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s374.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s376.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s378.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s38.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s380.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s382.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s384.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s386.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s388.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s390.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s392.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s394.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s396.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s398.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s4.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s40.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s400.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s402.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s404.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s406.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s408.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s410.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s412.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s414.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s416.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s418.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s42.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s420.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s422.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s424.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s426.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s428.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s430.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s432.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s434.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s436.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s438.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s44.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s440.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s442.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s444.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s446.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s448.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s450.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s452.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s454.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s456.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s458.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s46.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s460.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s462.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s464.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s466.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s468.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s470.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s472.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s474.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s476.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s478.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s48.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s480.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s482.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s484.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s486.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s488.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s490.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s492.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s494.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s496.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s498.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s50.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s500.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s502.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s504.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s506.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s508.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s510.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s512.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s514.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s516.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s518.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s52.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s520.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s522.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s524.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s526.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s528.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s530.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s532.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s534.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s536.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s538.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s54.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s540.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s542.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s544.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s546.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s548.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s550.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s552.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s554.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s556.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s558.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s56.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s560.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s562.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s564.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s566.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s568.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s570.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s572.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s574.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s576.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s578.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s58.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s580.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s582.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s584.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s586.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s588.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s590.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s592.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s594.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s596.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s598.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s6.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s60.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s600.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s62.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s64.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s66.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s68.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s70.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s72.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s74.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s76.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s78.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s8.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s80.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s82.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s84.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s86.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s88.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s90.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s92.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s94.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s96.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f/s98.bin",
+   "type": "file",
+   "size": 8192,
+   "sha256": "8041a95e781ba7ca5ecbaf0cc4a1353accde58deec91d4a133d0eb41091209e3",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

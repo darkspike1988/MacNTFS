@@ -1,0 +1,47 @@
+{
+ "schema": 1,
+ "image": "win-sparse.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-SPARSE",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/sp",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/sp/all-hole.bin",
+   "type": "file",
+   "size": 1048576,
+   "sha256": "30e14955ebf1352266dc2ff8067e68104607e750abb9d3b36582b8af909fcb58",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/sp/extended.bin",
+   "type": "file",
+   "size": 1000000,
+   "sha256": "53bfae309f336d2f2b15d9d05e40d97605e5fee004a0494d2c14ed863a769159",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/sp/holes.bin",
+   "type": "file",
+   "size": 400000,
+   "sha256": "135c1d82d045c744e4d907b01447e006f8eccd4931b9172032863d0cf62002b4",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

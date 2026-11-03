@@ -53,7 +53,34 @@ final class CorpusTests: XCTestCase {
         // MACNTFS_CORPUS_DIR points the test at another directory with built images.
         let built = getenv("MACNTFS_CORPUS_DIR").map { URL(fileURLWithPath: String(cString: $0)) }
             ?? tests.appendingPathComponent("Corpus/out")
-        return [built, tests.appendingPathComponent("Fixtures")]
+        return [built, tests.appendingPathComponent("Fixtures"), tests.appendingPathComponent("Fixtures/windows")]
+    }
+
+    /// The image next to its manifest. Images in `Tests/Fixtures/windows` are stored gzipped; they are unpacked once
+    /// into a temporary directory.
+    private static func imagePath(for image: String, besides manifest: URL) throws -> String {
+        let plain = manifest.deletingLastPathComponent().appendingPathComponent(image)
+        if FileManager.default.fileExists(atPath: plain.path) { return plain.path }
+        let packed = plain.appendingPathExtension("gz")
+        guard FileManager.default.fileExists(atPath: packed.path) else {
+            throw NSError(domain: "CorpusTests", code: 1, userInfo: [NSLocalizedDescriptionKey: "image \(image) is missing"])
+        }
+        let directory = FileManager.default.temporaryDirectory.appendingPathComponent("macntfs-corpus-\(getpid())")
+        try FileManager.default.createDirectory(at: directory, withIntermediateDirectories: true)
+        let unpacked = directory.appendingPathComponent(image)
+        if !FileManager.default.fileExists(atPath: unpacked.path) {
+            FileManager.default.createFile(atPath: unpacked.path, contents: nil)
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/gunzip")
+            process.arguments = ["-c", packed.path]
+            process.standardOutput = try FileHandle(forWritingTo: unpacked)
+            try process.run()
+            process.waitUntilExit()
+            guard process.terminationStatus == 0 else {
+                throw NSError(domain: "CorpusTests", code: 2, userInfo: [NSLocalizedDescriptionKey: "gunzip failed for \(image)"])
+            }
+        }
+        return unpacked.path
     }
 
     private static func sha256Hex(_ data: Data) -> String {
@@ -91,7 +118,13 @@ final class CorpusTests: XCTestCase {
         for manifestURL in manifestURLs {
             let manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: manifestURL))
             XCTAssertEqual(manifest.schema, 1, "unknown manifest schema in \(manifestURL.lastPathComponent)")
-            let imagePath = manifestURL.deletingLastPathComponent().appendingPathComponent(manifest.image).path
+            let imagePath: String
+            do {
+                imagePath = try Self.imagePath(for: manifest.image, besides: manifestURL)
+            } catch {
+                failures.append("\(manifest.image): \(error)")
+                continue
+            }
 
             let volume: NTFSVolume
             do {

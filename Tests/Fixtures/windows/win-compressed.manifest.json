@@ -1,0 +1,56 @@
+{
+ "schema": 1,
+ "image": "win-compressed.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-COMP",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/comp",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/comp/mixed.bin",
+   "type": "file",
+   "size": 90000,
+   "sha256": "bd400db7c7c36e05c39a8ec2fc3b22174b0897823f45f6ebfbace3051ccb4c44",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/comp/random.bin",
+   "type": "file",
+   "size": 100000,
+   "sha256": "72dc73664c72c644ca528a73041449594f697509cef9251be4b0b99b9b5c45fe",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/comp/small.txt",
+   "type": "file",
+   "size": 900,
+   "sha256": "b35fbb0ef0faf8c6ad4813fd9698cb797ebacb1ded1727db1a76df5dbc6b5097",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/comp/text.txt",
+   "type": "file",
+   "size": 300000,
+   "sha256": "685ae55c6369fdd1632928b1e28e47fb86132f6ac4d919b0e53dc6cd69d8a2b6",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

@@ -152,8 +152,9 @@ On GitHub's Ubuntu runner (kernel `7.0.0-azure`) the module cannot be loaded, so
 
 ## What is NOT covered
 
-* **No Windows-written image.** This corpus was written by `ntfs-3g`, so it is
-  **less independent than a Windows-made one**: Windows and ntfs-3g can differ in
+* **Few Windows-written images.** The built corpus was written by `ntfs-3g`, so it is
+  **less independent than a Windows-made one** (twelve small Windows images are committed in
+  `Tests/Fixtures/windows`, see `scripts/windows/README.md`, but not a Windows system that has run for years): Windows and ntfs-3g can differ in
   how they lay out and tag structures (DOS 8.3 names, `$Secure`/security IDs,
   `$UsnJrnl`, `$LogFile` state, index layout and fixups, timestamps, compression
   chunking, resident/non-resident thresholds), and a misreading shared by

@@ -59,7 +59,7 @@ let data = try volume.readFile(at: "/hello.txt")
 - A volume whose `$MFT` has an attribute list that points outside the part of the MFT known from record 0 is refused.
 - Names are matched by exact UTF-16 first, then ignoring case with the volume's `$UpCase` table. Unicode is not normalized, as in NTFS.
 - The journal is not replayed. A volume that Windows did not shut down cleanly or hibernated can show outdated data. `probe` and the other commands report the dirty flag and Windows hibernation (Fast Startup), but they read the volume as it is.
-- Only images written by ntfs-3g and by the Linux kernel driver ntfs3 have been compared so far. Nothing has been checked with images written by Windows yet.
+- The engine has been compared with images written by ntfs-3g, by the Linux kernel driver ntfs3 and by Windows 11 (in WinPE, with 4 KiB to 64 KiB clusters). Volumes of a long-running Windows system, with 512-byte clusters, EFS or deduplication, have not been checked.
 
 ## Need to write to NTFS on a Mac?
 
