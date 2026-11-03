@@ -22,6 +22,7 @@ public enum NTFSFormatter {
     ///   - options: Volume name, cluster size, etc.
     /// - Throws: `NTFSError` or `BlockDeviceError`
     public static func format(device: BlockDevice, options: FormatOptions = FormatOptions()) throws {
+        try ExperimentalGate.require("format")
         guard device.isWritable else {
             throw BlockDeviceError.readOnlyDevice
         }

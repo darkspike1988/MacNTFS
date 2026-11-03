@@ -13,9 +13,12 @@ public enum NTFSError: Error, LocalizedError, Sendable {
     case pathNotFound(String)
     case notADirectory(String)
     case invalidIndexEntry
+    case experimentalDisabled(String)
 
     public var errorDescription: String? {
         switch self {
+        case .experimentalDisabled(let feature):
+            return "'\(feature)' is disabled. Writing, formatting and repairing are experimental, can destroy data and are locked by default (see docs/SAFETY.md)."
         case .invalidBootSector(let msg):
             return "Invalid NTFS Boot Sector: \(msg)"
         case .invalidSignature(let expected, let found):

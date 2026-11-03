@@ -117,7 +117,7 @@ public final class DriveManager: ObservableObject {
                 self.selectedDriveID = matching.id
                 sendNotification(
                     title: "NTFS-Laufwerk erkannt",
-                    body: "'\(name)' ist einsatzbereit. Du kannst jetzt direkt Dateien per Drag & Drop schreiben."
+                    body: "'\(name)' wurde erkannt."
                 )
             }
         }
@@ -139,7 +139,7 @@ public final class DriveManager: ObservableObject {
         }
         guard drive.isNTFS else { return nil }
         do {
-            let device = try FileBlockDevice(path: drive.devicePath, writable: true, allowReadOnlyFallback: true)
+            let device = try FileBlockDevice(path: drive.devicePath, writable: false)
             let vol = try NTFSVolume(blockDevice: device)
             volumeCache[drive.id] = vol
             return vol

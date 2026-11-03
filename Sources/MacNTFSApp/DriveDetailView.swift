@@ -152,7 +152,7 @@ struct DriveDetailView: View {
                             .controlSize(.regular)
                             .disabled(true)
                             .help("Das interne macOS-Startvolume ist schreibgeschützt und kann nicht formatiert werden.")
-                        } else {
+                        } else if ExperimentalGate.isUnlocked {
                             Button(action: { showingFormatSheet = true }) {
                                 Label("Formatieren...", systemImage: "eraser.line.dashed")
                             }
@@ -234,8 +234,8 @@ struct DriveDetailView: View {
                 }
                 .appleCardStyle()
 
-                // Drag & Drop High-Speed Write Dropzone (exklusiv für NTFS)
-                if drive.isNTFS {
+                // Experimentelle Schreib-Dropzone, standardmäßig gesperrt (siehe docs/SAFETY.md)
+                if drive.isNTFS && ExperimentalGate.isUnlocked {
                     VStack(alignment: .leading, spacing: 10) {
                         HStack {
                             Label("High-Speed Dateitransfer (Drag & Drop)", systemImage: "arrow.down.doc.fill")
@@ -309,7 +309,10 @@ struct DriveDetailView: View {
                         DetailRow(label: "Schnittstelle", value: drive.busProtocol.isEmpty ? "Lokal" : drive.busProtocol)
                         DetailRow(label: "Seriennummer", value: drive.serialNumber)
                         DetailRow(label: "Clustergröße", value: drive.isNTFS ? "\(drive.clusterSize / 1024) KB (\(drive.clusterSize) Bytes)" : "Standard (\(drive.clusterSize) Bytes)")
-                        DetailRow(label: "Zugriff", value: drive.isReadOnly ? "Nur Lesen" : (drive.isNTFS ? "Lesen & Schreiben (Nativ FSKit)" : "Lesen & Schreiben (macOS)"))
+                        DetailRow(label: "Zugriff", value: drive.mountPoint == nil ? "Nicht gemountet" : (drive.isReadOnly ? "Nur Lesen" : "Lesen & Schreiben (durch den aktiven macOS-Treiber)"))
+                        if drive.isNTFS && !ExperimentalGate.isUnlocked {
+                            DetailRow(label: "MacNTFS", value: "Nur lesend (Schreiben deaktiviert)")
+                        }
                     }
                     .appleCardStyle()
 
@@ -326,8 +329,6 @@ struct DriveDetailView: View {
                                 value: drive.isDirty ? "Aktiv (Unsauber getrennt)" : "Sauber ausgehängt",
                                 color: drive.isDirty ? AppTheme.warningOrange : AppTheme.successGreen
                             )
-                            DetailRow(label: "Treiber-Architektur", value: "Native FSKit User-Space")
-                            DetailRow(label: "SIP / Kernel Extension", value: "Keine KEXT nötig (100% sicher)")
 
                             HStack(spacing: 10) {
                                 Button(action: runIntegrityCheck) {
@@ -344,7 +345,7 @@ struct DriveDetailView: View {
                                 .controlSize(.small)
                                 .disabled(isVerifying || isRepairing)
 
-                                if drive.isDirty || (healthReport != nil && !healthReport!.repairsAvailable.isEmpty) {
+                                if ExperimentalGate.isUnlocked && (drive.isDirty || (healthReport != nil && !healthReport!.repairsAvailable.isEmpty)) {
                                     Button(action: runRepair) {
                                         HStack(spacing: 4) {
                                             if isRepairing {
@@ -366,7 +367,7 @@ struct DriveDetailView: View {
                             DetailRow(label: "Treiber-Status", value: drive.isSystemDisk ? "macOS Systemvolume (SIP geschützt)" : "Aktiv durch macOS gemountet")
                             DetailRow(label: "Integritätsprüfung", value: "Exklusiv für NTFS-Volumes")
 
-                            if !drive.isSystemDisk {
+                            if !drive.isSystemDisk && ExperimentalGate.isUnlocked {
                                 Button(action: { showingFormatSheet = true }) {
                                     HStack(spacing: 4) {
                                         Image(systemName: "eraser.line.dashed")
@@ -446,6 +447,7 @@ struct DriveDetailView: View {
     }
 
     private func handleDroppedFiles(_ providers: [NSItemProvider]) -> Bool {
+        guard ExperimentalGate.isUnlocked else { return false }
         isWritingDroppedFiles = true
         dropSuccessMessage = nil
 

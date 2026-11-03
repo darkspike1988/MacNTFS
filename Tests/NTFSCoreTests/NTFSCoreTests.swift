@@ -3,6 +3,34 @@ import XCTest
 
 final class NTFSCoreTests: XCTestCase {
 
+    override func setUp() {
+        super.setUp()
+        setenv(ExperimentalGate.environmentKey, "1", 1)
+    }
+
+    func testExperimentalFeaturesAreLockedByDefault() throws {
+        let size = 20 * 1024 * 1024
+        let device = MemoryBlockDevice(data: Data(repeating: 0, count: size), writable: true)
+        try NTFSFormatter.format(device: device)
+        let volume = try NTFSVolume(blockDevice: device)
+        let before = try device.read(offset: 0, count: size)
+
+        unsetenv(ExperimentalGate.environmentKey)
+        defer { setenv(ExperimentalGate.environmentKey, "1", 1) }
+
+        func assertLocked(_ body: () throws -> Void, _ name: String) {
+            XCTAssertThrowsError(try body(), name) { error in
+                guard case NTFSError.experimentalDisabled = error else { return XCTFail("\(name): unexpected error \(error)") }
+            }
+        }
+        assertLocked({ try NTFSFormatter.format(device: device) }, "format")
+        assertLocked({ try NTFSVolumeChecker.repair(device: device) }, "repair")
+        assertLocked({ _ = try volume.writeFile(fileName: "a.txt", data: Data("x".utf8)) }, "writeFile")
+        assertLocked({ _ = try volume.repairVolume() }, "repairVolume")
+
+        XCTAssertEqual(before, try device.read(offset: 0, count: size), "a locked call must not change the device")
+    }
+
     // MARK: - BinaryReader Tests
 
     func testBinaryReaderPrimitives() throws {
@@ -291,7 +319,7 @@ final class NTFSCoreTests: XCTestCase {
         let totalBytes = 20 * 1024 * 1024
         let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
 
-        let targetName = "TUXERA_KILLER"
+        let targetName = "TEST_VOLUME"
         try NTFSFormatter.format(
             device: memDevice,
             options: NTFSFormatter.FormatOptions(volumeName: targetName)
