@@ -38,7 +38,7 @@ This note compares the structure of Microsoft's driver with the engine in this r
 
 Stay with Swift for `NTFSCore`:
 
-- FSKit is a Swift and Objective-C API. A Rust core would need a C layer to reach FSKit, a second toolchain in CI, and contributors who know both. The gain would be small, because the engine already checks bounds, uses checked arithmetic and has no unsafe code in the parser.
+- FSKit is a Swift and Objective-C API. A Rust core would need a C layer to reach FSKit, a second toolchain in CI, and contributors who know both. The gain would be small, because the engine already checks bounds, uses checked arithmetic and has no unsafe code in the parsers. Unsafe pointers appear in three small places only: reading from a device (`BlockDevice.swift`), the bulk copy of the `$UpCase` table (`NTFSName.swift`) and the list of mounts (`VolumeState.swift`).
 - The parser, 79 tests, the corpus comparison and the fuzz harness exist in Swift. SwiftPM builds the library on Linux too (CI job `linux`), so it is not tied to the Mac.
 - Rust would pay off for a `no_std` kernel or embedded use, or for a driver that must run in a place without Swift. That is not the goal of this project.
 
