@@ -19,7 +19,7 @@ A code review of the earlier write, format and repair code found problems. Not a
 - The read path can return empty or raw bytes instead of an error for missing `$DATA`, compressed and encrypted files.
 - The command line tool also had commands that write.
 
-## If you wrote to a volume with MacNTFS up to v0.2.2
+## If you wrote to a volume with MacNTFS v0.1.3 to v0.2.2
 
 1. Stop writing to that volume with MacNTFS.
 2. Copy off the files you need. Compare important files with their originals.

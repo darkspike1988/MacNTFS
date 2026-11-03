@@ -10,7 +10,7 @@
 MacNTFS is an early prototype. It can read parts of an NTFS volume from a disk image or device and show what it finds. It does **not** mount NTFS volumes, and it does **not** add write support to macOS.
 
 - **Writing, formatting and repairing are locked.** Earlier releases offered them. Code review found that they produce NTFS structures Windows may reject. See [docs/SAFETY.md](docs/SAFETY.md).
-- **If you used a release up to v0.2.2 to write to a volume:** back up the data, then check the volume in Windows. See the [advisory](docs/advisories/2026-11-03-releases-up-to-0.2.2.md).
+- **If you used a release from v0.1.3 to v0.2.2 to write to a volume:** back up the data, then check the volume in Windows. See the [advisory](docs/advisories/2026-11-03-releases-up-to-0.2.2.md).
 - The test suite uses small in-memory images produced by this project itself. Nothing has been validated against Windows `chkdsk` yet.
 - Feature by feature status: [docs/STATUS.md](docs/STATUS.md).
 
