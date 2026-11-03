@@ -32,6 +32,8 @@ public struct NTFSAttribute: Sendable {
     public let flags: AttributeHeaderFlags
     public let attributeID: UInt16
     public let payload: AttributeData
+    /// Size of a compression unit as a power of two in clusters (4 means 16 clusters). Zero when not set.
+    public let compressionUnitShift: UInt16
 
     public var residentData: Data? {
         if case .resident(let data) = payload {
@@ -62,7 +64,8 @@ public struct NTFSAttribute: Sendable {
         name: String?,
         flags: AttributeHeaderFlags,
         attributeID: UInt16,
-        payload: AttributeData
+        payload: AttributeData,
+        compressionUnitShift: UInt16 = 0
     ) {
         self.type = type
         self.recordLength = recordLength
@@ -71,6 +74,7 @@ public struct NTFSAttribute: Sendable {
         self.flags = flags
         self.attributeID = attributeID
         self.payload = payload
+        self.compressionUnitShift = compressionUnitShift
     }
 
     public var realDataSize: UInt64 {
@@ -99,6 +103,7 @@ public struct NTFSAttribute: Sendable {
             self.flags = []
             self.attributeID = 0
             self.payload = .resident(Data())
+            self.compressionUnitShift = 0
             return
         }
 
@@ -135,12 +140,13 @@ public struct NTFSAttribute: Sendable {
             }
             let resData = data.subdata(in: valueStart..<(valueStart + valueLength))
             self.payload = .resident(resData)
+            self.compressionUnitShift = 0
         } else {
             // Non-resident attribute
             let startingVCN = try reader.readUInt64()
             let endingVCN = try reader.readUInt64()
             let runlistOffset = Int(try reader.readUInt16())
-            let _ = try reader.readUInt16() // compression unit size
+            self.compressionUnitShift = try reader.readUInt16()
             let _ = try reader.readUInt32() // padding
             let allocatedSize = try reader.readUInt64()
             let realSize = try reader.readUInt64()

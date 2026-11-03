@@ -204,9 +204,6 @@ public final class NTFSVolume: Sendable {
             }
             return Data()
         }
-        if dataAttr.flags.contains(.compressed) {
-            throw NTFSError.unsupported(.compression)
-        }
         if dataAttr.flags.contains(.encrypted) {
             throw NTFSError.unsupported(.encryption)
         }
@@ -236,15 +233,28 @@ public final class NTFSVolume: Sendable {
             // Bytes at or after the initialized size read as zeros, whatever is stored on disk.
             let validEnd = min(initializedSize, realSize)
             let onDisk = offset < validEnd ? Int(min(wanted, validEnd - offset)) : 0
-            var result = onDisk > 0
-                ? try RunReader.read(
+            let clusterSize = UInt64(bootSector.clusterSizeBytes)
+            var result: Data
+            if onDisk == 0 {
+                result = Data()
+            } else if dataAttr.flags.contains(.compressed) {
+                result = try CompressedRunReader.read(
+                    runs: runs,
+                    unitShift: Int(dataAttr.compressionUnitShift),
+                    offset: offset,
+                    length: onDisk,
+                    clusterSize: clusterSize,
+                    device: blockDevice
+                )
+            } else {
+                result = try RunReader.read(
                     runs: runs,
                     virtualOffset: offset,
                     length: onDisk,
-                    clusterSize: UInt64(bootSector.clusterSizeBytes),
+                    clusterSize: clusterSize,
                     device: blockDevice
                 )
-                : Data()
+            }
             if onDisk < count {
                 result.append(Data(count: count - onDisk))
             }

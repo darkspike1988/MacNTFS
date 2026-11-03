@@ -16,5 +16,5 @@ docker build -q -t "$IMAGE" "$here" >/dev/null
 # FUSE inside the container needs /dev/fuse and SYS_ADMIN; --privileged is the portable way on colima.
 docker run --rm --privileged \
   -e HOST_UID="$(id -u)" -e HOST_GID="$(id -g)" \
-  -v "$here":/corpus:ro -v "$out":/out -v "$repo/Tests/Fixtures":/fixtures \
+  -v macntfs-corpus-cache:/cache -v "$here":/corpus:ro -v "$out":/out -v "$repo/Tests/Fixtures":/fixtures \
   "$IMAGE" /corpus/build-in-container.sh "$@"

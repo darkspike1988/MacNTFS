@@ -21,6 +21,8 @@ This version is a break. MacNTFS is now a read-only library and command line too
 - A directory with thousands of files took over a minute to resolve a path. Lookup now stops at the first match.
 
 ### Added
+- Compressed files (NTFS LZNT1 compression) are read. Checked against compressed files written by ntfs-3g.
+- Two corpus images written by the Linux kernel driver `ntfs3`, a second NTFS implementation besides ntfs-3g.
 - Named data streams (alternate data streams): `readFile(at:stream:)`, `dataStreams(at:)`, `macntfs streams` and `macntfs cat --stream`.
 - Attribute lists (`$ATTRIBUTE_LIST`): large directories and files whose names, index blocks or data runs are split over extension records are read and merged. Checked against ntfs-3g images with directories of 5000 and 1500 entries.
 - Reference corpus: 13 NTFS images written by ntfs-3g with manifests, cross-checked with ntfs-3g tools and The Sleuth Kit, and a committed 10 MiB test image.

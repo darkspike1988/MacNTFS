@@ -133,7 +133,8 @@ enum AttributeMerger {
                 realSize: real,
                 initializedSize: initialized,
                 runs: runs
-            )
+            ),
+            compressionUnitShift: first.compressionUnitShift
         )
     }
 }
