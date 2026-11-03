@@ -7,25 +7,56 @@ on:
     branches: [ main ]
 
 jobs:
-  test:
-    runs-on: macos-14
+  # The reference images are written by ntfs-3g in a Linux container and checked by ntfs-3g
+  # and The Sleuth Kit before the Swift tests compare the engine with them.
+  corpus:
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      - name: Select Xcode 16
+      - name: Build the reference images
+        run: scripts/corpus/build.sh
+
+      - name: Cross-check the manifests with two other readers
+        run: scripts/corpus/verify.sh
+
+      - name: Keep the images for the test job
+        uses: actions/upload-artifact@v4
+        with:
+          name: corpus
+          path: Tests/Corpus/out
+          retention-days: 7
+
+  test:
+    needs: corpus
+    runs-on: macos-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Get the reference images
+        uses: actions/download-artifact@v4
+        with:
+          name: corpus
+          path: Tests/Corpus/out
+
+      - name: Show Swift version
+        run: swift --version
+
+      - name: Build
+        run: swift build
+
+      - name: Run tests
+        run: swift test
+
+      - name: Read-only guarantee of the command line tool
+        run: scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
+
+      - name: The release binary has no write calls
         run: |
-          if [ -d "/Applications/Xcode_16.app" ]; then
-            sudo xcode-select -s /Applications/Xcode_16.app
+          swift build -c release
+          if nm -u .build/release/macntfs | grep -E '_(pwrite|write|ftruncate|unlink|rename)$'; then
+            echo "The release binary imports a call that can change files" >&2
+            exit 1
           fi
-
-      - name: Show Swift & Xcode Version
-        run: |
-          swift --version
-          xcodebuild -version
-
-      - name: Run Tests
-        run: swift test --verbose
-
-      - name: Build Release Binary
-        run: swift build -c release

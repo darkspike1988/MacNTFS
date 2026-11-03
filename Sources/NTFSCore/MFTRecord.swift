@@ -13,18 +13,17 @@ public struct MFTRecord: Sendable {
         header.isDirectory
     }
 
-    public init(recordNumber: UInt64, rawData: Data, bytesPerSector: Int = 512) throws {
+    public init(recordNumber: UInt64, rawData: Data) throws {
         self.recordNumber = recordNumber
 
         var dataCopy = rawData
         let headerProbe = try MFTRecordHeader(data: dataCopy)
 
-        // Apply Fixup Array to restore sector ends and verify integrity
+        // Apply Fixup Array to restore block ends and verify integrity
         try FixupApplier.applyFixup(
             data: &dataCopy,
             updateSequenceOffset: Int(headerProbe.updateSequenceOffset),
-            updateSequenceSize: Int(headerProbe.updateSequenceSize),
-            bytesPerSector: bytesPerSector
+            updateSequenceSize: Int(headerProbe.updateSequenceSize)
         )
 
         // Re-read header from fixed data

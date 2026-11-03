@@ -1,143 +1,85 @@
 # MacNTFS
 
-> **High-Performance, Pure Swift NTFS File System Engine for macOS**  
-> *Architected for Apple FSKit (User-Space) • Clean-Room Implementation • Memory-Safe*
+> **A read-only NTFS inspector and Swift library for macOS.**
+> It reads NTFS disk images and devices. It does not write, and it is not a driver.
 
-[![Swift](https://img.shields.io/badge/Swift-6.0+-orange.svg)](https://swift.org)
-[![Platform](https://img.shields.io/badge/Platform-macOS%2014%2B%20(Sonoma%20%7C%20Sequoia)-blue.svg)](https://apple.com/macos)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
----
+## Status
 
-## 🎯 Overview
+Early, but checked: the engine is compared with reference images written by ntfs-3g (see [Testing](#testing)). It is still a prototype with known limits, listed below and in [docs/STATUS.md](docs/STATUS.md).
 
-**MacNTFS** is an open-source, modern NTFS file system implementation and management utility written in Swift. It is designed to replace legacy, kernel-dependent drivers (such as outdated KEXTs or macFUSE workarounds) with a native, user-space architecture built on Apple's **FSKit**.
+- **It cannot write.** The code has no write path at all. Disks are opened read-only, and CI checks that the command line tool contains no call that can change a file.
+- **It refuses instead of guessing.** Compressed, encrypted, attribute-list and link data is not read. The tool stops with exit code 3 and does not return wrong bytes.
+- **If you used a release from v0.1.3 to v0.2.2 to write to a volume:** those releases could produce invalid NTFS data. Back up your files and check the volume in Windows. See the [advisory](docs/advisories/2026-11-03-releases-up-to-0.2.2.md).
 
-* **Apple-Native GUI:** Modern macOS interface built with SwiftUI, SF Pro typography, NavigationSplitView, and translucent Apple materials.
-* **Full Read & Write Capability:** Seamlessly write, import, and export files to NTFS volumes with automatic filename sanitization.
-* **Forensic File Recovery (Undelete & Carving):** Scan inactive MFT records to discover deleted files and carve data back to Mac with zero data loss.
-* **Hex Inspector & Sector Diagnostics:** Low-level hexadecimal cluster & sector viewer and non-destructive hardware surface scan for bad blocks.
-* **Format to NTFS:** Initialize partitions and disks as standard Windows NTFS with configurable cluster sizes.
-* **First Aid & Repair:** Detect and repair filesystem inconsistencies, clear dirty flags from Windows unclean unmounts, and restore boot sectors.
-* **Virtual Disk Image Studio:** Create, format, and mount `.img` / `.raw` NTFS virtual disk images on demand.
-* **Menu Bar Quick Access:** Live status monitor in the macOS menu bar showing connected NTFS volumes and unmount state.
-* **Built-in File Explorer:** Drag-and-drop file transfers directly between Mac Finder and NTFS volumes without third-party drivers.
-* **Zero Kernel Extensions:** Runs fully in user space via Apple's modern `fskitd` ecosystem (no SIP disabling, no Recovery Mode reboots).
-* **Strict Memory Safety:** Implemented in pure Swift with strict concurrency checks and bounds-safe binary streaming.
-* **Clean-Room Engineering:** Built from open specifications ([MS-FSCC], standard forensic documentation) without proprietary third-party code.
+## Use it
 
----
-
-## 🖥 The MacNTFS App
-
-The macOS application provides an Apple-like experience:
-1. **Drive Dashboard:** Shows storage capacity gauges, cluster size, MFT offset, and volume serial numbers.
-2. **Forensics & Data Recovery Suite:** 
-   * **File Carving & Undelete:** Deep scan over Master File Table to restore deleted files.
-   * **Hex Inspector:** Inspect raw boot sectors, MFT records, and cluster bytes with ASCII view.
-   * **Surface Scan:** Hardware-level sector verification to detect failing disk blocks.
-3. **First Aid & Maintenance:** Instant diagnostic scan for Boot Sector, Backup Boot Sector, MFT integrity, and Dirty Flag status, with one-click automated repair.
-4. **Format Wizard:** Erase and format partitions to Windows NTFS 3.1 directly within an Apple Disk Utility-inspired workflow.
-5. **Interactive Explorer:** Direct access to directories, file metadata, drag-and-drop file imports from Mac, and file exports.
-6. **Disk Image Support:** Create new blank NTFS images (.img) or inspect existing ones via drag-and-drop.
-
----
-
-## 🚀 Installation & Downloads
-
-Download the latest release DMG from the [Releases Page](https://github.com/darkspike1988/MacNTFS/releases):
-
-1. Open `MacNTFS-x.x.x-arm64.dmg`.
-2. Drag `MacNTFS.app` into your **Applications** folder.
-3. Launch MacNTFS from Launchpad or Spotlight.
-
----
-
-## 🛠 Command-Line Interface (`macntfs`)
-
-```
-┌────────────────────────────────────────────────────────┐
-│                   macOS VFS (Kernel)                   │
-└───────────────────────────┬────────────────────────────┘
-                            │ Mach IPC / XPC
-┌───────────────────────────▼────────────────────────────┐
-│                    fskitd (Daemon)                     │
-└───────────────────────────┬────────────────────────────┘
-                            │ FSKit API
-┌───────────────────────────▼────────────────────────────┐
-│  MacNTFS.app (App & FSKit Extension)                   │
-│  ├─ FSKit Adapter (FSFileSystem, FSVolume, FSItem)     │
-│  ├─ NTFSCore Engine                                    │
-│  │   ├─ BootSector & BPB Parser                        │
-│  │   ├─ Multi-Sector Fixup Verification (USA)          │
-│  │   ├─ MFT Record & Attribute Engine                  │
-│  │   ├─ Runlist (Data Runs) Decompressor               │
-│  │   └─ B-Tree Directory Indexing ($I30)               │
-│  └─ Block Device I/O (Async POSIX pread / Cache)       │
-└────────────────────────────────────────────────────────┘
-```
-
----
-
-## 🚀 Quick Start (CLI)
-
-The included CLI tool `macntfs` allows inspecting, formatting, repairing, and writing to NTFS drives directly:
+Requires macOS 14 or later and Swift 5.10 or later.
 
 ```bash
-# Clone the repository
 git clone https://github.com/darkspike1988/MacNTFS.git
 cd MacNTFS
-
-# Build the project
 swift build -c release
 
-# Inspect an NTFS disk image or partition
-.build/release/macntfs probe /path/to/disk.img
-
-# Format a partition or file as Windows NTFS
-.build/release/macntfs format /dev/rdisk4s1 "MyNTFSDrive" 4096
-
-# Create a fresh 100 MB NTFS virtual disk image
-.build/release/macntfs create-image /tmp/sample.img 100 "NTFS_Drive"
-
-# Check integrity and auto-repair dirty unmount flags
-.build/release/macntfs check /path/to/disk.img --repair
-
-# Write/import a file into the NTFS volume
-.build/release/macntfs write /path/to/disk.img ~/Downloads/photo.jpg "photo.jpg"
-
-# List directory contents
-.build/release/macntfs ls /path/to/disk.img /
-
-# Read a file to stdout
-.build/release/macntfs cat /path/to/disk.img /photo.jpg
+.build/release/macntfs probe disk.img                 # boot sector and volume information
+.build/release/macntfs ls disk.img /Documents         # list a directory
+.build/release/macntfs cat disk.img /Documents/a.txt > a.txt
+.build/release/macntfs info disk.img 5                # one MFT record and its attributes
 ```
 
----
+Exit codes: `0` success, `1` error, `2` wrong usage, `3` the data uses an NTFS feature that is not supported.
 
-## 🗺 Roadmap
-
-| Phase | Milestone | Status |
-| :--- | :--- | :---: |
-| **Phase 1** | **Read-Only Core Engine** (VBR/BPB, Fixups, MFT Parsing, Runlists, B-Tree Listing, CLI) | ✅ **Done** |
-| **Phase 2** | **Native FSKit Integration** (`MacNTFSFileSystem`, `FSUnaryFileSystemOperations`, `FSBlockDeviceResource` bridge) | ✅ **Done** |
-| **Phase 3** | **Write Engine Architecture** (`BitmapManager` Cluster Allokator, `DataRunEncoder`, `MFTRecordBuilder` mit Fixup-Array) | ✅ **Done** |
-| **Phase 4** | **NTFS Formatter & Maintenance** (Native `mkfs.ntfs`, First Aid Check & Auto-Repair, Dirty Flag clearing) | ✅ **Done** |
-| **Phase 5** | **GUI App & Distribution** (SwiftUI App mit Menu Bar, Drag-and-Drop File Import, DMG Packaging, GitHub Actions CI) | ✅ **Done** |
-
----
-
-## 🧪 Testing
-
-MacNTFS includes a test suite covering runlists, binary decoding, fixup integrity, and boot sector parsing:
+**Devices.** `/dev/rdiskN` needs root. Do not read a volume that another driver has mounted for writing, because the result can be inconsistent. Make an image first and inspect the copy:
 
 ```bash
-swift test
+sudo dd if=/dev/rdisk4s1 of=disk.img bs=1m
 ```
 
----
+**As a library.**
 
-## 📄 License
+```swift
+import NTFSCore
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.  
-Open-source software developed for the macOS community.
+let volume = try NTFSVolume(blockDevice: try FileBlockDevice(path: "disk.img"))   // read-only
+for item in try volume.listDirectory(at: "/") {
+    print(item.name, item.fileSize)
+}
+let data = try volume.readFile(at: "/hello.txt")
+```
+
+`BlockDevice` has no write method, so code that takes a device cannot modify the disk. Add the package with `.package(url: "https://github.com/darkspike1988/MacNTFS.git", branch: "main")` and the product `NTFSCore`. The API is not stable yet.
+
+## Known limits
+
+- Directories and files whose MFT record uses an `$ATTRIBUTE_LIST` are refused. Large directories (thousands of entries) and heavily fragmented files often need one.
+- Compressed and encrypted files, symbolic links, junctions and other reparse points are refused.
+- Only the default data stream of a file is read. Named streams are not available.
+- Names are matched exactly first, then case-insensitively with an approximation of NTFS's `$UpCase` table.
+- The journal is not replayed. A volume that Windows did not shut down cleanly can show outdated data. `probe` shows the dirty flag. Hibernation and Fast Startup are not detected.
+- Only images written by ntfs-3g have been compared so far. Nothing has been checked with images written by Windows yet.
+
+## Need to write to NTFS on a Mac?
+
+Other free, open-source projects build FSKit drivers for this (listed as of 2026-11-03, based on their own descriptions, **not reviewed or tested by this project**): [ntfstool/ntfstool](https://github.com/ntfstool/ntfstool), [dr-kbadawi/ttntfs](https://github.com/dr-kbadawi/ttntfs), [HuanchuanTech/xntfs](https://github.com/HuanchuanTech/xntfs). FSKit modules need a signature backed by an Apple Developer account, so use their signed builds.
+
+## Testing
+
+```bash
+swift test                          # unit tests, hostile-input tests, mutation test, committed fixture
+scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
+```
+
+The strongest check compares the engine with reference images. `scripts/corpus/build.sh` writes 13 NTFS images with ntfs-3g in a Linux container (512 and 4096-byte sectors, clusters from 512 bytes to 64 KiB, fragmented, sparse, compressed, links, a directory with 5000 files, deleted files and more) together with manifests of paths, sizes and SHA-256 hashes computed from the source content. `scripts/corpus/verify.sh` cross-checks each manifest with ntfs-3g and The Sleuth Kit. `swift test` then requires that every file reads back with the same hash or is refused with the expected error. Wrong bytes without an error fail the test. Details: [Tests/Corpus/README.md](Tests/Corpus/README.md). Building the corpus needs Docker (on macOS for example `colima start`).
+
+## Where this is going
+
+A small, well-tested, read-only library, checked against independent references. See [concepts_brief.md](concepts_brief.md) for the plan and [docs/STATUS.md](docs/STATUS.md) for what works.
+
+## Contributing and reporting problems
+
+Issues are welcome. Include the macOS version, the command you ran, and the output. Do not attach disk images that contain private data.
+
+## License
+
+[MIT](LICENSE).

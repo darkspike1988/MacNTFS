@@ -1,6 +1,7 @@
 import Foundation
 
 /// Represents the NTFS Volume Boot Record (VBR) located at sector 0.
+/// Every value is range-checked, because the sector comes from an untrusted disk.
 public struct BootSector: Sendable {
     public let oemID: String
     public let bytesPerSector: UInt16
@@ -48,55 +49,87 @@ public struct BootSector: Sendable {
         }
         self.oemID = oem
 
-        // Bytes per sector (offset 0x0B)
-        self.bytesPerSector = try reader.readUInt16()
-        guard self.bytesPerSector >= 512 && (self.bytesPerSector & (self.bytesPerSector - 1)) == 0 else {
-            throw NTFSError.invalidBootSector("Invalid bytes per sector: \(self.bytesPerSector)")
+        // Bytes per sector (offset 0x0B): NTFS supports 512 to 4096
+        let sectorSize = try reader.readUInt16()
+        guard sectorSize >= 512 && sectorSize <= 4096 && (sectorSize & (sectorSize - 1)) == 0 else {
+            throw NTFSError.invalidBootSector("Invalid bytes per sector: \(sectorSize)")
         }
+        self.bytesPerSector = sectorSize
 
-        // Sectors per cluster (offset 0x0D)
-        self.sectorsPerCluster = try reader.readUInt8()
-        guard self.sectorsPerCluster > 0 && (self.sectorsPerCluster & (self.sectorsPerCluster - 1)) == 0 else {
-            throw NTFSError.invalidBootSector("Invalid sectors per cluster: \(self.sectorsPerCluster)")
+        // Sectors per cluster (offset 0x0D): powers of two up to 128
+        let perCluster = try reader.readUInt8()
+        guard perCluster > 0 && (perCluster & (perCluster - 1)) == 0 else {
+            throw NTFSError.invalidBootSector("Invalid sectors per cluster: \(perCluster)")
         }
+        self.sectorsPerCluster = perCluster
+        let clusterSize = UInt64(sectorSize) * UInt64(perCluster)
 
         // Skip to offset 0x28 (total sectors)
         // From 0x0E to 0x28 is 26 bytes
         try reader.skip(26)
-        self.totalSectors = try reader.readUInt64()
+        let sectors = try reader.readUInt64()
+        let (totalBytes, sizeOverflow) = sectors.multipliedReportingOverflow(by: UInt64(sectorSize))
+        guard sectors > 0 && !sizeOverflow else {
+            throw NTFSError.invalidBootSector("Invalid total sector count: \(sectors)")
+        }
+        self.totalSectors = sectors
 
-        // MFT cluster number (offset 0x30)
-        self.mftClusterNumber = try reader.readUInt64()
+        // MFT cluster number (offset 0x30) must start inside the volume
+        let mftCluster = try reader.readUInt64()
+        let (mftOffset, mftOverflow) = mftCluster.multipliedReportingOverflow(by: clusterSize)
+        guard !mftOverflow && mftOffset < totalBytes else {
+            throw NTFSError.invalidBootSector("MFT cluster \(mftCluster) lies outside the volume")
+        }
+        self.mftClusterNumber = mftCluster
 
         // MFT Mirror cluster number (offset 0x38)
         self.mftMirrorClusterNumber = try reader.readUInt64()
 
         // Clusters per MFT Record (offset 0x40)
-        let rawMftRecordVal = try reader.readUInt8()
-        let signedMftVal = Int8(bitPattern: rawMftRecordVal)
-        if signedMftVal < 0 {
-            // Negative value represents 2^(-val) bytes (e.g. 0xF6 is -10 -> 2^10 = 1024 bytes)
-            self.mftRecordSizeBytes = 1 << UInt32(-signedMftVal)
-        } else {
-            self.mftRecordSizeBytes = UInt32(signedMftVal) * UInt32(self.bytesPerSector) * UInt32(self.sectorsPerCluster)
-        }
+        self.mftRecordSizeBytes = try BootSector.decodeRecordSize(
+            try reader.readUInt8(), clusterSize: clusterSize, name: "MFT record", allowed: 1024...65536
+        )
 
         // Skip 3 reserved bytes (0x41 - 0x43)
         try reader.skip(3)
 
         // Clusters per Index Record (offset 0x44)
-        let rawIndexRecordVal = try reader.readUInt8()
-        let signedIndexVal = Int8(bitPattern: rawIndexRecordVal)
-        if signedIndexVal < 0 {
-            self.indexRecordSizeBytes = 1 << UInt32(-signedIndexVal)
-        } else {
-            self.indexRecordSizeBytes = UInt32(signedIndexVal) * UInt32(self.bytesPerSector) * UInt32(self.sectorsPerCluster)
-        }
+        self.indexRecordSizeBytes = try BootSector.decodeRecordSize(
+            try reader.readUInt8(), clusterSize: clusterSize, name: "index record", allowed: 512...65536
+        )
 
         // Skip 3 reserved bytes (0x45 - 0x47)
         try reader.skip(3)
 
         // Volume Serial Number (offset 0x48)
         self.volumeSerialNumber = try reader.readUInt64()
+    }
+
+    /// A positive value counts clusters. A negative value `-n` means 2^n bytes.
+    private static func decodeRecordSize(
+        _ raw: UInt8,
+        clusterSize: UInt64,
+        name: String,
+        allowed: ClosedRange<UInt64>
+    ) throws -> UInt32 {
+        let signed = Int(Int8(bitPattern: raw))
+        let size: UInt64
+        if signed < 0 {
+            let shift = -signed
+            guard shift <= 16 else {
+                throw NTFSError.invalidBootSector("Invalid \(name) size exponent: -\(shift)")
+            }
+            size = UInt64(1) << UInt64(shift)
+        } else {
+            let (bytes, overflow) = UInt64(signed).multipliedReportingOverflow(by: clusterSize)
+            guard !overflow else {
+                throw NTFSError.invalidBootSector("Invalid \(name) size: \(signed) clusters")
+            }
+            size = bytes
+        }
+        guard allowed.contains(size) && (size & (size - 1)) == 0 else {
+            throw NTFSError.invalidBootSector("Unsupported \(name) size: \(size) bytes")
+        }
+        return UInt32(size)
     }
 }
