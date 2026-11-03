@@ -9,6 +9,7 @@ This version is a break. MacNTFS is now a read-only library and command line too
 - The macOS app, the privileged helper, the FSKit adapter (it only probed a volume and never mounted one), the forensics helpers, and the DMG releases.
 
 ### Added
+- `NTFSFSKit`: a read-only FSKit file system module (probe, volume, lookup, directory listing, reads, link targets; writes answer `EROFS`) written against the macOS 27 SDK, with templates for the app extension in `App/`. It has not been loaded by macOS yet.
 - `ReadOnlyFileSystem`: the operations a file system module needs (lookup by item ID, paged directory listing, reads, link targets), a bounded record cache, POSIX error mapping, and write operations that always return `EROFS`. Notes on an Apple-native app: `docs/APPLE-NATIVE.md`, `docs/FSKIT-NOTES.md`, `docs/DRIVER-ARCHITECTURE.md`.
 - Twelve NTFS images written by Windows 11 (`ntfs.sys` in WinPE) with manifests, and `scripts/windows` that rebuilds them in a VMware Fusion VM without installing Windows. The engine reads all of them with the expected hashes.
 - A coverage-guided fuzzer (`NTFSFuzz`, `scripts/fuzz.sh`) and a Linux CI job that builds the engine, runs the tests and fuzzes.

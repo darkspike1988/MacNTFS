@@ -26,7 +26,7 @@ public enum FileSystemError: Error, Equatable, Sendable {
         }
     }
 
-    init(_ error: Error) {
+    public init(_ error: Error) {
         if let known = error as? FileSystemError { self = known; return }
         switch error {
         case NTFSError.pathNotFound, NTFSError.recordNotAllocated: self = .notFound
@@ -51,6 +51,8 @@ public enum FileSystemItemKind: Sendable, Equatable {
 /// An item of the volume, identified by its MFT record number as file systems expect, not by a path.
 public struct FileSystemItem: Sendable, Equatable {
     public let id: UInt64
+    /// MFT record number of the directory that holds the item (the root is its own parent).
+    public let parentID: UInt64
     public let kind: FileSystemItemKind
     /// Size of the default data stream. Zero for directories.
     public let size: UInt64
@@ -70,7 +72,9 @@ public struct FileSystemItem: Sendable, Equatable {
 
 /// One page of a directory listing.
 public struct DirectoryPage: Sendable {
-    public let items: [(name: String, item: FileSystemItem)]
+    /// `next` of an entry is the position to pass as `from` to continue directly after it. Entries that cannot be
+    /// read are left out, so positions are not the same as array indexes.
+    public let items: [(name: String, item: FileSystemItem, next: Int)]
     /// Pass this as `from` to get the next page; nil after the last one.
     public let next: Int?
 }
@@ -161,16 +165,35 @@ public final class ReadOnlyFileSystem: @unchecked Sendable {
     public func lookup(name: String, inDirectory directory: UInt64) throws -> FileSystemItem {
         let parent = try record(directory)
         guard parent.isDirectory else { throw FileSystemError.notADirectory }
-        do {
-            let child = try volume.child(named: name, in: parent, path: name)
-            records.insert(child, for: child.recordNumber)
-            if options.hidesMetadataFiles, child.recordNumber < Self.firstUserRecord, child.recordNumber != Self.rootID {
-                throw FileSystemError.notFound
+        var lastError: Error = FileSystemError.notFound
+        for candidate in Self.nameCandidates(name) {
+            do {
+                let child = try volume.child(named: candidate, in: parent, path: candidate)
+                records.insert(child, for: child.recordNumber)
+                if options.hidesMetadataFiles, child.recordNumber < Self.firstUserRecord, child.recordNumber != Self.rootID {
+                    throw FileSystemError.notFound
+                }
+                return try describe(child)
+            } catch {
+                lastError = error
+                // Only a missing name is worth another spelling; any other error is final.
+                if case NTFSError.pathNotFound = error { continue }
+                if let known = error as? FileSystemError, known == .notFound { continue }
+                throw FileSystemError(error)
             }
-            return try describe(child)
-        } catch {
-            throw FileSystemError(error)
         }
+        throw FileSystemError(lastError)
+    }
+
+    /// The spellings to try for a name: as given, then composed (NFC, how Windows writes most names),
+    /// then decomposed (NFD, how macOS often sends them). NTFS compares UTF-16 code units, not Unicode text.
+    static func nameCandidates(_ name: String) -> [String] {
+        var result = [name]
+        for variant in [name.precomposedStringWithCanonicalMapping, name.decomposedStringWithCanonicalMapping]
+        where !result.contains(where: { Array($0.utf8) == Array(variant.utf8) }) {
+            result.append(variant)
+        }
+        return result
     }
 
     /// A page of a directory. `from` is the position to continue at, starting with 0.
@@ -195,10 +218,10 @@ public final class ReadOnlyFileSystem: @unchecked Sendable {
         }
         let end = min(all.count, from + count)
         let slice = from < all.count ? all[from..<end] : []
-        var items = [(name: String, item: FileSystemItem)]()
-        for entry in slice {
+        var items = [(name: String, item: FileSystemItem, next: Int)]()
+        for (offset, entry) in slice.enumerated() {
             do {
-                items.append((entry.name, try describe(try record(entry.mftRecordNumber))))
+                items.append((entry.name, try describe(try record(entry.mftRecordNumber)), from + offset + 1))
             } catch {
                 // A stale or damaged entry is left out of the listing; a lookup of it reports the error.
                 continue
@@ -286,6 +309,7 @@ public final class ReadOnlyFileSystem: @unchecked Sendable {
         let allocated = overflow ? size : rounded / cluster * cluster
         return FileSystemItem(
             id: record.recordNumber,
+            parentID: record.recordNumber == Self.rootID ? Self.rootID : (record.primaryFileName?.parentDirectoryRecordNumber ?? Self.rootID),
             kind: kind,
             size: size,
             allocatedSize: allocated,

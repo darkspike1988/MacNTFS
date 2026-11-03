@@ -31,6 +31,15 @@ public struct LinkInfo: Sendable, Equatable {
     public var target: String {
         printName.isEmpty ? substituteName : printName
     }
+
+    /// The target written as a POSIX path, for a system that wants a symbolic link in its own form:
+    /// the NT prefix `\\??\\` is removed and backslashes become slashes. A target on another drive
+    /// (`C:/x`) stays as it is; it cannot be resolved on this volume and will dangle.
+    public var posixTarget: String {
+        var text = target
+        if text.hasPrefix("\\??\\") { text.removeFirst(4) }
+        return text.replacingOccurrences(of: "\\", with: "/")
+    }
 }
 
 enum LinkParser {

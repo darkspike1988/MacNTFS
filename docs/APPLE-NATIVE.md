@@ -28,7 +28,9 @@ Parts of the MacNTFS app:
 
 1. **`NTFSCore`** (done): the engine, read-only by type.
 2. **`ReadOnlyFileSystem`** (done, 9 tests): the operations a file system module asks for, by item ID: `item`, `lookup`, `contents` (paged), `read`, `readLink`, `streamNames`. The write operations exist and always return `FileSystemError.readOnly` (POSIX `EROFS`). It has a bounded record cache, hides the NTFS metadata files and maps every error to a POSIX code.
-3. **FSKit extension** (not written): a subclass of `FSUnaryFileSystem` that probes with the boot sector check of `NTFSCore` and returns an `FSVolume` subclass that calls `ReadOnlyFileSystem`. Media types: the Microsoft Basic Data partition GUID `EBD0A0A2-B9E5-4433-87C0-68B6B72699C7` and the content hint `Windows_NTFS`. No privileged helper, no root: FSKit gives the extension the block device resource.
+3. **FSKit adapter** (written, compiles against the macOS 27 SDK, never loaded): `Sources/NTFSFSKit`. A subclass of `FSUnaryFileSystem` that probes with the boot sector check and the volume flags, and an `FSVolume` that implements `FSVolume.Handler` and `FSVolume.ReadWriteHandler` on top of `ReadOnlyFileSystem`. Reads, directory listings (with `.` and `..`), attributes and link targets go to the engine, every other operation answers `EROFS`. Packaging templates: `App/`. Tests cover the attribute and identifier mapping, the capabilities and the refused write; the calls that take an `FSContext`, a packer or a buffer cannot be made without the FSKit daemon.
+
+Was planned as: a subclass of `FSUnaryFileSystem` that probes with the boot sector check of `NTFSCore` and returns an `FSVolume` subclass that calls `ReadOnlyFileSystem`. Media types: the Microsoft Basic Data partition GUID `EBD0A0A2-B9E5-4433-87C0-68B6B72699C7` and the content hint `Windows_NTFS`. No privileged helper, no root: FSKit gives the extension the block device resource.
 4. **Host app** (not written): a small SwiftUI app that shows the state of a volume (the `probe` information: dirty flag, hibernation, mount state), explains how to turn the extension on, and never offers a write, a repair or a "remove hibernation file" button.
 
 Rules for the module that come from the comparison:
@@ -39,6 +41,7 @@ Rules for the module that come from the comparison:
 
 ## What is missing, and what blocks it
 
-- The FSKit adapter has to be written against the SDK it is built with. The SDK in use here (macOS 27) marks the `FSVolume.Operations` protocols as deprecated in favour of handler based ones, so the adapter should be written and tested on that SDK, not from memory.
+- The adapter has never run inside macOS. Its behaviour for `lookup`, `enumerateDirectory`, `read` and `readSymbolicLink` is verified only through `ReadOnlyFileSystem` (tested) and by compiling against the SDK, not by a real mount. See `App/README.md` for the first checks.
+
 - Running the extension needs the entitlement, hence a paid Apple Developer account. Without it the extension can be compiled but macOS will not load it. That is a decision for the author (see [STATUS.md](STATUS.md)).
 - Until then, the engine and the command line tool are the supported way to read an NTFS volume.

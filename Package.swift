@@ -8,6 +8,7 @@ let package = Package(
     ],
     products: [
         .library(name: "NTFSCore", targets: ["NTFSCore"]),
+        .library(name: "NTFSFSKit", targets: ["NTFSFSKit"]),
         .executable(name: "macntfs", targets: ["MacNTFSCli"])
     ],
     targets: [
@@ -15,6 +16,12 @@ let package = Package(
             name: "NTFSCore",
             dependencies: [],
             path: "Sources/NTFSCore"
+        ),
+        // The FSKit adapter. It has code on macOS only; the app extension that loads it is an Xcode target.
+        .target(
+            name: "NTFSFSKit",
+            dependencies: ["NTFSCore"],
+            path: "Sources/NTFSFSKit"
         ),
         .executableTarget(
             name: "MacNTFSCli",
@@ -25,6 +32,11 @@ let package = Package(
             name: "NTFSFuzz",
             dependencies: ["NTFSCore"],
             path: "Sources/NTFSFuzz"
+        ),
+        .testTarget(
+            name: "NTFSFSKitTests",
+            dependencies: ["NTFSFSKit", "NTFSCore"],
+            path: "Tests/NTFSFSKitTests"
         ),
         .testTarget(
             name: "NTFSCoreTests",

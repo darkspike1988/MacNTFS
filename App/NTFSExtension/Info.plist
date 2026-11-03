@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- Template for the Info.plist of the FSKit extension target. Not tested in a built extension yet:
+     the keys follow the structure of Apple's own FSKit modules (see docs/FSKIT-NOTES.md). -->
+<plist version="1.0">
+<dict>
+    <key>CFBundleDisplayName</key>
+    <string>MacNTFS</string>
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+    <key>CFBundleName</key>
+    <string>$(PRODUCT_NAME)</string>
+    <key>CFBundlePackageType</key>
+    <string>XPC!</string>
+    <key>CFBundleShortVersionString</key>
+    <string>$(MARKETING_VERSION)</string>
+    <key>CFBundleVersion</key>
+    <string>$(CURRENT_PROJECT_VERSION)</string>
+    <key>EXAppExtensionAttributes</key>
+    <dict>
+        <key>EXExtensionPointIdentifier</key>
+        <string>com.apple.fskit.fsmodule</string>
+        <key>FSMediaTypes</key>
+        <dict>
+            <!-- GPT partitions of type "Microsoft Basic Data" (NTFS, exFAT and FAT share it: the module probes). -->
+            <key>EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</key>
+            <dict>
+                <key>FSMediaProperties</key>
+                <dict>
+                    <key>Content Hint</key>
+                    <string>EBD0A0A2-B9E5-4433-87C0-68B6B72699C7</string>
+                    <key>Leaf</key>
+                    <true/>
+                </dict>
+                <key>FSProbeOrder</key>
+                <integer>1000</integer>
+            </dict>
+            <!-- MBR partitions of type 0x07. -->
+            <key>Windows_NTFS</key>
+            <dict>
+                <key>FSMediaProperties</key>
+                <dict>
+                    <key>Content Hint</key>
+                    <string>Windows_NTFS</string>
+                    <key>Leaf</key>
+                    <true/>
+                </dict>
+                <key>FSProbeOrder</key>
+                <integer>1000</integer>
+            </dict>
+        </dict>
+    </dict>
+</dict>
+</plist>

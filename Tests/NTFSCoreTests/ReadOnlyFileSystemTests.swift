@@ -137,4 +137,51 @@ final class ReadOnlyFileSystemTests: XCTestCase {
         XCTAssertEqual(Set(try fs.streamNames(id: file.id)), ["s1", "s2"])
         XCTAssertEqual(try fs.read(id: file.id, stream: "s1", offset: 0, length: 100), Data("one".utf8))
     }
+
+    func testParentIDsPointToTheDirectory() throws {
+        let fs = try makeFileSystem()
+        let dir = try fs.lookup(name: "dir", inDirectory: ReadOnlyFileSystem.rootID)
+        let nested = try fs.lookup(name: "nested.txt", inDirectory: dir.id)
+        XCTAssertEqual(nested.parentID, dir.id)
+        XCTAssertEqual(dir.parentID, ReadOnlyFileSystem.rootID)
+        XCTAssertEqual(try fs.item(id: ReadOnlyFileSystem.rootID).parentID, ReadOnlyFileSystem.rootID)
+    }
+
+    func testExactSpellingWinsWhenTwoNamesDifferOnlyInNormalization() throws {
+        // mini.img holds two different files, one named in NFC and one in NFD.
+        let fs = try makeFileSystem()
+        let folder = try fs.lookup(name: "unicode", inDirectory: ReadOnlyFileSystem.rootID)
+        let page = try fs.contents(ofDirectory: folder.id)
+        XCTAssertEqual(page.items.count, 2)
+        XCTAssertEqual(Set(page.items.map(\.item.id)).count, 2)
+        for entry in page.items {
+            XCTAssertEqual(try fs.lookup(name: entry.name, inDirectory: folder.id).id, entry.item.id)
+        }
+    }
+
+    func testLookupFindsAnotherUnicodeSpellingOfTheSameName() throws {
+        // win-basic.img (written by Windows) has one file "Grüße-äöü.txt".
+        let image = try Fixtures.windowsImage("basic")
+        let fs = ReadOnlyFileSystem(volume: try NTFSVolume(blockDevice: MemoryBlockDevice(data: image)))
+        let folder = try fs.lookup(name: "uni", inDirectory: ReadOnlyFileSystem.rootID)
+        let stored = try fs.contents(ofDirectory: folder.id).items.map(\.name).first { $0.hasPrefix("Gr") }
+        let name = try XCTUnwrap(stored)
+        let composed = name.precomposedStringWithCanonicalMapping
+        let decomposed = name.decomposedStringWithCanonicalMapping
+        XCTAssertNotEqual(Array(composed.utf8), Array(decomposed.utf8))
+        let expected = try fs.lookup(name: name, inDirectory: folder.id).id
+        XCTAssertEqual(try fs.lookup(name: composed, inDirectory: folder.id).id, expected)
+        XCTAssertEqual(try fs.lookup(name: decomposed, inDirectory: folder.id).id, expected)
+        XCTAssertEqual(ReadOnlyFileSystem.nameCandidates("e\u{301}").count, 2)
+        XCTAssertEqual(ReadOnlyFileSystem.nameCandidates("plain").count, 1)
+    }
+
+    func testWindowsLinkTargetsBecomePosixPaths() {
+        func link(_ substitute: String, _ printed: String) -> LinkInfo {
+            LinkInfo(kind: .symlink, substituteName: substitute, printName: printed, flags: 0)
+        }
+        XCTAssertEqual(link("dir\\sub\\file.txt", "dir\\sub\\file.txt").posixTarget, "dir/sub/file.txt")
+        XCTAssertEqual(link("\\??\\C:\\target", "").posixTarget, "C:/target")
+        XCTAssertEqual(link("x", "..\\up").posixTarget, "../up")
+    }
 }
