@@ -12,6 +12,6 @@ Published 2026-11-03 at the top of the GitHub release notes of v0.1.3 through v0
 2. If you wrote to a volume: copy your files off, then run `chkdsk X:` in Windows. Run `chkdsk X: /f` only after you have a backup.
 3. Do not format disks you care about with these releases.
 
-**Fix:** The next release locks writing, formatting and repairing by default and corrects the README and website. It is read-only.
+**Fix:** The next release removes the write, format and repair code and corrects the README and website. It is read-only and its tests compare it with reference images.
 
 Questions or damage reports: open an issue and include the Windows `chkdsk` output. Do not attach disk images with private data.

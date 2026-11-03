@@ -1,37 +1,19 @@
 # MacNTFS
 
-> **Experimental, read-only NTFS inspector written in Swift.**
-> Not a driver. Do not use it to write to disks you care about.
+> **A read-only NTFS inspector and Swift library for macOS.**
+> It reads NTFS disk images and devices. It does not write, and it is not a driver.
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 ## Status
 
-MacNTFS is an early prototype. It can read parts of an NTFS volume from a disk image or device and show what it finds. It does **not** mount NTFS volumes, and it does **not** add write support to macOS.
+Early, but checked: the engine is compared with reference images written by ntfs-3g (see [Testing](#testing)). It is still a prototype with known limits, listed below and in [docs/STATUS.md](docs/STATUS.md).
 
-- **Writing, formatting and repairing are locked.** Earlier releases offered them. Code review found that they produce NTFS structures Windows may reject. See [docs/SAFETY.md](docs/SAFETY.md).
-- **If you used a release from v0.1.3 to v0.2.2 to write to a volume:** back up the data, then check the volume in Windows. See the [advisory](docs/advisories/2026-11-03-releases-up-to-0.2.2.md).
-- The test suite uses small in-memory images produced by this project itself. Nothing has been validated against Windows `chkdsk` yet.
-- Feature by feature status: [docs/STATUS.md](docs/STATUS.md).
+- **It cannot write.** The code has no write path at all. Disks are opened read-only, and CI checks that the command line tool contains no call that can change a file.
+- **It refuses instead of guessing.** Compressed, encrypted, attribute-list and link data is not read. The tool stops with exit code 3 and does not return wrong bytes.
+- **If you used a release from v0.1.3 to v0.2.2 to write to a volume:** those releases could produce invalid NTFS data. Back up your files and check the volume in Windows. See the [advisory](docs/advisories/2026-11-03-releases-up-to-0.2.2.md).
 
-## What it can do today
-
-Read-only, on images and block devices:
-
-- Parse the boot sector and MFT records and list directories.
-- Read simple files. Compressed, encrypted and attribute-list files and reparse points are not handled reliably yet and may return wrong data instead of an error. This is a known defect.
-- Experimental forensics helpers (scan for deleted records, hex dump). Not validated.
-
-## What it is not
-
-- It is **not** an FSKit driver. The FSKit adapter in `Sources/NTFSCore/FSKitAdapter.swift` only probes and loads a volume. There is no file system extension target, so nothing is mounted through it.
-- It is **not** a replacement for Paragon NTFS or Tuxera NTFS.
-
-## Need to write to NTFS on a Mac?
-
-Other free, open-source projects build FSKit drivers for this (listed as of 2026-11-03, based on their own descriptions, **not reviewed or tested by this project**): [ntfstool/ntfstool](https://github.com/ntfstool/ntfstool), [dr-kbadawi/ttntfs](https://github.com/dr-kbadawi/ttntfs), [HuanchuanTech/xntfs](https://github.com/HuanchuanTech/xntfs). FSKit modules need a signature backed by an Apple Developer account, so use their signed builds.
-
-## Build and try (read-only)
+## Use it
 
 Requires macOS 14 or later and Swift 5.10 or later.
 
@@ -39,19 +21,60 @@ Requires macOS 14 or later and Swift 5.10 or later.
 git clone https://github.com/darkspike1988/MacNTFS.git
 cd MacNTFS
 swift build -c release
-swift test
 
-# Inspect an image or, with root, a raw device you are sure is not mounted writable
-.build/release/macntfs probe disk.img
-.build/release/macntfs ls disk.img /
-.build/release/macntfs cat disk.img /path/to/file > out.bin
+.build/release/macntfs probe disk.img                 # boot sector and volume information
+.build/release/macntfs ls disk.img /Documents         # list a directory
+.build/release/macntfs cat disk.img /Documents/a.txt > a.txt
+.build/release/macntfs info disk.img 5                # one MFT record and its attributes
 ```
 
-Raw devices (`/dev/rdiskN`) need root. Reading a volume that another driver has mounted writable can return inconsistent data. Make an image first (`sudo dd if=/dev/rdiskN of=disk.img bs=1m`) and inspect the copy.
+Exit codes: `0` success, `1` error, `2` wrong usage, `3` the data uses an NTFS feature that is not supported.
+
+**Devices.** `/dev/rdiskN` needs root. Do not read a volume that another driver has mounted for writing, because the result can be inconsistent. Make an image first and inspect the copy:
+
+```bash
+sudo dd if=/dev/rdisk4s1 of=disk.img bs=1m
+```
+
+**As a library.**
+
+```swift
+import NTFSCore
+
+let volume = try NTFSVolume(blockDevice: try FileBlockDevice(path: "disk.img"))   // read-only
+for item in try volume.listDirectory(at: "/") {
+    print(item.name, item.fileSize)
+}
+let data = try volume.readFile(at: "/hello.txt")
+```
+
+`BlockDevice` has no write method, so code that takes a device cannot modify the disk. Add the package with `.package(url: "https://github.com/darkspike1988/MacNTFS.git", branch: "main")` and the product `NTFSCore`. The API is not stable yet.
+
+## Known limits
+
+- Directories and files whose MFT record uses an `$ATTRIBUTE_LIST` are refused. Large directories (thousands of entries) and heavily fragmented files often need one.
+- Compressed and encrypted files, symbolic links, junctions and other reparse points are refused.
+- Only the default data stream of a file is read. Named streams are not available.
+- Names are matched exactly first, then case-insensitively with an approximation of NTFS's `$UpCase` table.
+- The journal is not replayed. A volume that Windows did not shut down cleanly can show outdated data. `probe` shows the dirty flag. Hibernation and Fast Startup are not detected.
+- Only images written by ntfs-3g have been compared so far. Nothing has been checked with images written by Windows yet.
+
+## Need to write to NTFS on a Mac?
+
+Other free, open-source projects build FSKit drivers for this (listed as of 2026-11-03, based on their own descriptions, **not reviewed or tested by this project**): [ntfstool/ntfstool](https://github.com/ntfstool/ntfstool), [dr-kbadawi/ttntfs](https://github.com/dr-kbadawi/ttntfs), [HuanchuanTech/xntfs](https://github.com/HuanchuanTech/xntfs). FSKit modules need a signature backed by an Apple Developer account, so use their signed builds.
+
+## Testing
+
+```bash
+swift test                          # unit tests, hostile-input tests, mutation test, committed fixture
+scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
+```
+
+The strongest check compares the engine with reference images. `scripts/corpus/build.sh` writes 13 NTFS images with ntfs-3g in a Linux container (512 and 4096-byte sectors, clusters from 512 bytes to 64 KiB, fragmented, sparse, compressed, links, a directory with 5000 files, deleted files and more) together with manifests of paths, sizes and SHA-256 hashes computed from the source content. `scripts/corpus/verify.sh` cross-checks each manifest with ntfs-3g and The Sleuth Kit. `swift test` then requires that every file reads back with the same hash or is refused with the expected error. Wrong bytes without an error fail the test. Details: [Tests/Corpus/README.md](Tests/Corpus/README.md). Building the corpus needs Docker (on macOS for example `colima start`).
 
 ## Where this is going
 
-The plan under discussion is a small, well-tested, read-only Swift library with a command line tool, checked against independent references. The write, format and repair code is scheduled to be removed from the repository. See [concepts_brief.md](concepts_brief.md).
+A small, well-tested, read-only library, checked against independent references. See [concepts_brief.md](concepts_brief.md) for the plan and [docs/STATUS.md](docs/STATUS.md) for what works.
 
 ## Contributing and reporting problems
 

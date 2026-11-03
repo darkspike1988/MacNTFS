@@ -1,26 +1,30 @@
 # Status
 
-Last updated: 2026-11-03. Maturity levels: **none** (not present), **skeleton** (compiles, does not work), **prototype** (works on simple cases, known defects), **locked** (code exists but is disabled because it can destroy data).
+Last updated: 2026-11-03. Maturity levels: **none** (not present), **refused** (detected and refused with an error, never read), **prototype** (works on the tested cases, known limits), **checked** (compared with an independent reference).
 
-Evidence means a test in this repository. All tests use images produced by this project itself. No feature has been validated against Windows `chkdsk` or another independent reader yet.
+Evidence means a test in this repository. The reference for "checked" is the corpus in `Tests/Corpus` (13 images written by ntfs-3g, manifests with SHA-256 hashes computed from the source content, cross-checked with ntfs-3g tools and The Sleuth Kit) and the committed image `Tests/Fixtures/mini.img`. No feature has been compared with an image written by Windows yet.
 
-| Feature | Maturity | Evidence | Notes |
-|---|---|---|---|
-| Boot sector and BPB parsing | prototype | unit tests | Arithmetic is not bounds-checked. Manipulated values can crash the parser. |
-| MFT record parsing, fixups | prototype | unit tests | Fixup step uses the device sector size. 4096-byte sectors untested. |
-| Runlist decoding | prototype | unit tests | |
-| Directory listing and path lookup | prototype | unit tests | Linear scan. Names are compared with Foundation's `caseInsensitiveCompare`, not the volume's `$UpCase` table, and file name namespaces (Win32, DOS, POSIX) are not handled. |
-| File read (`cat`) | prototype | unit tests | Missing `$DATA`, compression, encryption and attribute lists give empty or raw data instead of an error. |
-| Alternate data streams, hard links, reparse points, symlinks | none | none | |
-| Forensics (deleted record scan, hex dump, surface scan) | prototype | unit tests | Not validated. "Recovered" does not mean intact. |
-| Volume check (`check`, no repair) | prototype | unit tests | Checks boot sector, backup boot sector, MFT record 0 and dirty flag only. A clean result does not mean the volume is healthy. |
-| Read-only app (browse, forensics) | prototype | none | Needs root or an image to read devices. |
-| Write file | locked | unit tests (self-check only) | Known defects, see SAFETY.md. |
-| Format | locked | unit tests (self-check only) | Does not produce a volume Windows is known to accept. |
-| Repair | locked | unit tests (self-check only) | Only clears the dirty flag. |
-| FSKit adapter | skeleton | none | Probe and load only. No extension target, nothing is mounted. |
-| Privileged helper for the app | locked | none | |
-| Windows validation (`chkdsk`) | none | none | |
-| Fuzzing | none | none | |
+| Feature | Maturity | Evidence and limits |
+|---|---|---|
+| Boot sector and BPB | checked | Corpus: 512 and 4096-byte sectors, 512-byte to 64 KiB clusters. Hostile values are rejected (`ParserHardeningTests`). |
+| MFT records and fixups | checked | Corpus. Fixups use 512-byte blocks on every volume. Mutation test with 3000 damaged images does not crash. |
+| Data runs | checked | Corpus: fragmented and sparse files. Overflow is rejected. |
+| Directory listing and lookup | checked | Corpus: nested directories, directory with 5000 files (only when it needs no attribute list), Unicode names including NFC and NFD variants, deleted entries not listed, hard links listed once per name. |
+| File read (`cat`) | checked | Corpus: every file in 14 images reads back with the manifest hash. Reads beyond the initialized size return zeros. |
+| Hard links | checked | Corpus `links`. |
+| Sparse files | checked | Corpus `sparse`. |
+| Interix symlinks (written by ntfs-3g as files) | prototype | Read as ordinary files. |
+| Attribute list (`$ATTRIBUTE_LIST`) | refused | Needed for large directories and heavily fragmented files. Planned. |
+| Compressed files | refused | Corpus `compressed`. |
+| Encrypted files | refused | Unit test. No corpus image. |
+| Reparse points (symlinks, junctions) | refused | Corpus `links`. |
+| Named data streams | none | Only the default stream is read. |
+| Deleted file recovery | none | Removed with the forensics code. |
+| Journal replay, hibernation detection | none | `probe` shows the dirty flag only. |
+| Mounted-volume detection | none | |
+| Windows-written images | none | |
+| Coverage-guided fuzzing | none | A seeded mutation test exists. |
+| Write, format, repair | removed | Removed in this version. See `docs/SAFETY.md` for the old releases. |
+| FSKit driver, macOS app | removed | The FSKit adapter only probed and loaded a volume and never mounted one. |
 
-How to move a row up: link a test that shows the behavior against an independent reference (a manifest written on Windows, or `ntfscat`/`fls` output) and update this table in the same change.
+How to move a row up: add a corpus image or a test that shows the behavior against an independent reference and update this table in the same change.
