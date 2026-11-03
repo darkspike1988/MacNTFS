@@ -35,6 +35,8 @@ final class CorpusTests: XCTestCase {
     private struct Manifest: Decodable {
         let schema: Int
         let image: String
+        let dirty: Bool?
+        let hibernated: Bool?
         let entries: [Entry]
     }
 
@@ -92,6 +94,19 @@ final class CorpusTests: XCTestCase {
             func fail(_ entry: Entry, _ message: String) {
                 bad += 1
                 failures.append("\(manifest.image) \(entry.path): \(message)")
+            }
+
+            // Volume state: the dirty flag and Windows hibernation, as the manifest says.
+            if let dirty = manifest.dirty, volume.isDirty != dirty {
+                bad += 1
+                failures.append("\(manifest.image): dirty flag is \(volume.isDirty), manifest says \(dirty)")
+            }
+            if let hibernated = manifest.hibernated {
+                let state = try? volume.hibernationState()
+                if (state == .hibernated) != hibernated {
+                    bad += 1
+                    failures.append("\(manifest.image): hibernation state is \(String(describing: state)), manifest says hibernated=\(hibernated)")
+                }
             }
 
             for entry in manifest.entries {

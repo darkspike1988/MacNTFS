@@ -21,6 +21,7 @@ This version is a break. MacNTFS is now a read-only library and command line too
 - A directory with thousands of files took over a minute to resolve a path. Lookup now stops at the first match.
 
 ### Added
+- Warnings for a dirty volume and for Windows hibernation or Fast Startup. A device that is mounted for writing is refused (exit code 4, `--allow-mounted` overrides). `probe` shows the dirty flag, hibernation and mount state.
 - `macntfs readlink` and `NTFSVolume.readLink(at:)`: the target of Windows symbolic links, junctions, WSL links and Interix links. Links are never followed.
 - Case-insensitive name lookup uses the volume's `$UpCase` table.
 - Compressed files (NTFS LZNT1 compression) are read. Checked against compressed files written by ntfs-3g.

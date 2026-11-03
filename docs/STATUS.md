@@ -21,8 +21,10 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Link content and reparse points in general | refused | `cat` of a link and listing a junction stop with exit code 3. Links are never followed. |
 | Named data streams (ADS) | checked | Corpus `ads`: resident and non-resident streams, a stream on a directory, a Unicode stream name, an empty stream. `macntfs streams` lists them, `cat --stream` reads one. |
 | Deleted file recovery | none | Removed with the forensics code. |
-| Journal replay, hibernation detection | none | `probe` shows the dirty flag only. |
-| Mounted-volume detection | none | |
+| Hibernation and Fast Startup detection | checked | Corpus `hibernated` and `hiberfil-woken` (a `hiberfil.sys` with and without the `hibr` mark). Reported by `probe` and as a warning. |
+| Dirty flag | prototype | Corpus `dirty`. The flag in that image was set by hand, because neither ntfs-3g nor ntfs3 leaves it set. |
+| Journal replay | none | |
+| Detection of a device mounted for writing | prototype | `MountCheck` on the list from `getmntinfo`, unit-tested with a synthetic list. Not tried with a real mounted NTFS device. |
 | Windows-written images | none | |
 | Coverage-guided fuzzing | none | A seeded mutation test exists. |
 | Write, format, repair | removed | Removed in this version. See `docs/SAFETY.md` for the old releases. |

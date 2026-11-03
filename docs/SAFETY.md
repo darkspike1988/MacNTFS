@@ -10,8 +10,8 @@ MacNTFS reads NTFS volumes. This page says what protects your data and what does
 
 ## What still can go wrong
 
-- Reading a device that another driver has mounted for writing can return inconsistent data. Read an image instead.
-- A volume that Windows did not shut down cleanly (dirty flag, hibernation, Fast Startup) can show outdated data. The journal is not replayed, and hibernation is not detected.
+- Reading a device that another driver has mounted for writing can return inconsistent data. The tool refuses such a device (exit code 4) unless you pass `--allow-mounted`. Reading an image is safer.
+- A volume that Windows did not shut down cleanly (dirty flag, hibernation, Fast Startup) can show outdated data. The tool warns about both, but it does not replay the journal and reads the volume as it is.
 - Reading from a device needs root. The tool opens it read-only, but run it only on devices you name explicitly.
 - Hostile images: the parser checks sizes and offsets and is exercised with damaged images, but it has not been fuzzed with a coverage-guided fuzzer.
 

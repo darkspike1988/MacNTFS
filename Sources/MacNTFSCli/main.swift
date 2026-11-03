@@ -13,10 +13,16 @@ struct MacNTFSCLI {
         static let failure: Int32 = 1
         static let usage: Int32 = 2
         static let unsupported: Int32 = 3
+        static let mounted: Int32 = 4
     }
 
+    /// Set by `--allow-mounted`: read a device even if another driver has it mounted for writing.
+    private static var allowMountedWritable = false
+
     static func main() {
-        let args = Array(CommandLine.arguments.dropFirst())
+        var args = Array(CommandLine.arguments.dropFirst())
+        allowMountedWritable = args.contains("--allow-mounted")
+        args.removeAll { $0 == "--allow-mounted" }
         guard let command = args.first else {
             printUsage(to: .standardError)
             exit(Exit.usage)
@@ -78,18 +84,49 @@ struct MacNTFSCLI {
 
     // MARK: - Commands
 
-    private static func openVolume(_ path: String) throws -> NTFSVolume {
-        // FileBlockDevice opens read-only unless asked otherwise. This tool never asks.
-        try NTFSVolume(blockDevice: try FileBlockDevice(path: path))
+    private static func openVolume(_ path: String, quiet: Bool = false) throws -> NTFSVolume {
+        // A device that another driver has mounted for writing can change while we read it.
+        if let mount = MountCheck.mount(forDevice: path, in: MountCheck.currentMounts()), !mount.isReadOnly, !allowMountedWritable {
+            printError("\(path) is mounted for writing at \(mount.mountPoint) (\(mount.fileSystemType)). Its contents can change while they are read. Unmount it, read an image of it, or use --allow-mounted.")
+            exit(Exit.mounted)
+        }
+
+        // FileBlockDevice opens read-only. This tool has no way to open a device for writing.
+        let volume = try NTFSVolume(blockDevice: try FileBlockDevice(path: path))
+
+        if !quiet {
+            if volume.isDirty {
+                printError("warning: the volume was not shut down cleanly (dirty flag). What it shows can be outdated.")
+            }
+            if (try? volume.hibernationState()) == .hibernated {
+                printError("warning: Windows hibernated or used Fast Startup. The volume on disk is not up to date; shut Windows down completely first.")
+            }
+        }
+        return volume
     }
 
     private static func probe(path: String) throws {
-        let vol = try openVolume(path)
+        let vol = try openVolume(path, quiet: true)
         let boot = vol.bootSector
 
         print("Device:              \(path)")
         print("Volume name:         \(vol.volumeName)")
-        print("Dirty flag:          \(vol.isDirty ? "set (not cleanly unmounted)" : "clear")")
+        print("Dirty flag:          \(vol.isDirty ? "SET (not cleanly unmounted, contents can be outdated)" : "clear")")
+        switch (try? vol.hibernationState()) {
+        case .some(.hibernated):
+            print("Hibernation:         HIBERNATED (Windows saved its state; Fast Startup or hibernate)")
+        case .some(.notHibernated):
+            print("Hibernation:         hiberfil.sys present, no saved state")
+        case .some(.absent):
+            print("Hibernation:         no hiberfil.sys")
+        case .none:
+            print("Hibernation:         unknown")
+        }
+        if let mount = MountCheck.mount(forDevice: path, in: MountCheck.currentMounts()) {
+            print("Mounted:             yes, \(mount.isReadOnly ? "read-only" : "READ-WRITE") at \(mount.mountPoint) (\(mount.fileSystemType))")
+        } else {
+            print("Mounted:             no")
+        }
         print("Bytes per sector:    \(boot.bytesPerSector)")
         print("Sectors per cluster: \(boot.sectorsPerCluster)")
         print("Cluster size:        \(boot.clusterSizeBytes) bytes")
@@ -227,7 +264,11 @@ struct MacNTFSCLI {
         is refused with exit code 3 instead of returning wrong bytes. Devices need root and should
         not be mounted writable by another driver while you read them.
 
-        Exit codes: 0 success, 1 error, 2 wrong usage, 3 unsupported NTFS feature.
+        A device that another driver has mounted for writing is refused (exit code 4), because it can
+        change while it is read. Use --allow-mounted to read it anyway. Warnings about an unclean
+        shutdown or Windows hibernation go to standard error.
+
+        Exit codes: 0 success, 1 error, 2 wrong usage, 3 unsupported NTFS feature, 4 device mounted for writing.
         """
         stream.write(Data((text + "\n").utf8))
     }

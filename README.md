@@ -31,9 +31,9 @@ swift build -c release
 .build/release/macntfs readlink disk.img /link         # where a link points
 ```
 
-Exit codes: `0` success, `1` error, `2` wrong usage, `3` the data uses an NTFS feature that is not supported.
+Exit codes: `0` success, `1` error, `2` wrong usage, `3` the data uses an NTFS feature that is not supported, `4` the device is mounted for writing.
 
-**Devices.** `/dev/rdiskN` needs root. Do not read a volume that another driver has mounted for writing, because the result can be inconsistent. Make an image first and inspect the copy:
+**Devices.** `/dev/rdiskN` needs root. A device that another driver has mounted for writing is refused (exit code 4), because its contents can change while you read them; `--allow-mounted` overrides that. A volume that is not clean (dirty flag) or that Windows hibernated (Fast Startup) is read with a warning on standard error. Make an image first and inspect the copy:
 
 ```bash
 sudo dd if=/dev/rdisk4s1 of=disk.img bs=1m
@@ -58,7 +58,7 @@ let data = try volume.readFile(at: "/hello.txt")
 - Encrypted files (EFS) are refused. Symbolic links, junctions and other reparse points are not followed and their content is not read. `macntfs readlink` shows where a link points.
 - A volume whose `$MFT` has an attribute list that points outside the part of the MFT known from record 0 is refused.
 - Names are matched by exact UTF-16 first, then ignoring case with the volume's `$UpCase` table. Unicode is not normalized, as in NTFS.
-- The journal is not replayed. A volume that Windows did not shut down cleanly can show outdated data. `probe` shows the dirty flag. Hibernation and Fast Startup are not detected.
+- The journal is not replayed. A volume that Windows did not shut down cleanly or hibernated can show outdated data. `probe` and the other commands report the dirty flag and Windows hibernation (Fast Startup), but they read the volume as it is.
 - Only images written by ntfs-3g and by the Linux kernel driver ntfs3 have been compared so far. Nothing has been checked with images written by Windows yet.
 
 ## Need to write to NTFS on a Mac?
