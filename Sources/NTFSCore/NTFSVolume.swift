@@ -188,28 +188,26 @@ public final class NTFSVolume: Sendable {
     /// Resolves a path to its corresponding MFT record.
     public func lookup(path: String) throws -> (record: MFTRecord, isDirectory: Bool) {
         let trimmed = path.trimmingCharacters(in: CharacterSet(charactersIn: "/\\ "))
-        var currentRecordNumber: UInt64 = 5 // Root directory is record 5 in NTFS
+        let rootRecordNumber: UInt64 = 5 // Root directory is record 5 in NTFS
+        var currentRecord = try readMFTRecord(number: rootRecordNumber)
 
         if trimmed.isEmpty {
-            let rootRecord = try readMFTRecord(number: currentRecordNumber)
-            return (rootRecord, true)
+            return (currentRecord, true)
         }
 
         let components = trimmed.split(separator: "/").map(String.init)
-        var currentRecord = try readMFTRecord(number: currentRecordNumber)
-
         for (index, component) in components.enumerated() {
             guard currentRecord.isDirectory else {
                 throw NTFSError.notADirectory(components.prefix(index).joined(separator: "/"))
             }
 
-            let entries = try directoryIndexReader.readEntries(from: currentRecord)
-            guard let match = entries.first(where: { $0.name.caseInsensitiveCompare(component) == .orderedSame }) else {
+            // Names match by exact UTF-16 first, then case-insensitively. Walking into a link or a
+            // directory with an attribute list throws NTFSError.unsupported.
+            guard let match = try directoryIndexReader.findEntry(named: component, in: currentRecord) else {
                 throw NTFSError.pathNotFound(path)
             }
 
             currentRecord = try readMFTRecord(number: match.mftRecordNumber)
-            currentRecordNumber = match.mftRecordNumber
         }
 
         return (currentRecord, currentRecord.isDirectory)
@@ -218,6 +216,10 @@ public final class NTFSVolume: Sendable {
     /// Reads entire file content for a given path.
     public func readFile(at path: String) throws -> Data {
         let (record, isDir) = try lookup(path: path)
+        // A directory link has the directory flag, but it is a link and not a directory to read.
+        if record.attribute(ofType: .reparsePoint) != nil {
+            throw NTFSError.unsupported(.reparse)
+        }
         guard !isDir else {
             throw NTFSError.unsupportedFeature("Cannot read raw file data of directory '\(path)'")
         }
