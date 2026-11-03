@@ -66,6 +66,18 @@ struct RawIndexEntry {
         return true
     }
 
+    /// True if the name, mapped through `upCase`, equals `foldedUnits` (the wanted name, already mapped).
+    func nameEqualsIgnoringCase(_ foldedUnits: [UInt16], upCase: UpCaseTable, in data: Data) -> Bool {
+        guard nameLength(in: data) == foldedUnits.count,
+              keyOffset + RawIndexEntry.fileNameHeaderSize + foldedUnits.count * 2 <= keyOffset + keyLength else { return false }
+        let start = data.startIndex + keyOffset + RawIndexEntry.fileNameHeaderSize
+        for (index, wanted) in foldedUnits.enumerated() {
+            let unit = UInt16(data[start + index * 2]) | (UInt16(data[start + index * 2 + 1]) << 8)
+            if upCase.fold(unit) != wanted { return false }
+        }
+        return true
+    }
+
     /// The full `$FILE_NAME` structure of the key.
     func fileName(in data: Data) throws -> FileNameAttribute {
         let start = data.startIndex + keyOffset

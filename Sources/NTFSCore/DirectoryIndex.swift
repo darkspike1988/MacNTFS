@@ -22,13 +22,19 @@ public struct DirectoryItem: Identifiable, Hashable, Sendable {
 public final class DirectoryIndexReader: Sendable {
     private let blockDevice: BlockDevice
     private let bootSector: BootSector
+    private let upCase: UpCaseTable?
 
     /// B-trees of real directories are a few levels deep. A deeper chain means a damaged or hostile index.
     private static let maxIndexDepth = 32
 
-    public init(blockDevice: BlockDevice, bootSector: BootSector) {
+    public convenience init(blockDevice: BlockDevice, bootSector: BootSector) {
+        self.init(blockDevice: blockDevice, bootSector: bootSector, upCase: nil)
+    }
+
+    init(blockDevice: BlockDevice, bootSector: BootSector, upCase: UpCaseTable?) {
         self.blockDevice = blockDevice
         self.bootSector = bootSector
+        self.upCase = upCase
     }
 
     /// Reads all directory entries from an MFT record representing a directory.
@@ -70,12 +76,18 @@ public final class DirectoryIndexReader: Sendable {
         if let found { return found }
 
         // No exact match: take the first name that matches ignoring case.
+        let foldedUnits = upCase?.fold(units)
         try walk(record) { data, entry in
             guard entry.namespace(in: data) != .dos, entry.nameLength(in: data) == units.count else { return false }
             do {
-                guard let item = try DirectoryIndexReader.makeItem(from: entry, in: data),
-                      NTFSName.isCaseInsensitiveMatch(item.name, name) else { return false }
-                found = item
+                if let upCase, let foldedUnits {
+                    guard entry.nameEqualsIgnoringCase(foldedUnits, upCase: upCase, in: data) else { return false }
+                    found = try DirectoryIndexReader.makeItem(from: entry, in: data)
+                } else {
+                    guard let item = try DirectoryIndexReader.makeItem(from: entry, in: data),
+                          NTFSName.isCaseInsensitiveMatch(item.name, name) else { return false }
+                    found = item
+                }
             } catch {
                 failure = error
             }

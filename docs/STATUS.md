@@ -9,15 +9,16 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Boot sector and BPB | checked | Corpus: 512 and 4096-byte sectors, 512-byte to 64 KiB clusters. Hostile values are rejected (`ParserHardeningTests`). |
 | MFT records and fixups | checked | Corpus. Fixups use 512-byte blocks on every volume. Mutation test with 3000 damaged images does not crash. |
 | Data runs | checked | Corpus: fragmented and sparse files. Overflow is rejected. |
-| Directory listing and lookup | checked | Corpus: nested directories, directory with 5000 files, Unicode names including NFC and NFD variants, deleted entries not listed, hard links listed once per name. |
+| Directory listing and lookup | checked | Corpus: nested directories, directory with 5000 files, Unicode names including NFC and NFD variants, case-insensitive lookup with the volume's `$UpCase` table (`LookupTests`), deleted entries not listed, hard links listed once per name. |
 | File read (`cat`) | checked | Corpus: every file in 20 images reads back with the manifest hash. Reads beyond the initialized size return zeros. |
 | Hard links | checked | Corpus `links`. |
 | Sparse files | checked | Corpus `sparse`. |
-| Interix symlinks (written by ntfs-3g as files) | prototype | Read as ordinary files. |
+| Interix symlinks (written by ntfs-3g as files) | checked | Corpus `links`. Readable as files and recognized by `readlink`. |
 | Attribute list (`$ATTRIBUTE_LIST`) | checked | Corpus `attrlist`, `manydirs` and `mini-attrlist`: extension records are read and split attributes (hard-link names, index blocks, data runs) are merged. Damaged lists are reported as corrupt. A volume whose `$MFT` list points outside the known part of the MFT is refused. |
 | Compressed files (LZNT1) | checked | Corpus `compressed`: text, random, all-zero and odd-sized files up to 1 MiB. Hand-computed LZNT1 vectors in `LZNT1Tests`. Damaged data is reported as corrupt. |
 | Encrypted files | refused | Unit test. No corpus image. |
-| Reparse points (symlinks, junctions) | refused | Corpus `links`. |
+| Links: where they point (`readlink`) | checked | Corpus `links`: Windows file symlink, directory symlink and junction (substitute name, print name, flags), and Interix links written by ntfs-3g. WSL links are parsed but have no corpus image. |
+| Link content and reparse points in general | refused | `cat` of a link and listing a junction stop with exit code 3. Links are never followed. |
 | Named data streams (ADS) | checked | Corpus `ads`: resident and non-resident streams, a stream on a directory, a Unicode stream name, an empty stream. `macntfs streams` lists them, `cat --stream` reads one. |
 | Deleted file recovery | none | Removed with the forensics code. |
 | Journal replay, hibernation detection | none | `probe` shows the dirty flag only. |

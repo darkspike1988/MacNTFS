@@ -14,6 +14,13 @@ final class CorpusTests: XCTestCase {
         let sha256: String
     }
 
+    private struct Reparse: Decodable {
+        let kind: String
+        let substituteName: String
+        let printName: String
+        let flags: Int
+    }
+
     private struct Entry: Decodable {
         let path: String
         let type: String
@@ -21,6 +28,8 @@ final class CorpusTests: XCTestCase {
         let sha256: String?
         let expect: String?
         let streams: [Stream]?
+        let linkTarget: String?
+        let reparse: Reparse?
     }
 
     private struct Manifest: Decodable {
@@ -146,6 +155,38 @@ final class CorpusTests: XCTestCase {
 
                 default:
                     fail(entry, "unknown entry type '\(entry.type)'")
+                }
+
+                // Where links point. Reparse points carry their raw names, Interix links their target path.
+                if entry.type == "symlink" {
+                    do {
+                        let (record, isDirectory) = try volume.lookup(path: entry.path)
+                        if let link = try volume.linkInfo(of: record) {
+                            if let reparse = entry.reparse {
+                                let kindMatches: Bool
+                                switch reparse.kind {
+                                case "junction": kindMatches = link.kind == .junction
+                                case "symlink-dir": kindMatches = link.kind == .symlink && isDirectory
+                                case "symlink-file": kindMatches = link.kind == .symlink && !isDirectory
+                                default: kindMatches = false
+                                }
+                                if kindMatches && link.substituteName == reparse.substituteName
+                                    && link.printName == reparse.printName && Int(link.flags) == reparse.flags {
+                                    ok += 1
+                                } else {
+                                    fail(entry, "link is \(link), manifest says \(reparse)")
+                                }
+                            } else if link.kind == .interixSymlink && link.target == entry.linkTarget {
+                                ok += 1
+                            } else {
+                                fail(entry, "link target '\(link.target)', manifest says '\(entry.linkTarget ?? "-")'")
+                            }
+                        } else {
+                            fail(entry, "not recognised as a link")
+                        }
+                    } catch {
+                        fail(entry, "link: \(error)")
+                    }
                 }
 
                 // Named data streams, including the streams of directories.

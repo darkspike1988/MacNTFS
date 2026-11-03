@@ -28,6 +28,7 @@ swift build -c release
 .build/release/macntfs info disk.img 5                # one MFT record and its attributes
 .build/release/macntfs streams disk.img /a.txt        # default and named data streams
 .build/release/macntfs cat disk.img /a.txt --stream name   # one named data stream
+.build/release/macntfs readlink disk.img /link         # where a link points
 ```
 
 Exit codes: `0` success, `1` error, `2` wrong usage, `3` the data uses an NTFS feature that is not supported.
@@ -54,9 +55,9 @@ let data = try volume.readFile(at: "/hello.txt")
 
 ## Known limits
 
-- Encrypted files (EFS), symbolic links, junctions and other reparse points are refused.
+- Encrypted files (EFS) are refused. Symbolic links, junctions and other reparse points are not followed and their content is not read. `macntfs readlink` shows where a link points.
 - A volume whose `$MFT` has an attribute list that points outside the part of the MFT known from record 0 is refused.
-- Names are matched exactly first, then case-insensitively with an approximation of NTFS's `$UpCase` table.
+- Names are matched by exact UTF-16 first, then ignoring case with the volume's `$UpCase` table. Unicode is not normalized, as in NTFS.
 - The journal is not replayed. A volume that Windows did not shut down cleanly can show outdated data. `probe` shows the dirty flag. Hibernation and Fast Startup are not detected.
 - Only images written by ntfs-3g and by the Linux kernel driver ntfs3 have been compared so far. Nothing has been checked with images written by Windows yet.
 

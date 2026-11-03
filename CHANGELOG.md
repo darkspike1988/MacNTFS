@@ -21,6 +21,8 @@ This version is a break. MacNTFS is now a read-only library and command line too
 - A directory with thousands of files took over a minute to resolve a path. Lookup now stops at the first match.
 
 ### Added
+- `macntfs readlink` and `NTFSVolume.readLink(at:)`: the target of Windows symbolic links, junctions, WSL links and Interix links. Links are never followed.
+- Case-insensitive name lookup uses the volume's `$UpCase` table.
 - Compressed files (NTFS LZNT1 compression) are read. Checked against compressed files written by ntfs-3g.
 - Two corpus images written by the Linux kernel driver `ntfs3`, a second NTFS implementation besides ntfs-3g.
 - Named data streams (alternate data streams): `readFile(at:stream:)`, `dataStreams(at:)`, `macntfs streams` and `macntfs cat --stream`.

@@ -7,6 +7,8 @@ public final class NTFSVolume: Sendable {
     public let isDirty: Bool
     public let mftRecordRuns: [DataRun]
     private let directoryIndexReader: DirectoryIndexReader
+    /// The volume's case folding table, or nil if `$UpCase` could not be read.
+    private let upCase: UpCaseTable?
 
     public init(blockDevice: BlockDevice) throws {
         self.blockDevice = blockDevice
@@ -15,7 +17,6 @@ public final class NTFSVolume: Sendable {
         let bootData = try blockDevice.read(offset: 0, count: 512)
         let boot = try BootSector(data: bootData)
         self.bootSector = boot
-        self.directoryIndexReader = DirectoryIndexReader(blockDevice: blockDevice, bootSector: boot)
 
         // 2. Read bootstrap MFT Record 0 ($MFT) directly from boot.mftByteOffset
         let mft0Raw = try blockDevice.read(offset: boot.mftByteOffset, count: Int(boot.mftRecordSizeBytes))
@@ -43,6 +44,11 @@ public final class NTFSVolume: Sendable {
             throw NTFSError.corruptRunlist("$MFT record 0 does not contain non-resident $DATA runs")
         }
         self.mftRecordRuns = runs
+
+        // The $UpCase table (record 10) decides which names count as equal when case is ignored.
+        let upCase = NTFSVolume.loadUpCase(runs: runs, bootSector: boot, device: blockDevice)
+        self.upCase = upCase
+        self.directoryIndexReader = DirectoryIndexReader(blockDevice: blockDevice, bootSector: boot, upCase: upCase)
 
         // 4. Read $Volume (Record 3) to extract Volume Name and Flags
         var detectedName = "NTFS"
@@ -88,6 +94,21 @@ public final class NTFSVolume: Sendable {
         return try NTFSVolume.resolveAttributeList(base: base, bootSector: bootSector, device: blockDevice) { [mftRecordRuns, bootSector, blockDevice] extensionNumber in
             try NTFSVolume.readRecord(recordNumber: extensionNumber, runs: mftRecordRuns, bootSector: bootSector, device: blockDevice)
         }
+    }
+
+    private static func loadUpCase(runs: [DataRun], bootSector: BootSector, device: BlockDevice) -> UpCaseTable? {
+        guard let record = try? readRecord(recordNumber: 10, runs: runs, bootSector: bootSector, device: device),
+              let attribute = record.defaultDataAttribute,
+              case .nonResident(_, _, _, let realSize, _, let attributeRuns) = attribute.payload,
+              realSize == UInt64(UpCaseTable.byteCount),
+              let data = try? RunReader.read(
+                runs: attributeRuns,
+                virtualOffset: 0,
+                length: UpCaseTable.byteCount,
+                clusterSize: UInt64(bootSector.clusterSizeBytes),
+                device: device
+              ) else { return nil }
+        return UpCaseTable(data: data)
     }
 
     /// Most extension records one file may use. A file with this many is damaged or hostile.
@@ -196,7 +217,7 @@ public final class NTFSVolume: Sendable {
         if stream == nil && record.attribute(ofType: .reparsePoint) != nil {
             throw NTFSError.unsupported(.reparse)
         }
-        let selected = stream.map { record.dataStream(named: $0) } ?? record.defaultDataAttribute
+        let selected = stream.map { record.dataStream(named: $0, upCase: upCase) } ?? record.defaultDataAttribute
         guard let dataAttr = selected else {
             // A file can have no default stream. It reads as empty. A missing named stream is an error.
             if let stream {

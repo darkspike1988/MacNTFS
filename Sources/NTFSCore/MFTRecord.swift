@@ -126,8 +126,12 @@ public struct MFTRecord: Sendable {
 
     /// The `$DATA` attribute of a named stream. An exact UTF-16 match wins over a case-insensitive one.
     public func dataStream(named name: String) -> NTFSAttribute? {
+        dataStream(named: name, upCase: nil)
+    }
+
+    func dataStream(named name: String, upCase: UpCaseTable?) -> NTFSAttribute? {
         let named = attributes.filter { $0.type == .data && $0.name != nil }
         return named.first { NTFSName.isExactMatch($0.name ?? "", name) }
-            ?? named.first { NTFSName.isCaseInsensitiveMatch($0.name ?? "", name) }
+            ?? named.first { NTFSName.isCaseInsensitiveMatch($0.name ?? "", name, upCase: upCase) }
     }
 }

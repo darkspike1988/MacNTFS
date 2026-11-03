@@ -48,6 +48,10 @@ struct MacNTFSCLI {
                 guard args.count == 3 else { usageError("macntfs streams <image-or-device> <path>") }
                 try streams(imagePath: args[1], path: args[2])
 
+            case "readlink":
+                guard args.count == 3 else { usageError("macntfs readlink <image-or-device> <path>") }
+                try readLink(imagePath: args[1], path: args[2])
+
             case "info":
                 guard args.count == 3, let record = UInt64(args[2]) else {
                     usageError("macntfs info <image-or-device> <mft-record-number>")
@@ -112,6 +116,25 @@ struct MacNTFSCLI {
             let size = item.isDirectory ? "<DIR>" : String(item.fileSize)
             let padded = String(repeating: " ", count: max(0, 12 - size.count)) + size
             print("\(kind) \(padded)  \(formatter.string(from: item.modificationDate)) UTC  \(item.name)")
+        }
+    }
+
+    private static func readLink(imagePath: String, path: String) throws {
+        let vol = try openVolume(imagePath)
+        guard let link = try vol.readLink(at: path) else {
+            printError("'\(path)' is not a link")
+            exit(Exit.failure)
+        }
+        switch link.kind {
+        case .symlink: print("symlink\(link.isRelative ? " (relative)" : "")")
+        case .junction: print("junction")
+        case .wslSymlink: print("wsl symlink")
+        case .interixSymlink: print("interix symlink")
+        case .other(let tag): print("other reparse point (tag 0x\(String(tag, radix: 16)))")
+        }
+        print(link.target)
+        if link.substituteName != link.target && !link.substituteName.isEmpty {
+            print("substitute name: \(link.substituteName)")
         }
     }
 
@@ -197,6 +220,7 @@ struct MacNTFSCLI {
           macntfs cat <image-or-device> <file-path>        Write a file to standard output
                       [--stream NAME]                      ... or one of its named data streams
           macntfs streams <image-or-device> <path>         List the data streams of a file or directory
+          macntfs readlink <image-or-device> <path>        Show where a link points (the link is not followed)
           macntfs info <image-or-device> <mft-record>      Show one MFT record and its attributes
 
         Opens images and devices read-only. Encrypted and link data
