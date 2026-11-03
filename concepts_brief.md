@@ -2,7 +2,7 @@
 
 * **Author:** Michael Katschko
 * **Date:** 2026-11-03
-* **Status:** Entwurf, Version 3, ergänzt um die Entscheidungen vom 2026-11-03 (siehe "Key Decisions"). E1 ist vom Assistenten im Auftrag des Autors entschieden und widerrufbar. Der Autor hat entschieden, den Ansatz zu ändern. Welche neue Richtung gilt, ist noch nicht bestätigt. Version 3 enthält die Befunde von zwei Review-Runden (zwölf Prüfungen) und vorgeschlagene Kürzungen.
+* **Status:** Version 3, ergänzt um die Entscheidungen vom 2026-11-03 und um den Umsetzungsstand am Ende des Dokuments. E1 ist vom Assistenten im Auftrag des Autors entschieden und widerrufbar. Der Autor hat entschieden, den Ansatz zu ändern. Welche neue Richtung gilt, ist noch nicht bestätigt. Version 3 enthält die Befunde von zwei Review-Runden (zwölf Prüfungen) und vorgeschlagene Kürzungen.
 
 ## Overview
 
@@ -171,7 +171,7 @@ Der Name "MacNTFS" ist bereits vergeben (rookiestudio1/MacNTFS und ähnliche).
 | M4 | CLI `ls` und `cat` auf Images, Schreibschutz-Test (Hash vor und nach jedem Aufruf) | Alle CLI-Befehle bestehen den Schreibschutz-Test | M1, M2 | 2 bis 3 Tage |
 | M5 | Release 0.1 (Quellcode, Homebrew-Formel aus Quellcode), `CONTRIBUTING.md`, Hinweis für Nutzer von 0.1.x | Tag gesetzt, Release-Notes nennen Bruch und bekannte Grenzen | M3, M4, E8 | 2 Tage |
 
-**Stand M0a (lokal umgesetzt, nicht committet):**
+**Stand M0a (umgesetzt in Pull Request #2):**
 - Schreibende Funktionen sind zentral gesperrt (`ExperimentalGate`, Entsperren nur mit `MACNTFS_EXPERIMENTAL_UNSAFE=1`): `NTFSVolumeWriter.writeFile`, `NTFSFormatter.format`, `NTFSVolumeChecker.repair`, beide Funktionen von `PrivilegedDiskBridge`, `create-image` im CLI und in der App. Knöpfe und Dropzonen sind ausgeblendet, solange gesperrt. Der fest verdrahtete Helper-Pfad aus dem Home-Verzeichnis des Autors ist entfernt. Die App öffnet Geräte nur noch lesend.
 - README, `docs/index.html`, `LICENSE` sind korrigiert. Neu: `docs/SAFETY.md`, `docs/STATUS.md`, `docs/advisories/2026-11-03-releases-up-to-0.2.2.md` (Entwurf).
 - Geprüft: Build grün, 18 Tests grün (neuer Test: gesperrt als Standard). Im CLI per Hand geprüft: gesperrte Befehle melden einen Fehler und lassen das Image unverändert (Hash gleich), lesende Befehle ändern kein Byte.
@@ -179,3 +179,20 @@ Der Name "MacNTFS" ist bereits vergeben (rookiestudio1/MacNTFS und ähnliche).
 - **Wichtig:** Auf GitHub gibt es bereits zehn oder mehr öffentliche Releases bis v0.2.2 (alle vom 2026-10-21), deren DMGs schreiben, formatieren und "reparieren". Diese Releases zu kennzeichnen oder zurückzuziehen ist Sache des Autors (E8). Vorschlag: Hinweistext in die Release-Notes, dann das nächste Release als 0.3.0 mit Bruch kennzeichnen. Das Skript `scripts/build_dmg.sh` hat noch den Standardwert 0.1.5, die Website nannte 0.1.4, beides passt nicht zum Stand v0.2.2.
 
 **Nicht geprüft:** Selbstaussagen der Konkurrenzprojekte, ob diese auf macOS 27 laufen, die Reife von libfsntfs, der Rust-Crate, MFTECmd und dissect.ntfs, ob ntfs-3g über Homebrew auf macOS ohne macFUSE nutzbar ist, ob die Xcode-Toolchain libFuzzer mitbringt, ob es ein GitHub-Runner-Image für macOS 27 gibt, die Bedingungen der Windows-Evaluierungs-VM, Teile des Codes (Verzeichnis-Index, Forensik, die meisten Views) wurden nur per grep oder gar nicht gelesen.
+
+## Umsetzungsstand (2026-11-03, Abend)
+
+Umgesetzt in Pull Request #3 (enthält die Commits von #2), noch nicht gemergt:
+
+| Meilenstein | Stand | Beleg |
+|---|---|---|
+| M0a Texte und Sperre | erledigt | PR #2 |
+| M1 Parser härten | erledigt | `ParserHardeningTests`; der Mutationstest stürzte den alten Parser bei Iteration 242 ab und läuft jetzt über 3000 Images durch |
+| M3 Korpus und Vergleich | erledigt für ntfs-3g-Images | 13 Korpus-Images plus `mini.img`: 0 falsche Ausgaben. Gefunden und behoben: NFC/NFD-Namen, Junction-Fehler, Attributlisten-Fehler, quadratische Suche |
+| M2 Entfernen | erledigt | Schreibcode, Formatter, Prüfer, Forensik, FSKit-Gerüst, App, DMG-Skript, Release-Workflow gelöscht; `BlockDevice` ohne Schreibmethode |
+| M4 CLI | erledigt | `probe`, `ls`, `cat`, `info`; `scripts/readonly-check.sh`; Symbolprüfung im CI |
+| M5 Release 0.3.0 | vorbereitet | `CHANGELOG.md`; Veröffentlichung wartet auf grüne CI, Merge und Freigabe des Autors |
+
+**Abweichungen von der Planung:** M3 lief vor M2, weil die Unit-Tests ein echtes Image statt des eigenen Formatters brauchten. Der Produktname bleibt `NTFSCore` (E6), die Umbenennung (E4) ist weiter offen.
+
+**Noch offen:** die neue CI ist auf GitHub noch nicht gelaufen; Windows-erzeugte Images fehlen (braucht eine Windows-VM); `$ATTRIBUTE_LIST` wird abgelehnt, was große Verzeichnisse und stark fragmentierte Dateien betrifft (nächster sinnvoller Schritt, das Orakel dafür ist da); kein abdeckungsgesteuerter Fuzzer; E4 und E7 bis E8 aus der Entscheidungsvorlage.
