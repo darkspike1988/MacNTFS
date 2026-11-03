@@ -1,5 +1,14 @@
 import Foundation
 
+/// Valid NTFS features this library refuses to read instead of returning wrong data.
+/// The raw values match the `unsupported:<feature>` strings of the test corpus manifests.
+public enum UnsupportedFeature: String, Sendable, Equatable {
+    case compression
+    case encryption
+    case attributeList = "attribute-list"
+    case reparse
+}
+
 public enum NTFSError: Error, LocalizedError, Sendable {
     case invalidBootSector(String)
     case invalidSignature(expected: String, found: String)
@@ -14,9 +23,15 @@ public enum NTFSError: Error, LocalizedError, Sendable {
     case notADirectory(String)
     case invalidIndexEntry
     case experimentalDisabled(String)
+    case unsupported(UnsupportedFeature)
+    case resourceLimit(String)
 
     public var errorDescription: String? {
         switch self {
+        case .unsupported(let feature):
+            return "Unsupported NTFS feature: \(feature.rawValue). The data is not read, because returning it would give wrong bytes."
+        case .resourceLimit(let msg):
+            return "Resource limit: \(msg)"
         case .experimentalDisabled(let feature):
             return "'\(feature)' is disabled. Writing, formatting and repairing are experimental, can destroy data and are locked by default (see docs/SAFETY.md)."
         case .invalidBootSector(let msg):

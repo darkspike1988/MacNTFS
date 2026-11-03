@@ -2,13 +2,18 @@ import Foundation
 
 /// Handles NTFS Multi-Sector Header Update (Fixup Array) verification and restoration.
 public enum FixupApplier {
+    /// NTFS multi-sector protection works on 512-byte blocks on every volume.
+    public static let blockSize = 512
+
     /// Applies fixups in-place to raw record data (MFT Record or INDX block).
     ///
     /// - Parameters:
     ///   - data: Mutable record data buffer.
     ///   - updateSequenceOffset: Offset to USA relative to record start.
     ///   - updateSequenceSize: Total number of 2-byte words in USA (1 header + 1 per sector).
-    ///   - bytesPerSector: Sector size (usually 512).
+    ///   - bytesPerSector: Ignored. NTFS protects every 512-byte block of a record,
+    ///     whatever the device sector size is. The parameter goes away together
+    ///     with the write and forensics code that still passes it.
     /// - Throws: `NTFSError.fixupVerificationFailed` or `NTFSError.outOfBounds`
     public static func applyFixup(
         data: inout Data,
@@ -34,12 +39,17 @@ public enum FixupApplier {
         let usn = UInt16(data[usnOffset]) | (UInt16(data[usnOffset + 1]) << 8)
 
         let numberOfSectors = updateSequenceSize - 1
+        let blockSize = FixupApplier.blockSize
+        guard numberOfSectors <= data.count / blockSize else {
+            throw NTFSError.outOfBounds(
+                offset: UInt64(updateSequenceOffset),
+                requested: numberOfSectors * blockSize,
+                available: data.count
+            )
+        }
 
         for i in 0..<numberOfSectors {
-            let sectorEndOffset = (i + 1) * bytesPerSector - 2
-            guard sectorEndOffset + 2 <= data.count else {
-                break
-            }
+            let sectorEndOffset = (i + 1) * blockSize - 2
 
             // Read the signature currently at the end of the sector
             let currentSigOffset = baseStart + sectorEndOffset

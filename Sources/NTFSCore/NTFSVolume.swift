@@ -21,6 +21,12 @@ public final class NTFSVolume: Sendable {
         let mft0Raw = try blockDevice.read(offset: boot.mftByteOffset, count: Int(boot.mftRecordSizeBytes))
         let mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw, bytesPerSector: Int(boot.bytesPerSector))
 
+        // A fragmented $MFT can keep part of its run list in extension records. Those are not read,
+        // so opening such a volume would show only the first part of the MFT.
+        if mft0.attribute(ofType: .attributeList) != nil {
+            throw NTFSError.unsupported(.attributeList)
+        }
+
         // 3. Extract $MFT's own $DATA runlist
         guard let mftDataAttr = mft0.defaultDataAttribute,
               let runs = mftDataAttr.runs else {
@@ -77,17 +83,18 @@ public final class NTFSVolume: Sendable {
         device: BlockDevice
     ) throws -> MFTRecord {
         let recordSize = UInt64(bootSector.mftRecordSizeBytes)
-        let virtualOffset = recordNumber * recordSize
+        let (virtualOffset, overflow) = recordNumber.multipliedReportingOverflow(by: recordSize)
+        guard !overflow else {
+            throw NTFSError.outOfBounds(offset: recordNumber, requested: Int(recordSize), available: 0)
+        }
 
-        guard let rawBytes = try readFromRuns(
+        let rawBytes = try RunReader.read(
             runs: runs,
             virtualOffset: virtualOffset,
             length: Int(recordSize),
-            bootSector: bootSector,
+            clusterSize: UInt64(bootSector.clusterSizeBytes),
             device: device
-        ) else {
-            throw NTFSError.outOfBounds(offset: virtualOffset, requested: Int(recordSize), available: 0)
-        }
+        )
 
         return try MFTRecord(
             recordNumber: recordNumber,
@@ -96,10 +103,30 @@ public final class NTFSVolume: Sendable {
         )
     }
 
+    /// Largest range `readData` returns in one call. Read bigger files in chunks with `offset` and `length`.
+    public static let maxSingleReadBytes: UInt64 = 1 << 30
+
     /// Reads the payload data for the default $DATA stream of a given MFT record.
+    /// Throws `NTFSError.unsupported` for data it cannot read correctly instead of returning wrong bytes.
     public func readData(record: MFTRecord, offset: UInt64 = 0, length: Int? = nil) throws -> Data {
+        if let length, length < 0 {
+            throw NTFSError.outOfBounds(offset: offset, requested: length, available: 0)
+        }
+        // The data may live in extension records that are not read, or be a link or a placeholder.
+        if record.attribute(ofType: .attributeList) != nil {
+            throw NTFSError.unsupported(.attributeList)
+        }
+        if record.attribute(ofType: .reparsePoint) != nil {
+            throw NTFSError.unsupported(.reparse)
+        }
         guard let dataAttr = record.defaultDataAttribute else {
             return Data()
+        }
+        if dataAttr.flags.contains(.compressed) {
+            throw NTFSError.unsupported(.compression)
+        }
+        if dataAttr.flags.contains(.encrypted) {
+            throw NTFSError.unsupported(.encryption)
         }
 
         switch dataAttr.payload {
@@ -112,20 +139,34 @@ public final class NTFSVolume: Sendable {
             let end = start + Int(toRead)
             return resData.subdata(in: start..<end)
 
-        case .nonResident(_, _, _, let realSize, _, let runs):
+        case .nonResident(let startingVCN, _, _, let realSize, let initializedSize, let runs):
+            guard startingVCN == 0 else {
+                throw NTFSError.corruptRunlist("$DATA starts at VCN \(startingVCN), expected 0")
+            }
             guard offset < realSize else { return Data() }
             let available = realSize - offset
-            let toRead = length != nil ? min(UInt64(length!), available) : available
-            guard let bytes = try NTFSVolume.readFromRuns(
-                runs: runs,
-                virtualOffset: offset,
-                length: Int(toRead),
-                bootSector: bootSector,
-                device: blockDevice
-            ) else {
-                throw NTFSError.outOfBounds(offset: offset, requested: Int(toRead), available: 0)
+            let wanted = length != nil ? min(UInt64(length!), available) : available
+            guard wanted <= NTFSVolume.maxSingleReadBytes else {
+                throw NTFSError.resourceLimit("Reading \(wanted) bytes at once. Read large files in chunks with offset and length.")
             }
-            return bytes
+            let count = Int(wanted)
+
+            // Bytes at or after the initialized size read as zeros, whatever is stored on disk.
+            let validEnd = min(initializedSize, realSize)
+            let onDisk = offset < validEnd ? Int(min(wanted, validEnd - offset)) : 0
+            var result = onDisk > 0
+                ? try RunReader.read(
+                    runs: runs,
+                    virtualOffset: offset,
+                    length: onDisk,
+                    clusterSize: UInt64(bootSector.clusterSizeBytes),
+                    device: blockDevice
+                )
+                : Data()
+            if onDisk < count {
+                result.append(Data(count: count - onDisk))
+            }
+            return result
         }
     }
 
@@ -217,52 +258,5 @@ public final class NTFSVolume: Sendable {
     /// Recovers / carves the data of a deleted file by its MFT record number.
     public func recoverDeletedFile(recordNumber: UInt64) throws -> (name: String, data: Data) {
         return try NTFSForensicsEngine.recoverDeletedFile(volume: self, recordNumber: recordNumber)
-    }
-
-    private static func readFromRuns(
-        runs: [DataRun],
-        virtualOffset: UInt64,
-        length: Int,
-        bootSector: BootSector,
-        device: BlockDevice
-    ) throws -> Data? {
-        let clusterSize = UInt64(bootSector.clusterSizeBytes)
-        var result = Data()
-        result.reserveCapacity(length)
-        var currentRunVCN: UInt64 = 0
-        var bytesNeeded = length
-        var targetOffset = virtualOffset
-
-        for run in runs {
-            let runByteCount = run.clusterCount * clusterSize
-            let runStartByte = currentRunVCN * clusterSize
-            let runEndByte = runStartByte + runByteCount
-
-            if targetOffset >= runStartByte && targetOffset < runEndByte {
-                let offsetWithinRun = targetOffset - runStartByte
-                let availableInRun = runByteCount - offsetWithinRun
-                let toRead = min(Int(availableInRun), bytesNeeded)
-
-                if let lcn = run.startingLCN {
-                    let diskOffset = (lcn * clusterSize) + offsetWithinRun
-                    let chunk = try device.read(offset: diskOffset, count: toRead)
-                    result.append(chunk)
-                } else {
-                    // Sparse hole: pad with zeros
-                    result.append(Data(repeating: 0, count: toRead))
-                }
-
-                bytesNeeded -= toRead
-                targetOffset += UInt64(toRead)
-
-                if bytesNeeded <= 0 {
-                    break
-                }
-            }
-
-            currentRunVCN += run.clusterCount
-        }
-
-        return result.count == length ? result : nil
     }
 }

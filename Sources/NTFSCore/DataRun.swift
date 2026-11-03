@@ -58,7 +58,11 @@ public enum RunlistDecoder {
                 // Read signed LCN delta with proper two's-complement sign extension
                 let rawDeltaBytes = try reader.readBytes(count: offsetSize)
                 let delta = signExtend(bytes: rawDeltaBytes)
-                currentLCN += delta
+                let (nextLCN, overflow) = currentLCN.addingReportingOverflow(delta)
+                guard !overflow else {
+                    throw NTFSError.corruptRunlist("LCN delta overflows")
+                }
+                currentLCN = nextLCN
 
                 guard currentLCN >= 0 else {
                     throw NTFSError.corruptRunlist("Computed negative LCN: \(currentLCN)")

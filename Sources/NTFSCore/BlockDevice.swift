@@ -144,7 +144,7 @@ public final class FileBlockDevice: BlockDevice, @unchecked Sendable {
 
     public func read(offset: UInt64, count: Int) throws -> Data {
         guard count > 0 else { return Data() }
-        if size > 0 && offset + UInt64(count) > size {
+        if size > 0 && (offset > size || UInt64(count) > size - offset) {
             throw BlockDeviceError.outOfBounds(offset: offset, requested: count, totalSize: size)
         }
 
@@ -251,7 +251,7 @@ public final class MemoryBlockDevice: BlockDevice, @unchecked Sendable {
     public func read(offset: UInt64, count: Int) throws -> Data {
         guard count > 0 else { return Data() }
         let total = UInt64(data.count)
-        if offset + UInt64(count) > total {
+        if offset > total || UInt64(count) > total - offset {
             throw BlockDeviceError.outOfBounds(offset: offset, requested: count, totalSize: total)
         }
         let start = Int(offset)
