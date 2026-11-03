@@ -1,4 +1,4 @@
-#if canImport(FSKit)
+#if canImport(FSKit) && NTFS_FSKIT
 import Foundation
 import FSKit
 import NTFSCore

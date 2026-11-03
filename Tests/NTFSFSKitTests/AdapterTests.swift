@@ -1,7 +1,7 @@
 // The FSKit adapter can only be tested where FSKit exists, and without the FSKit daemon: the calls that take an
 // FSContext, a packer or a data buffer cannot be made here, because FSKit does not let a client create those.
 // What is tested: the mapping of attributes and identifiers, the capabilities, and that writes are refused.
-#if canImport(FSKit)
+#if canImport(FSKit) && NTFS_FSKIT
 import XCTest
 import FSKit
 import NTFSCore

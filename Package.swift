@@ -1,5 +1,16 @@
 // swift-tools-version: 5.10
+import Foundation
 import PackageDescription
+
+// The FSKit adapter needs the handler based FSKit API of the macOS 27 SDK. It is built only if the SDK has it
+// (or NTFS_FSKIT=1 asks for it); NTFS_FSKIT=0 leaves it out. Everything else builds with any Xcode and on Linux.
+let fskitAvailable: Bool = {
+    if let forced = ProcessInfo.processInfo.environment["NTFS_FSKIT"] { return forced == "1" }
+    let developer = ProcessInfo.processInfo.environment["DEVELOPER_DIR"] ?? "/Applications/Xcode.app/Contents/Developer"
+    let header = developer + "/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/System/Library/Frameworks/FSKit.framework/Headers/FSVolumeHandlerResult.h"
+    return FileManager.default.fileExists(atPath: header)
+}()
+let fskitSettings: [SwiftSetting] = fskitAvailable ? [.define("NTFS_FSKIT")] : []
 
 let package = Package(
     name: "MacNTFS",
@@ -21,7 +32,8 @@ let package = Package(
         .target(
             name: "NTFSFSKit",
             dependencies: ["NTFSCore"],
-            path: "Sources/NTFSFSKit"
+            path: "Sources/NTFSFSKit",
+            swiftSettings: fskitSettings
         ),
         .executableTarget(
             name: "MacNTFSCli",
@@ -36,7 +48,8 @@ let package = Package(
         .testTarget(
             name: "NTFSFSKitTests",
             dependencies: ["NTFSFSKit", "NTFSCore"],
-            path: "Tests/NTFSFSKitTests"
+            path: "Tests/NTFSFSKitTests",
+            swiftSettings: fskitSettings
         ),
         .testTarget(
             name: "NTFSCoreTests",

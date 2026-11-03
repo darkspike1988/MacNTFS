@@ -2,6 +2,8 @@
 
 `NTFSFSKit` (in `Sources/NTFSFSKit`) is the file system module as a Swift package product: it compiles and its attribute mapping is tested (`Tests/NTFSFSKitTests`). It has never been loaded by macOS, because that needs an app extension that is signed with the restricted entitlement `com.apple.developer.fskit.fsmodule`, and that needs a paid Apple Developer account. These files are the templates for that Xcode part.
 
+`Package.swift` builds `NTFSFSKit` only if the active Xcode has the macOS 27 FSKit headers (`FSVolumeHandlerResult.h`), so older toolchains and Linux still build everything else. `NTFS_FSKIT=1` forces it on, `NTFS_FSKIT=0` leaves it out.
+
 ## Create the Xcode project (needs Xcode 27 and the developer account)
 
 1. New project, macOS App (SwiftUI), name `MacNTFS`. Add this repository as a local Swift package and link `NTFSCore` into the app.
