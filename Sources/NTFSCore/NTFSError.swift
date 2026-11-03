@@ -18,6 +18,7 @@ public enum NTFSError: Error, LocalizedError, Sendable {
     case attributeNotFound(type: UInt32, name: String?)
     case corruptRunlist(String)
     case corruptDirectoryIndex(String)
+    case corruptAttributeList(String)
     case pathNotFound(String)
     case notADirectory(String)
     case isADirectory(String)
@@ -48,6 +49,8 @@ public enum NTFSError: Error, LocalizedError, Sendable {
             return "Corrupt data runlist: \(msg)"
         case .corruptDirectoryIndex(let msg):
             return "Corrupt directory index: \(msg)"
+        case .corruptAttributeList(let msg):
+            return "Corrupt attribute list: \(msg)"
         case .pathNotFound(let path):
             return "Path not found: '\(path)'"
         case .notADirectory(let path):

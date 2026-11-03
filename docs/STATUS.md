@@ -9,12 +9,12 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Boot sector and BPB | checked | Corpus: 512 and 4096-byte sectors, 512-byte to 64 KiB clusters. Hostile values are rejected (`ParserHardeningTests`). |
 | MFT records and fixups | checked | Corpus. Fixups use 512-byte blocks on every volume. Mutation test with 3000 damaged images does not crash. |
 | Data runs | checked | Corpus: fragmented and sparse files. Overflow is rejected. |
-| Directory listing and lookup | checked | Corpus: nested directories, directory with 5000 files (only when it needs no attribute list), Unicode names including NFC and NFD variants, deleted entries not listed, hard links listed once per name. |
+| Directory listing and lookup | checked | Corpus: nested directories, directory with 5000 files, Unicode names including NFC and NFD variants, deleted entries not listed, hard links listed once per name. |
 | File read (`cat`) | checked | Corpus: every file in 14 images reads back with the manifest hash. Reads beyond the initialized size return zeros. |
 | Hard links | checked | Corpus `links`. |
 | Sparse files | checked | Corpus `sparse`. |
 | Interix symlinks (written by ntfs-3g as files) | prototype | Read as ordinary files. |
-| Attribute list (`$ATTRIBUTE_LIST`) | refused | Needed for large directories and heavily fragmented files. Planned. |
+| Attribute list (`$ATTRIBUTE_LIST`) | checked | Corpus `attrlist`, `manydirs` and `mini-attrlist`: extension records are read and split attributes (hard-link names, index blocks, data runs) are merged. Damaged lists are reported as corrupt. A volume whose `$MFT` list points outside the known part of the MFT is refused. |
 | Compressed files | refused | Corpus `compressed`. |
 | Encrypted files | refused | Unit test. No corpus image. |
 | Reparse points (symlinks, junctions) | refused | Corpus `links`. |

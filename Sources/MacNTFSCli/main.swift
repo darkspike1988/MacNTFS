@@ -169,7 +169,7 @@ struct MacNTFSCLI {
           macntfs cat <image-or-device> <file-path>        Write a file to standard output
           macntfs info <image-or-device> <mft-record>      Show one MFT record and its attributes
 
-        Opens images and devices read-only. Compressed, encrypted, attribute-list and link data
+        Opens images and devices read-only. Compressed, encrypted and link data
         is refused with exit code 3 instead of returning wrong bytes. Devices need root and should
         not be mounted writable by another driver while you read them.
 

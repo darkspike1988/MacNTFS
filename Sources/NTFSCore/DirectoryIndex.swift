@@ -36,38 +36,76 @@ public final class DirectoryIndexReader: Sendable {
     /// Hard links keep one item per name.
     public func readEntries(from record: MFTRecord) throws -> [DirectoryItem] {
         var items = [DirectoryItem]()
-        try walk(record) { item in
-            items.append(item)
+        var failure: Error?
+        try walk(record) { data, entry in
+            do {
+                if let item = try DirectoryIndexReader.makeItem(from: entry, in: data) { items.append(item) }
+            } catch {
+                failure = error
+                return true
+            }
             return false
         }
+        if let failure { throw failure }
         return items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
-    /// Finds one entry by name without reading the whole directory into a sorted list.
-    /// An exact match on the UTF-16 name wins over a case-insensitive match.
+    /// Finds one entry by name. An exact match on the UTF-16 name wins over a case-insensitive match.
+    /// The exact pass compares name bytes without building strings, so it is cheap on large directories.
     public func findEntry(named name: String, in record: MFTRecord) throws -> DirectoryItem? {
-        var exact: DirectoryItem?
-        var caseInsensitive: DirectoryItem?
-        try walk(record) { item in
-            if NTFSName.isExactMatch(item.name, name) {
-                exact = item
-                return true
+        var failure: Error?
+        var found: DirectoryItem?
+
+        let units = Array(name.utf16)
+        try walk(record) { data, entry in
+            guard entry.namespace(in: data) != .dos, entry.nameEquals(units, in: data) else { return false }
+            do {
+                found = try DirectoryIndexReader.makeItem(from: entry, in: data)
+            } catch {
+                failure = error
             }
-            if caseInsensitive == nil && NTFSName.isCaseInsensitiveMatch(item.name, name) {
-                caseInsensitive = item
-            }
-            return false
+            return true
         }
-        return exact ?? caseInsensitive
+        if let failure { throw failure }
+        if let found { return found }
+
+        // No exact match: take the first name that matches ignoring case.
+        try walk(record) { data, entry in
+            guard entry.namespace(in: data) != .dos, entry.nameLength(in: data) == units.count else { return false }
+            do {
+                guard let item = try DirectoryIndexReader.makeItem(from: entry, in: data),
+                      NTFSName.isCaseInsensitiveMatch(item.name, name) else { return false }
+                found = item
+            } catch {
+                failure = error
+            }
+            return true
+        }
+        if let failure { throw failure }
+        return found
     }
 
-    /// Visits every entry of a directory. `visit` returns true to stop early.
-    private func walk(_ record: MFTRecord, visit: (DirectoryItem) -> Bool) throws {
+    /// Builds the item for an index entry. Returns nil for the "." entry and for pure DOS names.
+    private static func makeItem(from entry: RawIndexEntry, in data: Data) throws -> DirectoryItem? {
+        let fn = try entry.fileName(in: data)
+        guard fn.name != ".", fn.namespace != .dos else { return nil }
+        return DirectoryItem(
+            name: fn.name,
+            mftRecordNumber: entry.mftRecordNumber,
+            isDirectory: fn.isDirectory,
+            fileSize: fn.realSize,
+            modificationDate: fn.modificationTime,
+            creationDate: fn.creationTime
+        )
+    }
+
+    /// Visits every entry that carries a file name. `visit` returns true to stop early.
+    private func walk(_ record: MFTRecord, visit: (Data, RawIndexEntry) -> Bool) throws {
         guard record.isDirectory else {
             throw NTFSError.notADirectory("Record \(record.recordNumber) is not a directory")
         }
         // The index may live in extension records that are not read, and a link target is not this directory.
-        if record.attribute(ofType: .attributeList) != nil {
+        if record.hasUnresolvedAttributeList {
             throw NTFSError.unsupported(.attributeList)
         }
         if record.attribute(ofType: .reparsePoint) != nil {
@@ -98,7 +136,7 @@ public final class DirectoryIndexReader: Sendable {
         indexAlloc: NTFSAttribute?,
         depth: Int,
         visitedVCNs: inout Set<UInt64>,
-        visit: (DirectoryItem) -> Bool
+        visit: (Data, RawIndexEntry) -> Bool
     ) throws -> Bool {
         guard data.count >= nodeHeaderOffset + 16 else {
             throw NTFSError.corruptDirectoryIndex("Index node header is too short")
@@ -112,19 +150,9 @@ public final class DirectoryIndexReader: Sendable {
         let limitOffset = nodeHeaderOffset + totalEntriesSize
 
         while currentOffset < limitOffset && currentOffset + 16 <= data.count {
-            let entry = try IndexEntryParser.parse(data: data, offset: currentOffset)
+            let entry = try IndexEntryParser.parseRaw(data: data, offset: currentOffset)
 
-            if let fn = entry.fileName, fn.name != ".", fn.namespace != .dos {
-                let item = DirectoryItem(
-                    name: fn.name,
-                    mftRecordNumber: entry.mftRecordNumber,
-                    isDirectory: fn.isDirectory,
-                    fileSize: fn.realSize,
-                    modificationDate: fn.modificationTime,
-                    creationDate: fn.creationTime
-                )
-                if visit(item) { return true }
-            }
+            if entry.hasFileName, visit(data, entry) { return true }
 
             if let vcn = entry.subNodeVCN {
                 guard let alloc = indexAlloc else {
@@ -138,7 +166,7 @@ public final class DirectoryIndexReader: Sendable {
             if entry.isLastEntry || entry.entryLength == 0 {
                 break
             }
-            currentOffset += Int(entry.entryLength)
+            currentOffset += entry.entryLength
         }
         return false
     }
@@ -149,7 +177,7 @@ public final class DirectoryIndexReader: Sendable {
         indexAlloc: NTFSAttribute,
         depth: Int,
         visitedVCNs: inout Set<UInt64>,
-        visit: (DirectoryItem) -> Bool
+        visit: (Data, RawIndexEntry) -> Bool
     ) throws -> Bool {
         guard !visitedVCNs.contains(vcn) else { return false }
         visitedVCNs.insert(vcn)

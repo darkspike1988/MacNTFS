@@ -5,7 +5,7 @@ MacNTFS reads NTFS volumes. This page says what protects your data and what does
 ## Rules
 
 1. **The code cannot write.** The write, format and repair code of earlier releases is removed. `BlockDevice` has no write method, `FileBlockDevice` opens read-only, and CI fails if the release binary imports a call that can change files (`scripts/readonly-check.sh` and a symbol check in `.github/workflows/ci.yml`).
-2. **Refuse instead of guess.** Data that the engine cannot read correctly (compressed, encrypted, attribute-list, links) is refused with exit code 3. Wrong bytes without an error count as a test failure.
+2. **Refuse instead of guess.** Data that the engine cannot read correctly (compressed, encrypted, links) is refused with exit code 3. Wrong bytes without an error count as a test failure.
 3. **No claims without evidence.** A feature is called working only when `docs/STATUS.md` names a test that shows it against an independent reference.
 
 ## What still can go wrong

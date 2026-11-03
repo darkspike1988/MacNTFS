@@ -10,7 +10,7 @@
 Early, but checked: the engine is compared with reference images written by ntfs-3g (see [Testing](#testing)). It is still a prototype with known limits, listed below and in [docs/STATUS.md](docs/STATUS.md).
 
 - **It cannot write.** The code has no write path at all. Disks are opened read-only, and CI checks that the command line tool contains no call that can change a file.
-- **It refuses instead of guessing.** Compressed, encrypted, attribute-list and link data is not read. The tool stops with exit code 3 and does not return wrong bytes.
+- **It refuses instead of guessing.** Compressed, encrypted and link data is not read. The tool stops with exit code 3 and does not return wrong bytes.
 - **If you used a release from v0.1.3 to v0.2.2 to write to a volume:** those releases could produce invalid NTFS data. Back up your files and check the volume in Windows. See the [advisory](docs/advisories/2026-11-03-releases-up-to-0.2.2.md).
 
 ## Use it
@@ -52,8 +52,8 @@ let data = try volume.readFile(at: "/hello.txt")
 
 ## Known limits
 
-- Directories and files whose MFT record uses an `$ATTRIBUTE_LIST` are refused. Large directories (thousands of entries) and heavily fragmented files often need one.
 - Compressed and encrypted files, symbolic links, junctions and other reparse points are refused.
+- A volume whose `$MFT` has an attribute list that points outside the part of the MFT known from record 0 is refused.
 - Only the default data stream of a file is read. Named streams are not available.
 - Names are matched exactly first, then case-insensitively with an approximation of NTFS's `$UpCase` table.
 - The journal is not replayed. A volume that Windows did not shut down cleanly can show outdated data. `probe` shows the dirty flag. Hibernation and Fast Startup are not detected.
@@ -70,7 +70,7 @@ swift test                          # unit tests, hostile-input tests, mutation 
 scripts/readonly-check.sh .build/debug/macntfs Tests/Fixtures/mini.img
 ```
 
-The strongest check compares the engine with reference images. `scripts/corpus/build.sh` writes 13 NTFS images with ntfs-3g in a Linux container (512 and 4096-byte sectors, clusters from 512 bytes to 64 KiB, fragmented, sparse, compressed, links, a directory with 5000 files, deleted files and more) together with manifests of paths, sizes and SHA-256 hashes computed from the source content. `scripts/corpus/verify.sh` cross-checks each manifest with ntfs-3g and The Sleuth Kit. `swift test` then requires that every file reads back with the same hash or is refused with the expected error. Wrong bytes without an error fail the test. Details: [Tests/Corpus/README.md](Tests/Corpus/README.md). Building the corpus needs Docker (on macOS for example `colima start`).
+The strongest check compares the engine with reference images. `scripts/corpus/build.sh` writes 13 NTFS images with ntfs-3g in a Linux container (512 and 4096-byte sectors, clusters from 512 bytes to 64 KiB, fragmented, sparse, compressed, links, a directory with 5000 files, files with attribute lists, deleted files and more) together with manifests of paths, sizes and SHA-256 hashes computed from the source content. `scripts/corpus/verify.sh` cross-checks each manifest with ntfs-3g and The Sleuth Kit. `swift test` then requires that every file reads back with the same hash or is refused with the expected error. Wrong bytes without an error fail the test. Details: [Tests/Corpus/README.md](Tests/Corpus/README.md). Building the corpus needs Docker (on macOS for example `colima start`).
 
 ## Where this is going
 

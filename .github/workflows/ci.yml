@@ -4,7 +4,6 @@ on:
   push:
     branches: [ main ]
   pull_request:
-    branches: [ main ]
 
 jobs:
   # The reference images are written by ntfs-3g in a Linux container and checked by ntfs-3g

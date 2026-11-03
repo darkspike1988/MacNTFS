@@ -47,6 +47,32 @@ public struct NTFSAttribute: Sendable {
         return nil
     }
 
+    /// First virtual cluster this record of a non-resident attribute covers. Zero for resident attributes.
+    var startingVCN: UInt64 {
+        if case .nonResident(let startingVCN, _, _, _, _, _) = payload {
+            return startingVCN
+        }
+        return 0
+    }
+
+    init(
+        type: AttributeType,
+        recordLength: UInt32,
+        isNonResident: Bool,
+        name: String?,
+        flags: AttributeHeaderFlags,
+        attributeID: UInt16,
+        payload: AttributeData
+    ) {
+        self.type = type
+        self.recordLength = recordLength
+        self.isNonResident = isNonResident
+        self.name = name
+        self.flags = flags
+        self.attributeID = attributeID
+        self.payload = payload
+    }
+
     public var realDataSize: UInt64 {
         switch payload {
         case .resident(let data):

@@ -19,12 +19,22 @@ public final class NTFSVolume: Sendable {
 
         // 2. Read bootstrap MFT Record 0 ($MFT) directly from boot.mftByteOffset
         let mft0Raw = try blockDevice.read(offset: boot.mftByteOffset, count: Int(boot.mftRecordSizeBytes))
-        let mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw)
+        var mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw)
 
-        // A fragmented $MFT can keep part of its run list in extension records. Those are not read,
-        // so opening such a volume would show only the first part of the MFT.
-        if mft0.attribute(ofType: .attributeList) != nil {
-            throw NTFSError.unsupported(.attributeList)
+        // A fragmented $MFT can keep part of its run list in extension records. They are found with
+        // the part of the MFT that the base record maps, because that is all that is known yet.
+        if mft0.hasUnresolvedAttributeList {
+            guard let firstRuns = mft0.defaultDataAttribute?.runs else {
+                throw NTFSError.corruptRunlist("$MFT record 0 does not contain non-resident $DATA runs")
+            }
+            do {
+                mft0 = try NTFSVolume.resolveAttributeList(base: mft0, bootSector: boot, device: blockDevice) { number in
+                    try NTFSVolume.readRecord(recordNumber: number, runs: firstRuns, bootSector: boot, device: blockDevice)
+                }
+            } catch {
+                // The extension records lie outside the part of the MFT that is known: not readable.
+                throw NTFSError.unsupported(.attributeList)
+            }
         }
 
         // 3. Extract $MFT's own $DATA runlist
@@ -67,13 +77,82 @@ public final class NTFSVolume: Sendable {
     }
 
     /// Reads any arbitrary MFT record by its record number.
+    /// Attributes stored in extension records (see `$ATTRIBUTE_LIST`) are merged into the returned record.
     public func readMFTRecord(number: UInt64) throws -> MFTRecord {
-        return try NTFSVolume.readRecord(
+        let base = try NTFSVolume.readRecord(
             recordNumber: number,
             runs: mftRecordRuns,
             bootSector: bootSector,
             device: blockDevice
         )
+        return try NTFSVolume.resolveAttributeList(base: base, bootSector: bootSector, device: blockDevice) { [mftRecordRuns, bootSector, blockDevice] extensionNumber in
+            try NTFSVolume.readRecord(recordNumber: extensionNumber, runs: mftRecordRuns, bootSector: bootSector, device: blockDevice)
+        }
+    }
+
+    /// Most extension records one file may use. A file with this many is damaged or hostile.
+    private static let maxExtensionRecords = 4096
+    private static let maxAttributeListBytes: UInt64 = 16 << 20
+
+    /// Reads the extension records that the `$ATTRIBUTE_LIST` of `base` names and merges the listed
+    /// attributes into the base record. Returns `base` unchanged when it has no attribute list.
+    private static func resolveAttributeList(
+        base: MFTRecord,
+        bootSector: BootSector,
+        device: BlockDevice,
+        loadRecord: (UInt64) throws -> MFTRecord
+    ) throws -> MFTRecord {
+        guard base.hasUnresolvedAttributeList, let listAttribute = base.attribute(ofType: .attributeList) else {
+            return base
+        }
+
+        let listData = try attributeValue(listAttribute, bootSector: bootSector, device: device)
+        let entries = try AttributeListParser.parse(listData)
+
+        var wanted = [UInt64: [AttributeListEntry]]()
+        for entry in entries where entry.recordNumber != base.recordNumber {
+            wanted[entry.recordNumber, default: []].append(entry)
+        }
+        guard wanted.count <= maxExtensionRecords else {
+            throw NTFSError.resourceLimit("The attribute list names \(wanted.count) extension records")
+        }
+
+        var attributes = base.attributes
+        for number in wanted.keys.sorted() {
+            let extensionRecord = try loadRecord(number)
+            guard extensionRecord.isInUse,
+                  extensionRecord.header.baseRecordReference & 0x0000_FFFF_FFFF_FFFF == base.recordNumber else {
+                throw NTFSError.corruptAttributeList("Record \(number) is not an extension record of record \(base.recordNumber)")
+            }
+            for entry in wanted[number] ?? [] {
+                guard let found = extensionRecord.attributes.first(where: {
+                    $0.type == entry.type && $0.attributeID == entry.attributeID && ($0.name ?? "") == (entry.name ?? "")
+                }) else {
+                    throw NTFSError.corruptAttributeList("Record \(number) has no \(entry.type) attribute with ID \(entry.attributeID)")
+                }
+                attributes.append(found)
+            }
+        }
+        return MFTRecord(resolving: base, attributes: try AttributeMerger.merge(attributes))
+    }
+
+    /// The value of a small attribute such as an attribute list, whether it is resident or not.
+    private static func attributeValue(_ attribute: NTFSAttribute, bootSector: BootSector, device: BlockDevice) throws -> Data {
+        switch attribute.payload {
+        case .resident(let data):
+            return data
+        case .nonResident(_, _, _, let realSize, _, let runs):
+            guard realSize <= maxAttributeListBytes else {
+                throw NTFSError.resourceLimit("Attribute value of \(realSize) bytes")
+            }
+            return try RunReader.read(
+                runs: runs,
+                virtualOffset: 0,
+                length: Int(realSize),
+                clusterSize: UInt64(bootSector.clusterSizeBytes),
+                device: device
+            )
+        }
     }
 
     private static func readRecord(
@@ -109,7 +188,7 @@ public final class NTFSVolume: Sendable {
             throw NTFSError.outOfBounds(offset: offset, requested: length, available: 0)
         }
         // The data may live in extension records that are not read, or be a link or a placeholder.
-        if record.attribute(ofType: .attributeList) != nil {
+        if record.hasUnresolvedAttributeList {
             throw NTFSError.unsupported(.attributeList)
         }
         if record.attribute(ofType: .reparsePoint) != nil {

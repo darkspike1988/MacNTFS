@@ -21,6 +21,7 @@ This version is a break. MacNTFS is now a read-only library and command line too
 - A directory with thousands of files took over a minute to resolve a path. Lookup now stops at the first match.
 
 ### Added
+- Attribute lists (`$ATTRIBUTE_LIST`): large directories and files whose names, index blocks or data runs are split over extension records are read and merged. Checked against ntfs-3g images with directories of 5000 and 1500 entries.
 - Reference corpus: 13 NTFS images written by ntfs-3g with manifests, cross-checked with ntfs-3g tools and The Sleuth Kit, and a committed 10 MiB test image.
 - CI that builds the corpus in Linux, runs the tests on macOS, and checks that the release binary has no call that can change files.
 - `docs/STATUS.md` with the maturity and evidence of each feature.

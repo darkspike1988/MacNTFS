@@ -4,6 +4,13 @@ public struct MFTRecord: Sendable {
     public let recordNumber: UInt64
     public let header: MFTRecordHeader
     public let attributes: [NTFSAttribute]
+    /// False when the record has an `$ATTRIBUTE_LIST` whose extension records were not read.
+    /// Records returned by `NTFSVolume` are always resolved.
+    public let attributeListResolved: Bool
+
+    public var hasUnresolvedAttributeList: Bool {
+        !attributeListResolved
+    }
 
     public var isInUse: Bool {
         header.isInUse
@@ -42,6 +49,15 @@ public struct MFTRecord: Sendable {
         }
 
         self.attributes = parsedAttributes
+        self.attributeListResolved = !parsedAttributes.contains { $0.type == .attributeList }
+    }
+
+    /// The base record with the attributes of its extension records merged in.
+    init(resolving base: MFTRecord, attributes: [NTFSAttribute]) {
+        self.recordNumber = base.recordNumber
+        self.header = base.header
+        self.attributes = attributes
+        self.attributeListResolved = true
     }
 
     public func attribute(ofType type: AttributeType, name: String? = nil) -> NTFSAttribute? {

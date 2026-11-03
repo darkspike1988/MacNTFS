@@ -141,13 +141,14 @@ final class ParserHardeningTests: XCTestCase {
         }
     }
 
-    func testReadDataRefusesAttributeListAndReparsePoints() throws {
-        // Turn the first attribute ($STANDARD_INFORMATION) into another type.
+    func testReadDataRefusesBrokenAttributeListAndReparsePoints() throws {
+        // Turn the first attribute ($STANDARD_INFORMATION) into an attribute list. Its bytes are not a
+        // valid list, so the engine must report a corrupt list and must not return the file data.
         let withList = try Fixtures.patchedVolume(path: "/small.txt") { image, record, first, _ in
             image[record + first] = 0x20
         }
         XCTAssertThrowsError(try withList.readFile(at: "/small.txt")) { error in
-            guard case NTFSError.unsupported(.attributeList) = error else { return XCTFail("unexpected error \(error)") }
+            guard case NTFSError.corruptAttributeList = error else { return XCTFail("unexpected error \(error)") }
         }
 
         let withReparse = try Fixtures.patchedVolume(path: "/small.txt") { image, record, first, _ in

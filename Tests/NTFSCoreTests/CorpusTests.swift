@@ -32,7 +32,10 @@ final class CorpusTests: XCTestCase {
     /// The built corpus (not committed) and the committed fixtures.
     private static var manifestDirectories: [URL] {
         let tests = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
-        return [tests.appendingPathComponent("Corpus/out"), tests.appendingPathComponent("Fixtures")]
+        // MACNTFS_CORPUS_DIR points the test at another directory with built images.
+        let built = getenv("MACNTFS_CORPUS_DIR").map { URL(fileURLWithPath: String(cString: $0)) }
+            ?? tests.appendingPathComponent("Corpus/out")
+        return [built, tests.appendingPathComponent("Fixtures")]
     }
 
     private static func sha256Hex(_ data: Data) -> String {
