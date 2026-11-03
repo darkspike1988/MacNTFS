@@ -13,6 +13,28 @@ This note compares the structure of Microsoft's driver with the engine in this r
   - `Clfs` (36) and `Tm` (18): the common log file service and the transaction manager: the journal (`$LogFile`) and transactional NTFS (`$TxfLog`).
   - `Ksr`, `Etw`, `Rpc`: kernel soft reboot, tracing, remote calls.
 
+## What the code of `ntfs.sys` is spent on (Ghidra 12.2, no symbols)
+
+Ghidra analysed the same file headless (no PDB was loaded, so function names are generic) and found 3,994 functions with 2.3 MB of code. Each function was sorted by the most telling kernel service it calls (priority: journal, transactions, encryption, security, cache, memory, file system runtime, I/O, executive, kernel, runtime):
+
+| Calls mainly | Functions | Code |
+| --- | --- | --- |
+| Cache manager (`Cc`) | 461 | 658 KiB (29 %) |
+| Executive: locks, pool, resources (`Ex`) | 1001 | 489 KiB (21 %) |
+| Only internal calls, no kernel service | 1550 | 291 KiB (12 %) |
+| File system runtime (`Fs`) | 251 | 198 KiB (8 %) |
+| Journal (`Clfs`) | 88 | 174 KiB (7 %) |
+| I/O manager (`Io`) | 182 | 127 KiB (5 %) |
+| Memory manager (`Mm`) | 69 | 98 KiB (4 %) |
+| Kernel (`Ke`) | 147 | 76 KiB (3 %) |
+| Security (`Se`) | 57 | 59 KiB (2 %) |
+| Runtime, other | 181 | 53 KiB (2 %) |
+| Transactions (`Tm`) | 7 | 24 KiB (1 %) |
+
+The median function is 200 bytes, 66 functions are larger than 4 KiB, the largest is 21 KiB. One internal function is called from 3,876 places (it is a helper for locking or error handling, not file system logic).
+
+Read this as a rough picture, not as a measurement of "format code": a function that calls the cache and also parses a record counts as cache here, and a function without kernel calls can still be glue. It still shows the proportions. Only about an eighth of the code is free of kernel services, and the parts that can change a volume (journal, transactions, security, plus the cache and lock handling that serves them) are most of the rest. MacNTFS reads the format, which is the small part, and leaves the rest out on purpose.
+
 ## The same blocks in MacNTFS
 
 | Block of a driver | In `ntfs.sys` | In MacNTFS |
