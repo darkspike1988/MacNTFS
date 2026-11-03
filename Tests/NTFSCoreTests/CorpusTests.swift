@@ -147,6 +147,22 @@ final class CorpusTests: XCTestCase {
                 default:
                     fail(entry, "unknown entry type '\(entry.type)'")
                 }
+
+                // Named data streams, including the streams of directories.
+                if entry.type != "deleted" {
+                    for stream in entry.streams ?? [] {
+                        do {
+                            let data = try volume.readFile(at: entry.path, stream: stream.name)
+                            if UInt64(data.count) == stream.size && Self.sha256Hex(data) == stream.sha256 {
+                                ok += 1
+                            } else {
+                                fail(entry, "stream '\(stream.name)': \(data.count) bytes, expected \(stream.size) with another hash")
+                            }
+                        } catch {
+                            fail(entry, "stream '\(stream.name)': \(error)")
+                        }
+                    }
+                }
             }
             print("corpus \(manifest.image): \(ok) ok, \(refused) refused with the expected error, \(bad) wrong")
         }

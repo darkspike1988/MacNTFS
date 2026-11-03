@@ -1,5 +1,13 @@
 import Foundation
 
+/// One data stream of a file. The default stream has no name.
+public struct DataStream: Sendable, Equatable {
+    public let name: String?
+    public let size: UInt64
+    public let isCompressed: Bool
+    public let isEncrypted: Bool
+}
+
 public struct MFTRecord: Sendable {
     public let recordNumber: UInt64
     public let header: MFTRecordHeader
@@ -102,5 +110,24 @@ public struct MFTRecord: Sendable {
 
     public var defaultDataAttribute: NTFSAttribute? {
         attribute(ofType: .data, name: nil)
+    }
+
+    /// All data streams of the file: the unnamed default stream and the named ones.
+    public var dataStreams: [DataStream] {
+        attributes.filter { $0.type == .data }.map { attribute in
+            DataStream(
+                name: attribute.name,
+                size: attribute.realDataSize,
+                isCompressed: attribute.flags.contains(.compressed),
+                isEncrypted: attribute.flags.contains(.encrypted)
+            )
+        }
+    }
+
+    /// The `$DATA` attribute of a named stream. An exact UTF-16 match wins over a case-insensitive one.
+    public func dataStream(named name: String) -> NTFSAttribute? {
+        let named = attributes.filter { $0.type == .data && $0.name != nil }
+        return named.first { NTFSName.isExactMatch($0.name ?? "", name) }
+            ?? named.first { NTFSName.isCaseInsensitiveMatch($0.name ?? "", name) }
     }
 }

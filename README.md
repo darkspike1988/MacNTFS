@@ -26,6 +26,8 @@ swift build -c release
 .build/release/macntfs ls disk.img /Documents         # list a directory
 .build/release/macntfs cat disk.img /Documents/a.txt > a.txt
 .build/release/macntfs info disk.img 5                # one MFT record and its attributes
+.build/release/macntfs streams disk.img /a.txt        # default and named data streams
+.build/release/macntfs cat disk.img /a.txt --stream name   # one named data stream
 ```
 
 Exit codes: `0` success, `1` error, `2` wrong usage, `3` the data uses an NTFS feature that is not supported.
@@ -54,7 +56,6 @@ let data = try volume.readFile(at: "/hello.txt")
 
 - Compressed and encrypted files, symbolic links, junctions and other reparse points are refused.
 - A volume whose `$MFT` has an attribute list that points outside the part of the MFT known from record 0 is refused.
-- Only the default data stream of a file is read. Named streams are not available.
 - Names are matched exactly first, then case-insensitively with an approximation of NTFS's `$UpCase` table.
 - The journal is not replayed. A volume that Windows did not shut down cleanly can show outdated data. `probe` shows the dirty flag. Hibernation and Fast Startup are not detected.
 - Only images written by ntfs-3g have been compared so far. Nothing has been checked with images written by Windows yet.

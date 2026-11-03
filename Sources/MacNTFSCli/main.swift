@@ -33,8 +33,20 @@ struct MacNTFSCLI {
                 try list(imagePath: args[1], directory: args.count == 3 ? args[2] : "/")
 
             case "cat":
-                guard args.count == 3 else { usageError("macntfs cat <image-or-device> <file-path>") }
-                try cat(imagePath: args[1], filePath: args[2])
+                let usage = "macntfs cat <image-or-device> <file-path> [--stream NAME]"
+                var rest = Array(args.dropFirst())
+                var stream: String?
+                if let flag = rest.firstIndex(of: "--stream") {
+                    guard flag + 1 < rest.count else { usageError(usage) }
+                    stream = rest[flag + 1]
+                    rest.removeSubrange(flag...(flag + 1))
+                }
+                guard rest.count == 2 else { usageError(usage) }
+                try cat(imagePath: rest[0], filePath: rest[1], stream: stream)
+
+            case "streams":
+                guard args.count == 3 else { usageError("macntfs streams <image-or-device> <path>") }
+                try streams(imagePath: args[1], path: args[2])
 
             case "info":
                 guard args.count == 3, let record = UInt64(args[2]) else {
@@ -103,23 +115,39 @@ struct MacNTFSCLI {
         }
     }
 
-    private static func cat(imagePath: String, filePath: String) throws {
+    private static func streams(imagePath: String, path: String) throws {
+        let vol = try openVolume(imagePath)
+        for stream in try vol.dataStreams(at: path) {
+            var flags = [String]()
+            if stream.isCompressed { flags.append("compressed") }
+            if stream.isEncrypted { flags.append("encrypted") }
+            let name = stream.name ?? "(default)"
+            let size = String(stream.size)
+            let padded = String(repeating: " ", count: max(0, 12 - size.count)) + size
+            print("\(padded)  \(name)\(flags.isEmpty ? "" : "  [\(flags.joined(separator: ", "))]")")
+        }
+    }
+
+    private static func cat(imagePath: String, filePath: String, stream: String?) throws {
         let vol = try openVolume(imagePath)
         let (record, isDirectory) = try vol.lookup(path: filePath)
 
-        // A directory link has the directory flag, but it is a link.
-        if record.attribute(ofType: .reparsePoint) != nil {
-            throw NTFSError.unsupported(.reparse)
-        }
-        guard !isDirectory else {
-            throw NTFSError.isADirectory(filePath)
+        // Only the default stream is the content of a file. Directories can carry named streams.
+        if stream == nil {
+            // A directory link has the directory flag, but it is a link.
+            if record.attribute(ofType: .reparsePoint) != nil {
+                throw NTFSError.unsupported(.reparse)
+            }
+            guard !isDirectory else {
+                throw NTFSError.isADirectory(filePath)
+            }
         }
 
         // Read in blocks, so large files do not have to fit in memory.
         let chunkSize = 4 * 1024 * 1024
         var offset: UInt64 = 0
         while true {
-            let chunk = try vol.readData(record: record, offset: offset, length: chunkSize)
+            let chunk = try vol.readData(record: record, stream: stream, offset: offset, length: chunkSize)
             if chunk.isEmpty { break }
             let written = chunk.withUnsafeBytes { fwrite($0.baseAddress, 1, chunk.count, stdout) }
             guard written == chunk.count else {
@@ -167,6 +195,8 @@ struct MacNTFSCLI {
           macntfs probe <image-or-device>                  Show boot sector and volume information
           macntfs ls <image-or-device> [path]              List a directory
           macntfs cat <image-or-device> <file-path>        Write a file to standard output
+                      [--stream NAME]                      ... or one of its named data streams
+          macntfs streams <image-or-device> <path>         List the data streams of a file or directory
           macntfs info <image-or-device> <mft-record>      Show one MFT record and its attributes
 
         Opens images and devices read-only. Compressed, encrypted and link data

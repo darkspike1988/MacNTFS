@@ -18,7 +18,7 @@ Evidence means a test in this repository. The reference for "checked" is the cor
 | Compressed files | refused | Corpus `compressed`. |
 | Encrypted files | refused | Unit test. No corpus image. |
 | Reparse points (symlinks, junctions) | refused | Corpus `links`. |
-| Named data streams | none | Only the default stream is read. |
+| Named data streams (ADS) | checked | Corpus `ads`: resident and non-resident streams, a stream on a directory, a Unicode stream name, an empty stream. `macntfs streams` lists them, `cat --stream` reads one. |
 | Deleted file recovery | none | Removed with the forensics code. |
 | Journal replay, hibernation detection | none | `probe` shows the dirty flag only. |
 | Mounted-volume detection | none | |

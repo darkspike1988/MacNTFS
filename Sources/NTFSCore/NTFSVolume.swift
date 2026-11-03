@@ -181,20 +181,27 @@ public final class NTFSVolume: Sendable {
     /// Largest range `readData` returns in one call. Read bigger files in chunks with `offset` and `length`.
     public static let maxSingleReadBytes: UInt64 = 1 << 30
 
-    /// Reads the payload data for the default $DATA stream of a given MFT record.
-    /// Throws `NTFSError.unsupported` for data it cannot read correctly instead of returning wrong bytes.
-    public func readData(record: MFTRecord, offset: UInt64 = 0, length: Int? = nil) throws -> Data {
+    /// Reads the payload data of a $DATA stream of a given MFT record: the default stream, or the
+    /// named stream `stream`. Throws `NTFSError.unsupported` for data it cannot read correctly
+    /// instead of returning wrong bytes.
+    public func readData(record: MFTRecord, stream: String? = nil, offset: UInt64 = 0, length: Int? = nil) throws -> Data {
         if let length, length < 0 {
             throw NTFSError.outOfBounds(offset: offset, requested: length, available: 0)
         }
-        // The data may live in extension records that are not read, or be a link or a placeholder.
+        // The data may live in extension records that are not read.
         if record.hasUnresolvedAttributeList {
             throw NTFSError.unsupported(.attributeList)
         }
-        if record.attribute(ofType: .reparsePoint) != nil {
+        // The default stream of a link or placeholder is not the content it stands for.
+        if stream == nil && record.attribute(ofType: .reparsePoint) != nil {
             throw NTFSError.unsupported(.reparse)
         }
-        guard let dataAttr = record.defaultDataAttribute else {
+        let selected = stream.map { record.dataStream(named: $0) } ?? record.defaultDataAttribute
+        guard let dataAttr = selected else {
+            // A file can have no default stream. It reads as empty. A missing named stream is an error.
+            if let stream {
+                throw NTFSError.attributeNotFound(type: AttributeType.data.rawValue, name: stream)
+            }
             return Data()
         }
         if dataAttr.flags.contains(.compressed) {
@@ -289,15 +296,23 @@ public final class NTFSVolume: Sendable {
     }
 
     /// Reads entire file content for a given path.
-    public func readFile(at path: String) throws -> Data {
+    public func readFile(at path: String, stream: String? = nil) throws -> Data {
         let (record, isDir) = try lookup(path: path)
-        // A directory link has the directory flag, but it is a link and not a directory to read.
-        if record.attribute(ofType: .reparsePoint) != nil {
-            throw NTFSError.unsupported(.reparse)
+        // Only the default stream of a file is its content. Directories can carry named streams.
+        if stream == nil {
+            // A directory link has the directory flag, but it is a link and not a directory to read.
+            if record.attribute(ofType: .reparsePoint) != nil {
+                throw NTFSError.unsupported(.reparse)
+            }
+            guard !isDir else {
+                throw NTFSError.isADirectory(path)
+            }
         }
-        guard !isDir else {
-            throw NTFSError.isADirectory(path)
-        }
-        return try readData(record: record)
+        return try readData(record: record, stream: stream)
+    }
+
+    /// The data streams of the file or directory at `path`.
+    public func dataStreams(at path: String) throws -> [DataStream] {
+        try lookup(path: path).record.dataStreams
     }
 }
