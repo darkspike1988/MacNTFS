@@ -333,24 +333,29 @@ public final class NTFSVolume: Sendable {
                 throw NTFSError.notADirectory(components.prefix(index).joined(separator: "/"))
             }
 
-            // Names match by exact UTF-16 first, then case-insensitively. Walking into a link or a
-            // directory with an attribute list throws NTFSError.unsupported.
-            guard let match = try directoryIndexReader.findEntry(named: component, in: currentRecord) else {
-                throw NTFSError.pathNotFound(path)
-            }
-
-            currentRecord = try readMFTRecord(number: match.mftRecordNumber)
-
-            // An index entry can be left behind when its file was deleted and the record reused.
-            guard currentRecord.isInUse, currentRecord.header.baseRecordReference == 0 else {
-                throw NTFSError.corruptDirectoryIndex("'\(component)' points to record \(match.mftRecordNumber), which is not a file record in use")
-            }
-            if match.sequenceNumber != 0, currentRecord.header.sequenceNumber != match.sequenceNumber {
-                throw NTFSError.corruptDirectoryIndex("'\(component)' points to record \(match.mftRecordNumber) with an old sequence number")
-            }
+            currentRecord = try child(named: component, in: currentRecord, path: path)
         }
 
         return (currentRecord, currentRecord.isDirectory)
+    }
+
+    /// The record of the entry `name` in the directory `directory`.
+    /// Names match by exact UTF-16 first, then case-insensitively. Walking into a link or a
+    /// directory with an attribute list throws NTFSError.unsupported.
+    func child(named name: String, in directory: MFTRecord, path: String) throws -> MFTRecord {
+        guard let match = try directoryIndexReader.findEntry(named: name, in: directory) else {
+            throw NTFSError.pathNotFound(path)
+        }
+        let record = try readMFTRecord(number: match.mftRecordNumber)
+
+        // An index entry can be left behind when its file was deleted and the record reused.
+        guard record.isInUse, record.header.baseRecordReference == 0 else {
+            throw NTFSError.corruptDirectoryIndex("'\(name)' points to record \(match.mftRecordNumber), which is not a file record in use")
+        }
+        if match.sequenceNumber != 0, record.header.sequenceNumber != match.sequenceNumber {
+            throw NTFSError.corruptDirectoryIndex("'\(name)' points to record \(match.mftRecordNumber) with an old sequence number")
+        }
+        return record
     }
 
     /// Reads entire file content for a given path.

@@ -35,6 +35,22 @@ enum Fixtures {
         fatalError("MFT record \(number) is not mapped")
     }
 
+
+    /// A copy of one of the images that Windows wrote (`Tests/Fixtures/windows/win-<name>.img.gz`).
+    static func windowsImage(_ name: String) throws -> Data {
+        let packed = directory.appendingPathComponent("windows/win-\(name).img.gz")
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/gunzip")
+        process.arguments = ["-c", packed.path]
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        try process.run()
+        let data = pipe.fileHandleForReading.readDataToEndOfFile()
+        process.waitUntilExit()
+        guard process.terminationStatus == 0 else { throw NSError(domain: "Fixtures", code: 1) }
+        return data
+    }
+
     static func miniAttributeListImage() throws -> Data {
         try Data(contentsOf: directory.appendingPathComponent("mini-attrlist.img"))
     }
