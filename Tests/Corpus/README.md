@@ -42,6 +42,8 @@ scripts/corpus/verify.sh links     # only some images
 
 ## Reproducibility, and its limit
 
+**Labels.** Labels such as `unsupported:attribute-list` and `unsupported:compression` come from the time when the engine could not read these cases. The Swift test now requires such entries to read back correctly. Only `unsupported:reparse` and `unsupported:encryption` may still be refused.
+
 File **content and manifests are stable**: every file is derived from
 `sha256("macntfs-corpus:1:<image>:<key>")`, so the same hashes come out on every
 build and the manifests are byte-identical between builds. The **images
@@ -79,6 +81,15 @@ any editor. Entries are sorted by path; one entry per line.
 | `linkTarget` | `symlink`: the link target as recorded. `hardlink`: the first path of the hardlink group (the same inode); every path of the group has its own entry. Otherwise `null`. |
 | `streams` | Alternate (named) data streams: `name`, `size`, `sha256`. Empty list if none. Directories may carry streams too. |
 | `note` | Optional free text explaining an unusual entry. |
+| `reparse` | Only on hand-made reparse points in `links`: `{"kind": "symlink-file" or "symlink-dir" or "junction", "substituteName", "printName", "flags"}`, the exact values written into the reparse data (`flags` is the symlink `SYMLINK_FLAG_RELATIVE` bit, 0 for junctions). `verify.sh` reads the reparse data back through a read-only mount and compares. |
+| `attributeList` | Only in images built with `al_mode="field"` (`mini-attrlist`): `true` when the entry's own base MFT record or an ancestor directory's has an `$ATTRIBUTE_LIST`, derived from TSK `istat`. In those images `expect` stays `ok` on every entry (the engine is expected to read attribute lists); `verify.sh` enforces the field in both directions. |
+
+Top-level fields added after schema 1 first shipped (a missing field means `false`; `mini.manifest.json` predates them and is committed unchanged):
+
+| Field | Meaning |
+|---|---|
+| `dirty` | `true` when `VOLUME_IS_DIRTY` is set in `$Volume` (checked via TSK `icat 3-112-<id>` and `ntfsinfo -m`). |
+| `hibernated` | Present on the two hiberfil images. `true`: `/hiberfil.sys` starts with `hibr` and the rest of the first 4 KiB is zero (waiting to be resumed). `false`: the first 4 KiB are all zero (state after resume). `verify.sh` checks the bytes. |
 
 `expect` values:
 
@@ -115,14 +126,35 @@ Hardlinks: all paths have the same content; `expect` is the same for each path.
 | `manydirs` | 4 KiB clusters | `/big` with 3500 files and a subdirectory with 1500 longer-named files, so both need `$INDEX_ALLOCATION` blocks (verified via `istat`); a third level; 300 directories under `/dirs` | 5629 |
 | `attrlist` | 4 KiB clusters | `$ATTRIBUTE_LIST`: one inode with 80 long hard-link names, three files with ~800 runs each (runlist overflows the base record), a file with 40 alternate streams. All `expect: unsupported:attribute-list`; `/al/plain.txt` is a control without one | 88 |
 | `deleted` | 4 KiB clusters | Files, a directory tree and a name that was reused after deletion. `type: deleted` entries must not show up in listings. | 18 |
+| `dirty` | 16 MiB | Files written, then the ntfs-3g daemon was `kill -9`ed (never unmounted). Neither ntfs-3g 2022.10.3 nor the kernel `ntfs3` driver leaves `VOLUME_IS_DIRTY` set in that state, so the bit is then **set by hand** in `$Volume` and `$MFTMirr` (`set_dirty_flag` in `corpus.py`). This emulates an unclean shutdown; it is not a real crash. `"dirty": true`. | 45 |
+| `hibernated` | 16 MiB | `/hiberfil.sys` (4 MiB) with a `hibr` header page, i.e. a Windows hibernation file waiting to be resumed. `"hibernated": true`. | 4 |
+| `hiberfil-woken` | 16 MiB | Same file with the first 4 KiB zeroed, the state after a resume. `"hibernated": false`. The remaining 4 MiB minus 4 KiB are identical pseudo-random bytes in both images. | 4 |
+| `k-basic` | 512 B / 4 KiB, 32 MiB | Subset of the `basic-512` content, **written by the Linux kernel `ntfs3` driver** (`mkntfs` for the empty volume, then `mount -t ntfs3`). A different NTFS implementation than ntfs-3g, which makes the corpus somewhat more independent. Labels are TSK-derived like everywhere else. | 46 |
+| `k-many` | 512 B / 4 KiB, 48 MiB | One directory with 1500 files, written by `ntfs3`. TSK finds an `$ATTRIBUTE_LIST` on that directory, so all entries carry `unsupported:attribute-list`. | 1501 |
 | `empty` | 8 MiB, fresh `mkntfs`, never mounted | Only system files; root must list as empty | 0 |
 
 Volume labels are `CORPUS-<NAME>` with dashes removed.
 
+## Committed fixtures (`Tests/Fixtures/`)
+
+Built only by name (`scripts/corpus/build.sh mini-attrlist`), never by a plain build, and committed on purpose:
+
+* `mini.img`: see above.
+* `mini-attrlist.img` (16 MiB, label `MINIAL`), every entry `expect: ok`, each with `"attributeList"`. Contents, each asserted from TSK `istat` while building and again by `verify.sh`: `/ds` (9 entries with 200-character names: directory with an `$ATTRIBUTE_LIST`, `$INDEX_ALLOCATION` of two index blocks in two runs); `/de` (1200 entries: `$INDEX_ALLOCATION` itself continues in an extension record, VCN > 0); `/links` (45 hard-link paths to one inode whose `$FILE_NAME` attributes overflow into extension records); `/frag/f0..f2.bin` (three interleaved appenders, about 500 runs each: `$DATA` continues in extension records at VCN > 0); `/control` (no attribute list).
+
+Directory names matter in ntfs-3g: a directory called `d` or `ds` with long-named children gets an `$ATTRIBUTE_LIST` after two entries, one called `d-small` does not. The builder therefore asserts the contract instead of assuming it.
+
+## Kernel driver availability
+
+`k-*` need the `ntfs3` module. The colima VM kernel (6.8.0-117-generic) has it built as a module but not installed. `build-in-container.sh` downloads `linux-modules-extra-<kernel>` (cached in the docker volume `macntfs-corpus-cache`), extracts `ntfs3.ko` and `insmod`s it from the privileged container; this only lives in the VM's memory until reboot. If that fails, `k-*` are reported as `SKIPPED`.
+
+On GitHub's Ubuntu runner (kernel `7.0.0-azure`) the module cannot be loaded, so CI builds and compares 16 ntfs-3g images plus the 2 committed fixtures (`MACNTFS_CORPUS_REQUIRE=18`). The two `k-*` images are only compared on a developer machine with `MACNTFS_CORPUS_REQUIRE=20`.
+
 ## What is NOT covered
 
-* **No Windows-written image.** This corpus was written by `ntfs-3g`, so it is
-  **less independent than a Windows-made one**: Windows and ntfs-3g can differ in
+* **Few Windows-written images.** The built corpus was written by `ntfs-3g`, so it is
+  **less independent than a Windows-made one** (twelve small Windows images are committed in
+  `Tests/Fixtures/windows`, see `scripts/windows/README.md`, but not a Windows system that has run for years): Windows and ntfs-3g can differ in
   how they lay out and tag structures (DOS 8.3 names, `$Secure`/security IDs,
   `$UsnJrnl`, `$LogFile` state, index layout and fixups, timestamps, compression
   chunking, resident/non-resident thresholds), and a misreading shared by

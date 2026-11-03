@@ -13,10 +13,16 @@ struct MacNTFSCLI {
         static let failure: Int32 = 1
         static let usage: Int32 = 2
         static let unsupported: Int32 = 3
+        static let mounted: Int32 = 4
     }
 
+    /// Set by `--allow-mounted`: read a device even if another driver has it mounted for writing.
+    private static var allowMountedWritable = false
+
     static func main() {
-        let args = Array(CommandLine.arguments.dropFirst())
+        var args = Array(CommandLine.arguments.dropFirst())
+        allowMountedWritable = args.contains("--allow-mounted")
+        args.removeAll { $0 == "--allow-mounted" }
         guard let command = args.first else {
             printUsage(to: .standardError)
             exit(Exit.usage)
@@ -33,8 +39,24 @@ struct MacNTFSCLI {
                 try list(imagePath: args[1], directory: args.count == 3 ? args[2] : "/")
 
             case "cat":
-                guard args.count == 3 else { usageError("macntfs cat <image-or-device> <file-path>") }
-                try cat(imagePath: args[1], filePath: args[2])
+                let usage = "macntfs cat <image-or-device> <file-path> [--stream NAME]"
+                var rest = Array(args.dropFirst())
+                var stream: String?
+                if let flag = rest.firstIndex(of: "--stream") {
+                    guard flag + 1 < rest.count else { usageError(usage) }
+                    stream = rest[flag + 1]
+                    rest.removeSubrange(flag...(flag + 1))
+                }
+                guard rest.count == 2 else { usageError(usage) }
+                try cat(imagePath: rest[0], filePath: rest[1], stream: stream)
+
+            case "streams":
+                guard args.count == 3 else { usageError("macntfs streams <image-or-device> <path>") }
+                try streams(imagePath: args[1], path: args[2])
+
+            case "readlink":
+                guard args.count == 3 else { usageError("macntfs readlink <image-or-device> <path>") }
+                try readLink(imagePath: args[1], path: args[2])
 
             case "info":
                 guard args.count == 3, let record = UInt64(args[2]) else {
@@ -62,18 +84,55 @@ struct MacNTFSCLI {
 
     // MARK: - Commands
 
-    private static func openVolume(_ path: String) throws -> NTFSVolume {
-        // FileBlockDevice opens read-only unless asked otherwise. This tool never asks.
-        try NTFSVolume(blockDevice: try FileBlockDevice(path: path))
+    private static func openVolume(_ path: String, quiet: Bool = false) throws -> NTFSVolume {
+        // A device that another driver has mounted for writing can change while we read it.
+        if let mount = MountCheck.mount(forDevice: path, in: MountCheck.currentMounts()), !mount.isReadOnly, !allowMountedWritable {
+            printError("\(path) is mounted for writing at \(mount.mountPoint) (\(mount.fileSystemType)). Its contents can change while they are read. Unmount it, read an image of it, or use --allow-mounted.")
+            exit(Exit.mounted)
+        }
+
+        // FileBlockDevice opens read-only. This tool has no way to open a device for writing.
+        let volume = try NTFSVolume(blockDevice: try FileBlockDevice(path: path))
+
+        if !quiet {
+            if !volume.volumeFlagsKnown {
+                printError("warning: the volume flags could not be read, so it is not known whether the volume was shut down cleanly.")
+            } else if volume.isDirty {
+                printError("warning: the volume was not shut down cleanly (dirty flag). What it shows can be outdated.")
+            }
+            do {
+                if try volume.hibernationState() == .hibernated {
+                    printError("warning: Windows hibernated or used Fast Startup. The volume on disk is not up to date; shut Windows down completely first.")
+                }
+            } catch {
+                printError("warning: could not check whether Windows hibernated (\(error.localizedDescription)).")
+            }
+        }
+        return volume
     }
 
     private static func probe(path: String) throws {
-        let vol = try openVolume(path)
+        let vol = try openVolume(path, quiet: true)
         let boot = vol.bootSector
 
         print("Device:              \(path)")
         print("Volume name:         \(vol.volumeName)")
-        print("Dirty flag:          \(vol.isDirty ? "set (not cleanly unmounted)" : "clear")")
+        print("Dirty flag:          \(!vol.volumeFlagsKnown ? "UNKNOWN (the volume flags could not be read)" : vol.isDirty ? "SET (not cleanly unmounted, contents can be outdated)" : "clear")")
+        switch (try? vol.hibernationState()) {
+        case .some(.hibernated):
+            print("Hibernation:         HIBERNATED (Windows saved its state; Fast Startup or hibernate)")
+        case .some(.notHibernated):
+            print("Hibernation:         hiberfil.sys present, no saved state")
+        case .some(.absent):
+            print("Hibernation:         no hiberfil.sys")
+        case .none:
+            print("Hibernation:         unknown")
+        }
+        if let mount = MountCheck.mount(forDevice: path, in: MountCheck.currentMounts()) {
+            print("Mounted:             yes, \(mount.isReadOnly ? "read-only" : "READ-WRITE") at \(mount.mountPoint) (\(mount.fileSystemType))")
+        } else {
+            print("Mounted:             no")
+        }
         print("Bytes per sector:    \(boot.bytesPerSector)")
         print("Sectors per cluster: \(boot.sectorsPerCluster)")
         print("Cluster size:        \(boot.clusterSizeBytes) bytes")
@@ -103,23 +162,58 @@ struct MacNTFSCLI {
         }
     }
 
-    private static func cat(imagePath: String, filePath: String) throws {
+    private static func readLink(imagePath: String, path: String) throws {
+        let vol = try openVolume(imagePath)
+        guard let link = try vol.readLink(at: path) else {
+            printError("'\(path)' is not a link")
+            exit(Exit.failure)
+        }
+        switch link.kind {
+        case .symlink: print("symlink\(link.isRelative ? " (relative)" : "")")
+        case .junction: print("junction")
+        case .wslSymlink: print("wsl symlink")
+        case .interixSymlink: print("interix symlink")
+        case .other(let tag): print("other reparse point (tag 0x\(String(tag, radix: 16)))")
+        }
+        print(link.target)
+        if link.substituteName != link.target && !link.substituteName.isEmpty {
+            print("substitute name: \(link.substituteName)")
+        }
+    }
+
+    private static func streams(imagePath: String, path: String) throws {
+        let vol = try openVolume(imagePath)
+        for stream in try vol.dataStreams(at: path) {
+            var flags = [String]()
+            if stream.isCompressed { flags.append("compressed") }
+            if stream.isEncrypted { flags.append("encrypted") }
+            let name = stream.name ?? "(default)"
+            let size = String(stream.size)
+            let padded = String(repeating: " ", count: max(0, 12 - size.count)) + size
+            print("\(padded)  \(name)\(flags.isEmpty ? "" : "  [\(flags.joined(separator: ", "))]")")
+        }
+    }
+
+    private static func cat(imagePath: String, filePath: String, stream: String?) throws {
         let vol = try openVolume(imagePath)
         let (record, isDirectory) = try vol.lookup(path: filePath)
 
-        // A directory link has the directory flag, but it is a link.
-        if record.attribute(ofType: .reparsePoint) != nil {
-            throw NTFSError.unsupported(.reparse)
-        }
-        guard !isDirectory else {
-            throw NTFSError.isADirectory(filePath)
+        // Only the default stream is the content of a file. Directories can carry named streams.
+        if stream == nil {
+            // A directory link has the directory flag, but it is a link.
+            if record.attribute(ofType: .reparsePoint) != nil {
+                throw NTFSError.unsupported(.reparse)
+            }
+            guard !isDirectory else {
+                throw NTFSError.isADirectory(filePath)
+            }
         }
 
         // Read in blocks, so large files do not have to fit in memory.
         let chunkSize = 4 * 1024 * 1024
         var offset: UInt64 = 0
         while true {
-            let chunk = try vol.readData(record: record, offset: offset, length: chunkSize)
+            let chunk = try vol.readData(record: record, stream: stream, offset: offset, length: chunkSize)
             if chunk.isEmpty { break }
             let written = chunk.withUnsafeBytes { fwrite($0.baseAddress, 1, chunk.count, stdout) }
             guard written == chunk.count else {
@@ -167,13 +261,20 @@ struct MacNTFSCLI {
           macntfs probe <image-or-device>                  Show boot sector and volume information
           macntfs ls <image-or-device> [path]              List a directory
           macntfs cat <image-or-device> <file-path>        Write a file to standard output
+                      [--stream NAME]                      ... or one of its named data streams
+          macntfs streams <image-or-device> <path>         List the data streams of a file or directory
+          macntfs readlink <image-or-device> <path>        Show where a link points (the link is not followed)
           macntfs info <image-or-device> <mft-record>      Show one MFT record and its attributes
 
-        Opens images and devices read-only. Compressed, encrypted, attribute-list and link data
+        Opens images and devices read-only. Encrypted and link data
         is refused with exit code 3 instead of returning wrong bytes. Devices need root and should
         not be mounted writable by another driver while you read them.
 
-        Exit codes: 0 success, 1 error, 2 wrong usage, 3 unsupported NTFS feature.
+        A device that another driver has mounted for writing is refused (exit code 4), because it can
+        change while it is read. Use --allow-mounted to read it anyway. Warnings about an unclean
+        shutdown or Windows hibernation go to standard error.
+
+        Exit codes: 0 success, 1 error, 2 wrong usage, 3 unsupported NTFS feature, 4 device mounted for writing.
         """
         stream.write(Data((text + "\n").utf8))
     }

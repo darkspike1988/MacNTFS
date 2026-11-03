@@ -41,7 +41,8 @@ public struct MFTRecordHeader: Sendable {
 
         var reader = BinaryReader(data: data)
         let magic = try reader.readASCIIString(byteCount: 4)
-        guard magic == "FILE" || magic == "BAAD" else {
+        // "BAAD" marks a record that chkdsk found damaged. It is not read.
+        guard magic == "FILE" else {
             throw NTFSError.invalidSignature(expected: "FILE", found: magic)
         }
         self.magic = magic

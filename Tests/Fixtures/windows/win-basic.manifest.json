@@ -1,0 +1,245 @@
+{
+ "schema": 1,
+ "image": "win-basic.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-BASIC",
+ "dirty": false,
+ "entries": [
+  {
+   "path": "/a",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/a/b",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/a/b/c",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/a/b/c/deep.bin",
+   "type": "file",
+   "size": 9000,
+   "sha256": "0e3ce7c4e1a81590d5a1ccba1e4418632f3f19dc15758c9d20aca4cd62cd2050",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/dir with spaces",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/dir with spaces/nested file.txt",
+   "type": "file",
+   "size": 700,
+   "sha256": "2de48fdd7579c781765b4251e2e0aa709e8ef5ec7479a467909470b6e2e78b16",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f0.bin",
+   "type": "file",
+   "size": 0,
+   "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f1.bin",
+   "type": "file",
+   "size": 1,
+   "sha256": "7cb7c4547cf2653590d7a9ace60cc623d25148adfbc88a89aeb0ef88da7839ba",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f1023.bin",
+   "type": "file",
+   "size": 1023,
+   "sha256": "0b9191e4b641fdc0a5ac954b393796b8b89d0c83ed9c52652bccc556169ac284",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f1024.bin",
+   "type": "file",
+   "size": 1024,
+   "sha256": "c241801b7626b2401a01f4ff5fb0440055431bf3439b61222b07cd80187cf052",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f1025.bin",
+   "type": "file",
+   "size": 1025,
+   "sha256": "87c7861598e178d208270e4bfde0ae7eb8f35797db8dbec01c29d0c16fca8395",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f1100000.bin",
+   "type": "file",
+   "size": 1100000,
+   "sha256": "85de270b36d4652905623ffc543e7da0f39fd712b56eb8bb5c013fe5d534f5aa",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f20000.bin",
+   "type": "file",
+   "size": 20000,
+   "sha256": "1d41a1954e8611b906ec4da352d924434bc75795c07829b020f0e32eb9788628",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f262144.bin",
+   "type": "file",
+   "size": 262144,
+   "sha256": "cbadee1e14f13194ec8c2b75c2958e82015de92245a505e0169b83139c78d0c2",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f4095.bin",
+   "type": "file",
+   "size": 4095,
+   "sha256": "3982f904143b734ebfe893d5ab119a05ff30c3c7930a559aaf7f04e7935b3051",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f4096.bin",
+   "type": "file",
+   "size": 4096,
+   "sha256": "0adade1c9add464ef6b0c70856a2f6379f2db72216f0adc4090623e065012a7d",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f4097.bin",
+   "type": "file",
+   "size": 4097,
+   "sha256": "203b2851711769faa1ff6243ac4d5211bc5954fde374db9ab200d6625fab4d96",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f511.bin",
+   "type": "file",
+   "size": 511,
+   "sha256": "779f4795e28c4824c78886914516681f415ea3b88d7476cb739b256534091344",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f512.bin",
+   "type": "file",
+   "size": 512,
+   "sha256": "956b6b59cf2ee80094cf5398f70f3c30381318a2a12454b0385724420022b7bf",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f513.bin",
+   "type": "file",
+   "size": 513,
+   "sha256": "1a2dc78d5f7c4162085d00b242fbd7cade6a19e9ff6c9317c3ab1c98c5316a80",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f65536.bin",
+   "type": "file",
+   "size": 65536,
+   "sha256": "844b29360112ac097ad8137c2c76f9fac495e3df6f7b7c875ef200a242bfe95b",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/f700.bin",
+   "type": "file",
+   "size": 700,
+   "sha256": "31c0175afa2e9b7f645bb3fde0a84e0ba8ff92132ad96ec34a3ddf2915f38c47",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/uni",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/uni/Gr\u00fc\u00dfe-\u00e4\u00f6\u00fc.txt",
+   "type": "file",
+   "size": 300,
+   "sha256": "aabc49f5bd76f977984682bd1ce7354f12c880245fcbb0815cc292d7475b3ba0",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/uni/\u01c5-\u01c4-\u01c6.txt",
+   "type": "file",
+   "size": 40,
+   "sha256": "7d9de0a51fe9be102156829701139ba2f3178bab90c2538c64528f29122f774a",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/uni/\u65e5\u672c\u8a9e.txt",
+   "type": "file",
+   "size": 1500,
+   "sha256": "696c2ad5bb10e22e3d616722e7f213b4b024e90afbd2ac32c3103ea373883c71",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

@@ -1,9 +1,24 @@
 import Foundation
 
+/// One data stream of a file. The default stream has no name.
+public struct DataStream: Sendable, Equatable {
+    public let name: String?
+    public let size: UInt64
+    public let isCompressed: Bool
+    public let isEncrypted: Bool
+}
+
 public struct MFTRecord: Sendable {
     public let recordNumber: UInt64
     public let header: MFTRecordHeader
     public let attributes: [NTFSAttribute]
+    /// False when the record has an `$ATTRIBUTE_LIST` whose extension records were not read.
+    /// Records returned by `NTFSVolume` are always resolved.
+    public let attributeListResolved: Bool
+
+    public var hasUnresolvedAttributeList: Bool {
+        !attributeListResolved
+    }
 
     public var isInUse: Bool {
         header.isInUse
@@ -18,6 +33,12 @@ public struct MFTRecord: Sendable {
 
         var dataCopy = rawData
         let headerProbe = try MFTRecordHeader(data: dataCopy)
+
+        // One update sequence entry per 512-byte block, plus the sequence number itself.
+        let expectedEntries = dataCopy.count / FixupApplier.blockSize + 1
+        guard Int(headerProbe.updateSequenceSize) == expectedEntries else {
+            throw NTFSError.corruptRecord("Record \(recordNumber) has \(headerProbe.updateSequenceSize) update sequence entries, expected \(expectedEntries)")
+        }
 
         // Apply Fixup Array to restore block ends and verify integrity
         try FixupApplier.applyFixup(
@@ -42,6 +63,15 @@ public struct MFTRecord: Sendable {
         }
 
         self.attributes = parsedAttributes
+        self.attributeListResolved = !parsedAttributes.contains { $0.type == .attributeList }
+    }
+
+    /// The base record with the attributes of its extension records merged in.
+    init(resolving base: MFTRecord, attributes: [NTFSAttribute]) {
+        self.recordNumber = base.recordNumber
+        self.header = base.header
+        self.attributes = attributes
+        self.attributeListResolved = true
     }
 
     public func attribute(ofType type: AttributeType, name: String? = nil) -> NTFSAttribute? {
@@ -86,5 +116,28 @@ public struct MFTRecord: Sendable {
 
     public var defaultDataAttribute: NTFSAttribute? {
         attribute(ofType: .data, name: nil)
+    }
+
+    /// All data streams of the file: the unnamed default stream and the named ones.
+    public var dataStreams: [DataStream] {
+        attributes.filter { $0.type == .data }.map { attribute in
+            DataStream(
+                name: attribute.name,
+                size: attribute.realDataSize,
+                isCompressed: attribute.flags.contains(.compressed),
+                isEncrypted: attribute.flags.contains(.encrypted)
+            )
+        }
+    }
+
+    /// The `$DATA` attribute of a named stream. An exact UTF-16 match wins over a case-insensitive one.
+    public func dataStream(named name: String) -> NTFSAttribute? {
+        dataStream(named: name, upCase: nil)
+    }
+
+    func dataStream(named name: String, upCase: UpCaseTable?) -> NTFSAttribute? {
+        let named = attributes.filter { $0.type == .data && $0.name != nil }
+        return named.first { NTFSName.isExactMatch($0.name ?? "", name) }
+            ?? named.first { NTFSName.isCaseInsensitiveMatch($0.name ?? "", name, upCase: upCase) }
     }
 }

@@ -10,7 +10,7 @@ if [ ! -f /.dockerenv ] && [ -z "${CORPUS_IN_CONTAINER:-}" ]; then
   repo="$(cd "$here/../.." && pwd)"
   docker info >/dev/null 2>&1 || { echo "error: docker daemon not reachable (try: colima start)" >&2; exit 1; }
   docker build -q -t macntfs-corpus:1 "$here" >/dev/null
-  exec docker run --rm -e CORPUS_IN_CONTAINER=1 \
+  exec docker run --rm --privileged -e CORPUS_IN_CONTAINER=1 \
     -v "$here":/corpus:ro -v "$repo/Tests/Corpus/out":/out:ro -v "$repo/Tests/Fixtures":/fixtures:ro \
     macntfs-corpus:1 /corpus/verify.sh "$@"
 fi

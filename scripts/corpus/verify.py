@@ -12,6 +12,7 @@ import hashlib
 import json
 import os
 import re
+import struct
 import subprocess
 import sys
 
@@ -70,6 +71,13 @@ def runs_of(istat_text):
                 prev = n
             return runs
     return 0
+
+
+AL_ROW = re.compile(r"Type: (\d+)-\d+ \tMFT Entry: (\d+) \tVCN: (\d+)")
+
+
+def al_rows(text):
+    return [tuple(int(x) for x in m.groups()) for m in map(AL_ROW.match, text.splitlines()) if m]
 
 
 class Checker:
@@ -180,6 +188,8 @@ class Checker:
             else:
                 self.fail("features", "fsstat label %r != manifest %r" % (g.group(1).strip(), mf["volumeLabel"]))
 
+        self.check_header(mf)
+
         # content
         todo = [e for e in ents if e["type"] in ("file", "hardlink", "symlink") and e["sha256"]]
         inodes = {}
@@ -228,7 +238,12 @@ class Checker:
                     break
                 cur = parent(cur)
             lab = e["expect"]
-            if lab == "unsupported:attribute-list":
+            if "attributeList" in e:  # explicit oracle field: must equal what TSK reports, both directions
+                if bool(hit) == bool(e["attributeList"]):
+                    self.ok("features")
+                else:
+                    self.fail("features", "%s: attributeList=%s but TSK says %s" % (e["path"], e["attributeList"], bool(hit)))
+            elif lab == "unsupported:attribute-list":
                 if hit:
                     self.ok("features")
                 else:
@@ -298,6 +313,79 @@ class Checker:
         total = sum(1 for e in ents if e["type"] == "deleted")
         self.info = "(info: %d/%d deleted paths still resolvable in fls)" % (seen, total) if total else ""
 
+    def volume_flags_tsk(self):
+        """u16 flags of $VOLUME_INFORMATION read through TSK (istat 3 + icat 3-112-<id>)."""
+        t = self.istat("3")
+        g = re.search(r"Type: \$VOLUME_INFORMATION \(112-(\d+)\)", t)
+        if not g:
+            return None
+        rc, out = self.icat("3-112-" + g.group(1))
+        return struct.unpack_from("<H", out, 10)[0] if rc == 0 and len(out) >= 12 else None
+
+    def check_header(self, mf):
+        want_dirty = bool(mf.get("dirty", False))
+        fl = self.volume_flags_tsk()
+        rc, out, err = run(["ntfsinfo", "-m", "-f", self.img])
+        g = re.search(r"Volume Flags:\s*0x([0-9a-fA-F]+)", out.decode("utf-8", "replace"))
+        nf = int(g.group(1), 16) if g else None
+        for who, f in (("TSK", fl), ("ntfsinfo", nf)):
+            if f is None:
+                self.fail("features", "dirty: %s could not read the volume flags" % who)
+            elif bool(f & 1) == want_dirty:
+                self.ok("features")
+            else:
+                self.fail("features", "dirty: manifest says %s but %s reads flags 0x%x" % (want_dirty, who, f))
+        if "hibernated" in mf:
+            rc, out, err = self.ntfscat("/hiberfil.sys")
+            head = out[:4096]
+            real = out[:4] == b"hibr"
+            if real != mf["hibernated"]:
+                self.fail("features", "hibernated: manifest %s but /hiberfil.sys starts with %r" % (mf["hibernated"], out[:4]))
+            elif real and head[4:] != bytes(4092):
+                self.fail("features", "hibernated: header page is not 'hibr' + zeros")
+            elif not real and head != bytes(4096):
+                self.fail("features", "hiberfil-woken: first 4 KiB are not all zero")
+            else:
+                self.ok("features")
+        self.check_reparse()
+
+    def check_reparse(self):
+        ents = [e for e in self.mf["entries"] if e.get("reparse")]
+        if not ents:
+            return
+        mnt = "/mnt/rp-" + self.name
+        os.makedirs(mnt, exist_ok=True)
+        rc, out, err = run(["ntfs-3g", "-o", "ro,force,streams_interface=xattr", self.img, mnt])
+        if rc != 0:
+            self.fail("features", "reparse: cannot mount read-only: " + err.decode(errors="replace")[:100])
+            return
+        try:
+            for e in ents:
+                r = e["reparse"]
+                try:
+                    raw = os.getxattr(mnt + e["path"], "system.ntfs_reparse_data", follow_symlinks=False)
+                except OSError as ex:
+                    self.fail("features", "%s: no reparse data (%s)" % (e["path"], ex))
+                    continue
+                tag, ln, _ = struct.unpack_from("<IHH", raw, 0)
+                so, sl, po, pl = struct.unpack_from("<HHHH", raw, 8)
+                if tag == 0xA000000C:
+                    flags, base = struct.unpack_from("<I", raw, 16)[0], 20
+                    kind = "symlink-dir" if "dir" in r["kind"] else "symlink-file"
+                elif tag == 0xA0000003:
+                    flags, base, kind = 0, 16, "junction"
+                else:
+                    self.fail("features", "%s: unexpected reparse tag 0x%x" % (e["path"], tag))
+                    continue
+                sub = raw[base + so:base + so + sl].decode("utf-16le")
+                pr = raw[base + po:base + po + pl].decode("utf-16le")
+                if (kind, sub, pr, flags) == (r["kind"], r["substituteName"], r["printName"], r["flags"]):
+                    self.ok("features")
+                else:
+                    self.fail("features", "%s: reparse data %r != manifest %r" % (e["path"], (kind, sub, pr, flags), r))
+        finally:
+            run(["umount", mnt])
+
     def image_rules(self, ents, inodes):
         name = self.name
 
@@ -350,22 +438,66 @@ class Checker:
                     else:
                         self.fail("features", "%s should not be compressed" % e["path"])
         if name == "ads":
+            res = nonres = dirs = both = 0
             for e in ents:
-                if e["streams"]:
-                    i = self.ifind(e["path"])
-                    if i and sum(1 for l in self.istat(i).splitlines() if l.startswith("Type: $DATA") and "Name: N/A" not in l) >= 1 \
-                            or e["type"] == "dir":
-                        self.ok("features")
-                    else:
-                        self.fail("features", "%s: no named $DATA in istat" % e["path"])
+                if not e["streams"]:
+                    continue
+                i = self.ifind(e["path"])
+                t = self.istat(i) if i else ""
+                if e["type"] == "dir":
+                    dirs += 1
+                elif e["sha256"]:
+                    both += 1
+                for s in e["streams"]:
+                    line = next((l for l in t.splitlines() if l.startswith("Type: $DATA") and ("Name: %s " % s["name"]) in l), None)
+                    if line is None:
+                        self.fail("features", "%s:%s: no named $DATA in istat" % (e["path"], s["name"]))
+                        continue
+                    self.ok("features")
+                    isres = "Non-Resident" not in line
+                    res += isres and s["size"] <= 700
+                    nonres += (not isres) and s["size"] > 700
+                    if isres != (s["size"] <= 700) and s["size"] > 800:
+                        self.fail("features", "%s:%s residency unexpected" % (e["path"], s["name"]))
+            for what, cnt in (("resident named stream", res), ("non-resident named stream >700 B", nonres),
+                              ("stream on a directory", dirs), ("file with default + named streams", both)):
+                if cnt:
+                    self.ok("features")
+                else:
+                    self.fail("features", "ads: manifest/image has no %s" % what)
+        if name == "mini-attrlist":
+            def rows(p):
+                i = self.ifind(p)
+                return al_rows(self.istat(i)) if i else [], (self.istat(i) if i else "")
+            r, t = rows("/ds")
+            m = re.search(r"Type: \$INDEX_ALLOCATION.*\n([0-9 ]*)\n", t)
+            nums = [int(x) for x in (m.group(1).split() if m else [])]
+            nruns = 1 + sum(1 for x, y in zip(nums, nums[1:]) if y != x + 1) if nums else 0
+            checks = [("/ds has $ATTRIBUTE_LIST and >=2 index runs", bool(r) and nruns >= 2)]
+            r, t = rows("/de")
+            checks.append(("/de $INDEX_ALLOCATION extent with VCN>0 in an extension record", any(x[0] == 160 and x[2] > 0 for x in r)))
+            hl = [e for e in ents if e["type"] == "hardlink"]
+            r, t = rows(hl[0]["path"]) if hl else ([], "")
+            checks.append((">=40 hard link paths", len(hl) >= 40))
+            checks.append(("hard-link $FILE_NAME overflow into an extension record",
+                           sum(1 for x in r if x[0] == 48) >= 40 and any(x[0] == 48 and x[1] != r[0][1] for x in r)))
+            for f in ("/frag/f0.bin", "/frag/f1.bin", "/frag/f2.bin"):
+                r, t = rows(f)
+                checks.append((f + " $DATA extent with VCN>0", any(x[0] == 128 and x[2] > 0 for x in r)))
+            checks.append(("all expect ok", all(e["expect"] == "ok" for e in ents)))
+            for what, good in checks:
+                if good:
+                    self.ok("features")
+                else:
+                    self.fail("features", "mini-attrlist: " + what)
 
 
 def main():
     mans = sorted(f for f in os.listdir(D) if f.endswith(".manifest.json"))
     paths = [os.path.join(D, m) for m in mans]
     fx = os.environ.get("CORPUS_FIXTURES", "/fixtures")
-    if os.path.exists(fx + "/mini.manifest.json"):
-        paths.append(fx + "/mini.manifest.json")
+    if os.path.isdir(fx):
+        paths += [os.path.join(fx, f) for f in sorted(os.listdir(fx)) if f.endswith(".manifest.json")]
     if ONLY:
         paths = [p for p in paths if os.path.basename(p)[:-len(".manifest.json")] in ONLY]
     mans = paths

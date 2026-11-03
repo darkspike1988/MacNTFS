@@ -1,0 +1,38 @@
+{
+ "schema": 1,
+ "image": "win-dirty.img",
+ "tool": "Windows ntfs.sys (26100.4349, WinPE)",
+ "sectorSize": 512,
+ "clusterSize": 4096,
+ "volumeLabel": "WIN-DIRTY",
+ "dirty": true,
+ "entries": [
+  {
+   "path": "/c.txt",
+   "type": "file",
+   "size": 40,
+   "sha256": "79ff5a849eac69105cd117c0ade8824b9488983ea92c82a183a569496d360a66",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/docs",
+   "type": "dir",
+   "size": null,
+   "sha256": null,
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  },
+  {
+   "path": "/docs/a.bin",
+   "type": "file",
+   "size": 5000,
+   "sha256": "534d17020dca156d15e39f54b0702136b8ed79a8bc40a9b97fb038168751fc24",
+   "expect": "ok",
+   "linkTarget": null,
+   "streams": []
+  }
+ ]
+}

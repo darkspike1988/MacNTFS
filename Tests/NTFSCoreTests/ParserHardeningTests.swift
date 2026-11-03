@@ -125,12 +125,22 @@ final class ParserHardeningTests: XCTestCase {
 
     // MARK: - Reading data
 
-    func testReadDataRefusesCompressedAndEncryptedStreams() throws {
+    func testReadDataRefusesEncryptedStreamsAndReportsBrokenCompression() throws {
+        // The compressed flag without a compression unit size is not a valid attribute.
         let compressed = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
             image[record + data + 12] |= 0x01  // compressed flag
         }
         XCTAssertThrowsError(try compressed.readFile(at: "/big.bin")) { error in
-            guard case NTFSError.unsupported(.compression) = error else { return XCTFail("unexpected error \(error)") }
+            guard case NTFSError.corruptRunlist = error else { return XCTFail("unexpected error \(error)") }
+        }
+
+        // With a unit size the stored bytes must be valid LZNT1 data. The test file holds pseudo-random bytes.
+        let notCompressed = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
+            image[record + data + 12] |= 0x01
+            image[record + data + 0x22] = 4  // compression unit: 16 clusters
+        }
+        XCTAssertThrowsError(try notCompressed.readFile(at: "/big.bin")) { error in
+            guard case NTFSError.corruptCompressedData = error else { return XCTFail("unexpected error \(error)") }
         }
 
         let encrypted = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
@@ -141,13 +151,14 @@ final class ParserHardeningTests: XCTestCase {
         }
     }
 
-    func testReadDataRefusesAttributeListAndReparsePoints() throws {
-        // Turn the first attribute ($STANDARD_INFORMATION) into another type.
+    func testReadDataRefusesBrokenAttributeListAndReparsePoints() throws {
+        // Turn the first attribute ($STANDARD_INFORMATION) into an attribute list. Its bytes are not a
+        // valid list, so the engine must report a corrupt list and must not return the file data.
         let withList = try Fixtures.patchedVolume(path: "/small.txt") { image, record, first, _ in
             image[record + first] = 0x20
         }
         XCTAssertThrowsError(try withList.readFile(at: "/small.txt")) { error in
-            guard case NTFSError.unsupported(.attributeList) = error else { return XCTFail("unexpected error \(error)") }
+            guard case NTFSError.corruptAttributeList = error else { return XCTFail("unexpected error \(error)") }
         }
 
         let withReparse = try Fixtures.patchedVolume(path: "/small.txt") { image, record, first, _ in

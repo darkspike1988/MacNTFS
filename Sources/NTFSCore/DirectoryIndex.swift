@@ -4,6 +4,8 @@ public struct DirectoryItem: Identifiable, Hashable, Sendable {
     public var id: UInt64 { mftRecordNumber }
     public let name: String
     public let mftRecordNumber: UInt64
+    /// Sequence number of the record when the entry was made. Zero if the volume does not record one.
+    public let sequenceNumber: UInt16
     public let isDirectory: Bool
     public let fileSize: UInt64
     public let modificationDate: Date
@@ -19,16 +21,44 @@ public struct DirectoryItem: Identifiable, Hashable, Sendable {
     }
 }
 
-public final class DirectoryIndexReader: Sendable {
+public final class DirectoryIndexReader: @unchecked Sendable {
     private let blockDevice: BlockDevice
     private let bootSector: BootSector
+    private let upCase: UpCaseTable?
+
+    /// The names of one directory, to find an entry without scanning the index again.
+    private struct NameTable {
+        var exact = [[UInt16]: DirectoryItem]()
+        var folded = [[UInt16]: DirectoryItem]()
+    }
+
+    /// A directory is identified by its record and by the state of the record when its index was read.
+    private struct DirectoryKey: Hashable {
+        let record: UInt64
+        let sequenceNumber: UInt16
+        let logFileSequenceNumber: UInt64
+    }
+
+    /// Name tables of the directories read last. A client that walks a tree by path looks up one
+    /// directory again and again; the table makes each step a dictionary lookup. A directory with more
+    /// entries than `maxTableEntries` is scanned for each lookup instead, to keep memory bounded.
+    private var tables = [DirectoryKey: NameTable]()
+    private var tableOrder = [DirectoryKey]()
+    private let tablesLock = NSLock()
+    private static let maxTables = 8
+    private static let maxTableEntries = 100_000
 
     /// B-trees of real directories are a few levels deep. A deeper chain means a damaged or hostile index.
     private static let maxIndexDepth = 32
 
-    public init(blockDevice: BlockDevice, bootSector: BootSector) {
+    public convenience init(blockDevice: BlockDevice, bootSector: BootSector) {
+        self.init(blockDevice: blockDevice, bootSector: bootSector, upCase: nil)
+    }
+
+    init(blockDevice: BlockDevice, bootSector: BootSector, upCase: UpCaseTable?) {
         self.blockDevice = blockDevice
         self.bootSector = bootSector
+        self.upCase = upCase
     }
 
     /// Reads all directory entries from an MFT record representing a directory.
@@ -36,38 +66,148 @@ public final class DirectoryIndexReader: Sendable {
     /// Hard links keep one item per name.
     public func readEntries(from record: MFTRecord) throws -> [DirectoryItem] {
         var items = [DirectoryItem]()
-        try walk(record) { item in
-            items.append(item)
+        var failure: Error?
+        try walk(record) { data, entry in
+            do {
+                if let item = try DirectoryIndexReader.makeItem(from: entry, in: data) { items.append(item) }
+            } catch {
+                failure = error
+                return true
+            }
             return false
         }
+        if let failure { throw failure }
         return items.sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }
     }
 
-    /// Finds one entry by name without reading the whole directory into a sorted list.
-    /// An exact match on the UTF-16 name wins over a case-insensitive match.
+    /// Finds one entry by name. An exact match on the UTF-16 name wins over a case-insensitive match.
+    /// The exact pass compares name bytes without building strings, so it is cheap on large directories.
     public func findEntry(named name: String, in record: MFTRecord) throws -> DirectoryItem? {
-        var exact: DirectoryItem?
-        var caseInsensitive: DirectoryItem?
-        try walk(record) { item in
-            if NTFSName.isExactMatch(item.name, name) {
-                exact = item
+        let units = Array(name.utf16)
+        if let table = try nameTable(for: record) {
+            if let item = table.exact[units] { return item }
+            return table.folded[foldedUnits(units)]
+        }
+        return try scanForEntry(named: name, units: units, in: record)
+    }
+
+    private func foldedUnits(_ units: [UInt16]) -> [UInt16] {
+        upCase?.fold(units) ?? NTFSName.approximateFold(String(decoding: units, as: UTF16.self))
+    }
+
+    /// The name table of a directory, built on first use. Nil if the directory is too large to keep.
+    private func nameTable(for record: MFTRecord) throws -> NameTable? {
+        let key = DirectoryKey(
+            record: record.recordNumber,
+            sequenceNumber: record.header.sequenceNumber,
+            logFileSequenceNumber: record.header.logFileSequenceNumber
+        )
+        tablesLock.lock()
+        if let table = tables[key] {
+            tablesLock.unlock()
+            return table
+        }
+        tablesLock.unlock()
+
+        var table = NameTable()
+        var entries = 0
+        var failure: Error?
+        var tooLarge = false
+        try walk(record) { data, entry in
+            do {
+                guard let item = try DirectoryIndexReader.makeItem(from: entry, in: data) else { return false }
+                entries += 1
+                if entries > DirectoryIndexReader.maxTableEntries {
+                    tooLarge = true
+                    return true
+                }
+                let units = Array(item.name.utf16)
+                // The first entry with a name wins, as it does in a scan.
+                if table.exact[units] == nil { table.exact[units] = item }
+                let folded = foldedUnits(units)
+                if table.folded[folded] == nil { table.folded[folded] = item }
+            } catch {
+                failure = error
                 return true
-            }
-            if caseInsensitive == nil && NTFSName.isCaseInsensitiveMatch(item.name, name) {
-                caseInsensitive = item
             }
             return false
         }
-        return exact ?? caseInsensitive
+        if let failure { throw failure }
+        if tooLarge { return nil }
+
+        tablesLock.lock()
+        defer { tablesLock.unlock() }
+        if tables[key] == nil {
+            tables[key] = table
+            tableOrder.append(key)
+            if tableOrder.count > DirectoryIndexReader.maxTables {
+                tables[tableOrder.removeFirst()] = nil
+            }
+        }
+        return table
     }
 
-    /// Visits every entry of a directory. `visit` returns true to stop early.
-    private func walk(_ record: MFTRecord, visit: (DirectoryItem) -> Bool) throws {
+    /// Finds an entry by scanning the index: an exact pass without strings, then a pass ignoring case.
+    private func scanForEntry(named name: String, units: [UInt16], in record: MFTRecord) throws -> DirectoryItem? {
+        var failure: Error?
+        var found: DirectoryItem?
+
+        try walk(record) { data, entry in
+            guard entry.namespace(in: data) != .dos, entry.nameEquals(units, in: data) else { return false }
+            do {
+                found = try DirectoryIndexReader.makeItem(from: entry, in: data)
+            } catch {
+                failure = error
+            }
+            return true
+        }
+        if let failure { throw failure }
+        if let found { return found }
+
+        // No exact match: take the first name that matches ignoring case.
+        let foldedUnits = upCase?.fold(units)
+        try walk(record) { data, entry in
+            guard entry.namespace(in: data) != .dos, entry.nameLength(in: data) == units.count else { return false }
+            do {
+                if let upCase, let foldedUnits {
+                    guard entry.nameEqualsIgnoringCase(foldedUnits, upCase: upCase, in: data) else { return false }
+                    found = try DirectoryIndexReader.makeItem(from: entry, in: data)
+                } else {
+                    guard let item = try DirectoryIndexReader.makeItem(from: entry, in: data),
+                          NTFSName.isCaseInsensitiveMatch(item.name, name) else { return false }
+                    found = item
+                }
+            } catch {
+                failure = error
+            }
+            return true
+        }
+        if let failure { throw failure }
+        return found
+    }
+
+    /// Builds the item for an index entry. Returns nil for the "." entry and for pure DOS names.
+    private static func makeItem(from entry: RawIndexEntry, in data: Data) throws -> DirectoryItem? {
+        let fn = try entry.fileName(in: data)
+        guard fn.name != ".", fn.namespace != .dos else { return nil }
+        return DirectoryItem(
+            name: fn.name,
+            mftRecordNumber: entry.mftRecordNumber,
+            sequenceNumber: entry.sequenceNumber,
+            isDirectory: fn.isDirectory,
+            fileSize: fn.realSize,
+            modificationDate: fn.modificationTime,
+            creationDate: fn.creationTime
+        )
+    }
+
+    /// Visits every entry that carries a file name. `visit` returns true to stop early.
+    private func walk(_ record: MFTRecord, visit: (Data, RawIndexEntry) -> Bool) throws {
         guard record.isDirectory else {
             throw NTFSError.notADirectory("Record \(record.recordNumber) is not a directory")
         }
         // The index may live in extension records that are not read, and a link target is not this directory.
-        if record.attribute(ofType: .attributeList) != nil {
+        if record.hasUnresolvedAttributeList {
             throw NTFSError.unsupported(.attributeList)
         }
         if record.attribute(ofType: .reparsePoint) != nil {
@@ -98,7 +238,7 @@ public final class DirectoryIndexReader: Sendable {
         indexAlloc: NTFSAttribute?,
         depth: Int,
         visitedVCNs: inout Set<UInt64>,
-        visit: (DirectoryItem) -> Bool
+        visit: (Data, RawIndexEntry) -> Bool
     ) throws -> Bool {
         guard data.count >= nodeHeaderOffset + 16 else {
             throw NTFSError.corruptDirectoryIndex("Index node header is too short")
@@ -112,19 +252,9 @@ public final class DirectoryIndexReader: Sendable {
         let limitOffset = nodeHeaderOffset + totalEntriesSize
 
         while currentOffset < limitOffset && currentOffset + 16 <= data.count {
-            let entry = try IndexEntryParser.parse(data: data, offset: currentOffset)
+            let entry = try IndexEntryParser.parseRaw(data: data, offset: currentOffset)
 
-            if let fn = entry.fileName, fn.name != ".", fn.namespace != .dos {
-                let item = DirectoryItem(
-                    name: fn.name,
-                    mftRecordNumber: entry.mftRecordNumber,
-                    isDirectory: fn.isDirectory,
-                    fileSize: fn.realSize,
-                    modificationDate: fn.modificationTime,
-                    creationDate: fn.creationTime
-                )
-                if visit(item) { return true }
-            }
+            if entry.hasFileName, visit(data, entry) { return true }
 
             if let vcn = entry.subNodeVCN {
                 guard let alloc = indexAlloc else {
@@ -138,7 +268,7 @@ public final class DirectoryIndexReader: Sendable {
             if entry.isLastEntry || entry.entryLength == 0 {
                 break
             }
-            currentOffset += Int(entry.entryLength)
+            currentOffset += entry.entryLength
         }
         return false
     }
@@ -149,7 +279,7 @@ public final class DirectoryIndexReader: Sendable {
         indexAlloc: NTFSAttribute,
         depth: Int,
         visitedVCNs: inout Set<UInt64>,
-        visit: (DirectoryItem) -> Bool
+        visit: (Data, RawIndexEntry) -> Bool
     ) throws -> Bool {
         guard !visitedVCNs.contains(vcn) else { return false }
         visitedVCNs.insert(vcn)
@@ -189,6 +319,9 @@ public final class DirectoryIndexReader: Sendable {
 
         let usaOffset = Int(try reader.readUInt16())
         let usaSize = Int(try reader.readUInt16())
+        guard usaSize == mutableData.count / FixupApplier.blockSize + 1 else {
+            throw NTFSError.corruptDirectoryIndex("Index block at VCN \(vcn) has \(usaSize) update sequence entries")
+        }
 
         // Apply fixups to the INDX block
         try FixupApplier.applyFixup(

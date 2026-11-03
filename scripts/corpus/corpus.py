@@ -43,13 +43,14 @@ def tool_version():
 
 
 TOOL = None
+KERNEL_TOOL = None
 
 
 FLS_RE = re.compile(r"^(\S+)\s+(\*\s+)?(\d+)-\d+-\d+:\t(.*)$")
 AL = "unsupported:attribute-list"
 
 
-def label_attrlist(img_path, entries):
+def label_attrlist(img_path, entries, mode="label"):
     """Derive the attribute-list label from the oracle (TSK istat): an entry gets it when its own
     base MFT record or that of any ancestor directory has an $ATTRIBUTE_LIST. Returns #changed."""
     out = run("fls", "-r", "-p", img_path).stdout.decode("utf-8", "replace")
@@ -82,6 +83,10 @@ def label_attrlist(img_path, entries):
     changed = 0
     for e in live:
         hit = [q for q in chain(e["path"]) if al[inode[q]]]
+        if mode == "field":  # keep expect as set by the builder, record the oracle result
+            e["attributeList"] = bool(hit)
+            changed += bool(hit)
+            continue
         if not hit:
             continue
         why = "$ATTRIBUTE_LIST in MFT record of %s" % hit[0]
@@ -125,8 +130,14 @@ def sha(b):
 
 # ------------------------------------------------------------------- image ---
 class Img:
-    def __init__(self, name, sector=512, cluster=4096, size_mb=64, label=None, dest=None):
+    def __init__(self, name, sector=512, cluster=4096, size_mb=64, label=None, dest=None,
+                 driver="ntfs-3g", legacy_header=False, al_mode="label", hibernated=None, dirty=False):
         self.dest = dest or OUT
+        self.driver = driver          # "ntfs-3g" (FUSE) or "ntfs3" (Linux kernel driver)
+        self.legacy_header = legacy_header  # omit "dirty" (only for the committed mini fixture)
+        self.al_mode = al_mode        # "label": derive expect; "field": set entry["attributeList"]
+        self.hibernated = hibernated
+        self.dirty = dirty
         self.name = name
         self.sector = sector
         self.cluster = cluster
@@ -147,8 +158,23 @@ class Img:
 
     def mount(self):
         os.makedirs(self.mnt, exist_ok=True)
-        run("ntfs-3g", "-o", "rw,streams_interface=xattr,compression,noatime", self.path, self.mnt)
+        if self.driver == "ntfs3":
+            run("mount", "-t", "ntfs3", "-o", "loop,iocharset=utf8,noatime", self.path, self.mnt)
+        else:
+            run("ntfs-3g", "-o", "rw,streams_interface=xattr,compression,noatime", self.path, self.mnt)
         return self
+
+    def crash(self):
+        """kill -9 the ntfs-3g daemon so the volume is never unmounted cleanly (dirty flag stays set)."""
+        os.sync()
+        pid = run("pgrep", "-f", "ntfs-3g.*" + self.mnt).stdout.decode().split()
+        if not pid:
+            raise RuntimeError("ntfs-3g process not found")
+        for p in pid:
+            run("kill", "-9", p, check=False)
+        time.sleep(0.5)
+        run("umount", "-l", self.mnt, check=False)
+        time.sleep(0.5)
 
     def umount(self):
         os.sync()
@@ -169,11 +195,13 @@ class Img:
         return self.mnt + path
 
     # ---- recording
-    def rec(self, path, typ, size=None, digest=None, expect="ok", link=None, streams=None, note=None):
+    def rec(self, path, typ, size=None, digest=None, expect="ok", link=None, streams=None, note=None, reparse=None):
         e = {"path": path, "type": typ, "size": size, "sha256": digest, "expect": expect,
              "linkTarget": link, "streams": streams or []}
         if note:
             e["note"] = note
+        if reparse:
+            e["reparse"] = reparse
         self.entries.append(e)
 
     def mkdir(self, path, streams=None):
@@ -200,10 +228,14 @@ class Img:
                     follow_symlinks=False)
 
     def finish(self):
-        self.relabeled = label_attrlist(self.path, self.entries)
-        header = {"schema": 1, "image": self.name + ".img", "tool": TOOL,
+        self.relabeled = label_attrlist(self.path, self.entries, self.al_mode)
+        header = {"schema": 1, "image": self.name + ".img", "tool": TOOL if self.driver == "ntfs-3g" else KERNEL_TOOL,
                   "sectorSize": self.sector, "clusterSize": self.cluster,
                   "volumeLabel": self.label}
+        if not self.legacy_header:
+            header["dirty"] = self.dirty
+            if self.hibernated is not None:
+                header["hibernated"] = self.hibernated
         ents = sorted(self.entries, key=lambda e: (e["path"], e["type"] == "deleted"))
         lines = ["{"]
         for k, v in header.items():
@@ -226,7 +258,7 @@ class Img:
 
 
 # ---------------------------------------------------------------- builders ---
-def populate_basic(m):
+def populate_basic(m, kernel=False):
     n = m.name
     for d in ["/docs", "/docs/nested", "/docs/nested/deeper", "/docs/nested/deeper/still",
               "/docs/nested/deeper/still/deeper", "/src", "/src/a", "/src/a/b", "/empty-dir",
@@ -260,6 +292,8 @@ def populate_basic(m):
                             ".hidden", "many.dots.in.name.tar.gz", "UPPER and lower.TXT",
                             "semi;colon,comma'quote.txt", "#hash&amp%pct.txt", "-dash", "tilde~1.txt",
                             "longfilename_here.txt", "LONGFI~1.TXT", "x"]):
+        if kernel and nm in ("LONGFI~1.TXT",):
+            continue  # the kernel driver may generate DOS names itself
         m.file("/names/" + nm, blob(n, "nm%d" % i, 50 + i * 13))
 
 
@@ -440,17 +474,20 @@ def b_links():
         os.setxattr(m.p("/links/rp-symlink-file"), "system.ntfs_reparse_data",
                     reparse_symlink("target.txt"), follow_symlinks=False)
         m.rec("/links/rp-symlink-file", "symlink", None, None, "unsupported:reparse", "target.txt", [],
-              "IO_REPARSE_TAG_SYMLINK (0xA000000C), relative")
+              "IO_REPARSE_TAG_SYMLINK (0xA000000C), relative",
+              {"kind": "symlink-file", "substituteName": "target.txt", "printName": "target.txt", "flags": 1})
         os.mkdir(m.p("/links/rp-symlink-dir"))
         os.setxattr(m.p("/links/rp-symlink-dir"), "system.ntfs_reparse_data",
                     reparse_symlink("../hl"), follow_symlinks=False)
         m.rec("/links/rp-symlink-dir", "symlink", None, None, "unsupported:reparse", "../hl", [],
-              "IO_REPARSE_TAG_SYMLINK (0xA000000C) on a directory, relative")
+              "IO_REPARSE_TAG_SYMLINK (0xA000000C) on a directory, relative",
+              {"kind": "symlink-dir", "substituteName": "../hl", "printName": "../hl", "flags": 1})
         os.mkdir(m.p("/links/rp-junction"))
         os.setxattr(m.p("/links/rp-junction"), "system.ntfs_reparse_data",
                     reparse_junction("C:\\target"), follow_symlinks=False)
         m.rec("/links/rp-junction", "symlink", None, None, "unsupported:reparse", "C:\\target", [],
-              "IO_REPARSE_TAG_MOUNT_POINT (0xA0000003) junction, print name C:\\target")
+              "IO_REPARSE_TAG_MOUNT_POINT (0xA0000003) junction, print name C:\\target",
+              {"kind": "junction", "substituteName": "\\??\\C:\\target", "printName": "C:\\target", "flags": 0})
     return m
 
 
@@ -554,7 +591,7 @@ def b_empty():
 
 def b_mini():
     """Small committed fixture (Tests/Fixtures/mini.*); only built when named explicitly."""
-    m = Img("mini", 512, 4096, 10, label="MINI", dest=os.environ.get("CORPUS_FIXTURES", "/fixtures")).format()
+    m = Img("mini", 512, 4096, 10, label="MINI", dest=os.environ.get("CORPUS_FIXTURES", "/fixtures"), legacy_header=True).format()
     n = m.name
     with m:
         m.file("/small.txt", b"hello")
@@ -569,6 +606,166 @@ def b_mini():
         for i in range(150):
             m.file("/many/file-%03d-with-a-long-name-to-fill-index-blocks.txt" % i,
                    text(n, "many%d" % i, 50 + (i * 7) % 251))
+    return m
+
+
+def al_entries(img, path):
+    """(attribute-list rows [(type, mft, vcn)], istat text) for `path`, from TSK istat."""
+    ino = run("ifind", "-n", path, img).stdout.decode().strip()
+    t = run("istat", img, ino).stdout.decode("utf-8", "replace")
+    rows = []
+    for l in t.splitlines():
+        g = re.match(r"Type: (\d+)-\d+ \tMFT Entry: (\d+) \tVCN: (\d+)", l)
+        if g:
+            rows.append(tuple(int(x) for x in g.groups()))
+    return rows, t
+
+
+def check_mini_attrlist(img):
+    """Fail the build unless the fixture really contains what it advertises (evidence from TSK istat)."""
+    bad = []
+    rows, t = al_entries(img, "/ds")
+    runs = 0
+    for l in t.splitlines():
+        if l.startswith("Type: $INDEX_ALLOCATION"):
+            blocks = int(re.search(r"size: (\d+)", l).group(1)) // 4096
+            nums = [int(x) for x in t.split(l, 1)[1].split("\nType:", 1)[0].split()]
+            runs = 1 + sum(1 for a, b in zip(nums, nums[1:]) if b != a + 1)
+    if not rows or runs < 2:
+        bad.append("/ds: need $ATTRIBUTE_LIST and >=2 index runs (AL=%s runs=%d)" % (bool(rows), runs))
+    rows, t = al_entries(img, "/de")
+    if not any(r[0] == 160 and r[2] > 0 for r in rows):
+        bad.append("/de: $INDEX_ALLOCATION not split into extension records: %s" % rows)
+    rows, t = al_entries(img, "/links/" + "link-00-".ljust(90, "z"))
+    if sum(1 for r in rows if r[0] == 48) < 40 or not any(r[0] == 48 and r[1] != rows[0][1] for r in rows):
+        bad.append("link file: $FILE_NAME not overflowing: %s" % rows)
+    for f in ("/frag/f0.bin", "/frag/f1.bin", "/frag/f2.bin"):
+        rows, t = al_entries(img, f)
+        if not any(r[0] == 128 and r[2] > 0 for r in rows):
+            bad.append("%s: no $DATA extent with VCN>0: %s" % (f, rows))
+    for f in ("/control", "/control/plain.txt", "/control/big.bin", "/control/dir", "/control/dir/inner.txt"):
+        if al_entries(img, f)[0]:
+            bad.append("%s unexpectedly has an attribute list" % f)
+    if bad:
+        raise RuntimeError("mini-attrlist does not meet its contract: " + "; ".join(bad))
+
+
+def b_mini_attrlist():
+    """Committed fixture with real attribute lists; every entry is expect "ok" and carries the
+    TSK-derived "attributeList" boolean. Only built when named explicitly."""
+    m = Img("mini-attrlist", 512, 4096, 16, label="MINIAL", dest=os.environ.get("CORPUS_FIXTURES", "/fixtures"),
+            al_mode="field").format()
+    n = m.name
+    with m:
+        # (a1) smallest directory with an $ATTRIBUTE_LIST and 2 index blocks (long names)
+        m.mkdir("/ds")
+        for i in range(9):
+            m.file("/ds/" + ("n%03d-" % i).ljust(200, "x"), text(n, "ds%d" % i, 5000))
+        # (a2) directory like manydirs /big: $INDEX_ALLOCATION itself split over extension records
+        m.mkdir("/de")
+        for i in range(1200):
+            m.file("/de/" + ("e%04d-" % i).ljust(120, "y"), text(n, "de%d" % i, 1000))
+        # (b) one inode with 45 hard-link names (the $FILE_NAME attributes overflow the record)
+        m.mkdir("/links")
+        data = text(n, "hl", 2000)
+        first = "/links/" + ("link-00-").ljust(90, "z")
+        m.file(first, data, typ="hardlink")
+        m.entries[-1]["linkTarget"] = first
+        for i in range(1, 45):
+            p = "/links/" + ("link-%02d-" % i).ljust(90, "z")
+            os.link(m.p(first), m.p(p))
+            m.rec(p, "hardlink", len(data), sha(data), link=first)
+        # (c) heavily fragmented files: $DATA runlist continues in extension records
+        m.mkdir("/frag")
+        chunk, rounds = 4096, 500
+        d = [text(n, "fr%d" % i, chunk * rounds) for i in range(3)]
+        hs = [open(m.p("/frag/f%d.bin" % i), "wb", buffering=0) for i in range(3)]
+        for r in range(rounds):
+            for i, h in enumerate(hs):
+                h.write(d[i][r * chunk:(r + 1) * chunk])
+        for h in hs:
+            h.close()
+        for i in range(3):
+            m.rec("/frag/f%d.bin" % i, "file", len(d[i]), sha(d[i]))
+        # (d) controls without an attribute list
+        m.mkdir("/control")
+        m.mkdir("/control/dir")
+        m.file("/control/plain.txt", text(n, "cp", 500))
+        m.file("/control/big.bin", text(n, "cb", 30000))
+        m.file("/control/dir/inner.txt", text(n, "ci", 300))
+    check_mini_attrlist(m.path)
+    return m
+
+
+def hib_builder(name, hibernated):
+    m = Img(name, 512, 4096, 16, hibernated=hibernated).format()
+    with m:
+        head = (b"hibr" if hibernated else bytes(4)) + bytes(4092)
+        body = blob("hib", "body", 4 * 1024 * 1024 - 4096)  # same bytes in both images
+        m.file("/hiberfil.sys", head + body)
+        m.file("/small.txt", text(name, "small", 300))
+        m.mkdir("/dir")
+        m.file("/dir/note.txt", text(name, "note", 900))
+    return m
+
+
+def set_dirty_flag(path):
+    """Set VOLUME_IS_DIRTY (0x0001) in $Volume/$VOLUME_INFORMATION by writing the image directly.
+    Neither ntfs-3g 2022.10.3 nor the kernel ntfs3 driver leaves the flag set after kill -9 /
+    a snapshot of a mounted volume, so the bit is set by hand (record 3 = $Volume)."""
+    with open(path, "r+b") as f:
+        boot = f.read(512)
+        sec = struct.unpack_from("<H", boot, 11)[0]
+        clu = boot[13] * sec
+        mft = struct.unpack_from("<q", boot, 0x30)[0] * clu
+        c = struct.unpack_from("<b", boot, 0x40)[0]
+        rec = c * clu if c > 0 else 1 << -c
+        f.seek(mft + 3 * rec)
+        r = bytearray(f.read(rec))
+        assert r[:4] == b"FILE"
+        off = struct.unpack_from("<H", r, 0x14)[0]
+        while struct.unpack_from("<I", r, off)[0] != 0xFFFFFFFF:
+            typ, ln = struct.unpack_from("<II", r, off)
+            if typ == 0x70:
+                voff = off + struct.unpack_from("<H", r, off + 0x14)[0]
+                fpos = voff + 10
+                assert fpos % 512 not in (510, 511), "flags overlap the fixup slot"
+                flags = struct.unpack_from("<H", r, fpos)[0] | 0x0001
+                struct.pack_into("<H", r, fpos, flags)
+                mirr = struct.unpack_from("<q", boot, 0x38)[0] * clu  # $MFTMirr must stay identical
+                for base in (mft, mirr):
+                    f.seek(base + 3 * rec)
+                    f.write(r)
+                return
+            off += ln
+        raise RuntimeError("$VOLUME_INFORMATION not found")
+
+
+def b_dirty():
+    m = Img("dirty", 512, 4096, 16, dirty=True).format()
+    n = m.name
+    m.mount()
+    m.mkdir("/docs")
+    m.file("/docs/a.txt", text(n, "a", 1500))
+    m.file("/docs/b.bin", blob(n, "b", 100000))
+    m.file("/c.txt", text(n, "c", 40))
+    m.mkdir("/many")
+    for i in range(40):
+        m.file("/many/f%02d.txt" % i, blob(n, "m%d" % i, 30 + i))
+    m.crash()  # no clean unmount
+    set_dirty_flag(m.path)
+    return m
+
+
+def kernel_builder(name, many):
+    m = Img(name, 512, 4096, 48 if many else 32, driver="ntfs3").format()
+    with m:
+        if many:
+            m.mkdir("/many")
+            for i in range(1500):
+                m.file("/many/file-%04d-with-a-long-name.txt" % i, blob(m.name, "k%d" % i, 20 + (i * 37) % 900))
+        else:
+            populate_basic(m, kernel=True)
     return m
 
 
@@ -587,13 +784,22 @@ BUILDERS = [
     ("attrlist", b_attrlist),
     ("deleted", b_deleted),
     ("empty", b_empty),
+    ("dirty", b_dirty),
+    ("hibernated", lambda: hib_builder("hibernated", True)),
+    ("hiberfil-woken", lambda: hib_builder("hiberfil-woken", False)),
+    ("k-basic", lambda: kernel_builder("k-basic", False)),
+    ("k-many", lambda: kernel_builder("k-many", True)),
 ]
-EXPLICIT_ONLY = [("mini", b_mini)]  # not part of the default build
+EXPLICIT_ONLY = [("mini", b_mini), ("mini-attrlist", b_mini_attrlist)]  # not part of the default build
 
 
 def main():
     global TOOL
+    global KERNEL_TOOL
     TOOL = tool_version()
+    mk = run("mkntfs", "--version").stdout.decode().split("mkntfs v")[1].split()[0]
+    KERNEL_TOOL = "linux ntfs3 %s + mkntfs %s" % (os.uname().release, mk)
+    have_ntfs3 = "ntfs3" in open("/proc/filesystems").read().split()
     want = sys.argv[1:]
     allb = BUILDERS + EXPLICIT_ONLY
     names = [b[0] for b in allb]
@@ -605,6 +811,11 @@ def main():
         if (want and name not in want) or (not want and (name, fn) in EXPLICIT_ONLY):
             continue
         t0 = time.time()
+        if name.startswith("k-") and not have_ntfs3:
+            print("SKIPPED %-12s ntfs3 kernel driver not available in this VM" % name, flush=True)
+            if want:
+                failed.append(name)
+            continue
         try:
             m = fn()
             cnt = m.finish()

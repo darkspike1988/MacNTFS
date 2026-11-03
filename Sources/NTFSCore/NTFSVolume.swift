@@ -5,8 +5,12 @@ public final class NTFSVolume: Sendable {
     public let bootSector: BootSector
     public let volumeName: String
     public let isDirty: Bool
+    /// False if `$Volume` could not be read. Then `isDirty` is not known, and false only because nothing was found.
+    public let volumeFlagsKnown: Bool
     public let mftRecordRuns: [DataRun]
     private let directoryIndexReader: DirectoryIndexReader
+    /// The volume's case folding table, or nil if `$UpCase` could not be read.
+    private let upCase: UpCaseTable?
 
     public init(blockDevice: BlockDevice) throws {
         self.blockDevice = blockDevice
@@ -15,16 +19,25 @@ public final class NTFSVolume: Sendable {
         let bootData = try blockDevice.read(offset: 0, count: 512)
         let boot = try BootSector(data: bootData)
         self.bootSector = boot
-        self.directoryIndexReader = DirectoryIndexReader(blockDevice: blockDevice, bootSector: boot)
 
         // 2. Read bootstrap MFT Record 0 ($MFT) directly from boot.mftByteOffset
         let mft0Raw = try blockDevice.read(offset: boot.mftByteOffset, count: Int(boot.mftRecordSizeBytes))
-        let mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw)
+        var mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw)
 
-        // A fragmented $MFT can keep part of its run list in extension records. Those are not read,
-        // so opening such a volume would show only the first part of the MFT.
-        if mft0.attribute(ofType: .attributeList) != nil {
-            throw NTFSError.unsupported(.attributeList)
+        // A fragmented $MFT can keep part of its run list in extension records. They are found with
+        // the part of the MFT that the base record maps, because that is all that is known yet.
+        if mft0.hasUnresolvedAttributeList {
+            guard let firstRuns = mft0.defaultDataAttribute?.runs else {
+                throw NTFSError.corruptRunlist("$MFT record 0 does not contain non-resident $DATA runs")
+            }
+            do {
+                mft0 = try NTFSVolume.resolveAttributeList(base: mft0, bootSector: boot, device: blockDevice) { number in
+                    try NTFSVolume.readRecord(recordNumber: number, runs: firstRuns, bootSector: boot, device: blockDevice)
+                }
+            } catch NTFSError.outOfBounds {
+                // The extension records lie outside the part of the MFT that is known: not readable.
+                throw NTFSError.unsupported(.attributeList)
+            }
         }
 
         // 3. Extract $MFT's own $DATA runlist
@@ -34,9 +47,15 @@ public final class NTFSVolume: Sendable {
         }
         self.mftRecordRuns = runs
 
+        // The $UpCase table (record 10) decides which names count as equal when case is ignored.
+        let upCase = NTFSVolume.loadUpCase(runs: runs, bootSector: boot, device: blockDevice)
+        self.upCase = upCase
+        self.directoryIndexReader = DirectoryIndexReader(blockDevice: blockDevice, bootSector: boot, upCase: upCase)
+
         // 4. Read $Volume (Record 3) to extract Volume Name and Flags
         var detectedName = "NTFS"
         var dirty = false
+        var flagsKnown = false
         if let volRecord = try? NTFSVolume.readRecord(
             recordNumber: 3,
             runs: runs,
@@ -59,21 +78,112 @@ public final class NTFSVolume: Sendable {
                 // Bytes 10-11 are Flags (UInt16 LE: 0x0001 = Dirty flag)
                 let flags = UInt16(resData[resData.startIndex + 10]) | (UInt16(resData[resData.startIndex + 11]) << 8)
                 dirty = (flags & 0x0001) != 0
+                flagsKnown = true
             }
         }
 
         self.volumeName = detectedName
         self.isDirty = dirty
+        self.volumeFlagsKnown = flagsKnown
     }
 
     /// Reads any arbitrary MFT record by its record number.
+    /// Attributes stored in extension records (see `$ATTRIBUTE_LIST`) are merged into the returned record.
     public func readMFTRecord(number: UInt64) throws -> MFTRecord {
-        return try NTFSVolume.readRecord(
+        let base = try NTFSVolume.readRecord(
             recordNumber: number,
             runs: mftRecordRuns,
             bootSector: bootSector,
             device: blockDevice
         )
+        return try NTFSVolume.resolveAttributeList(base: base, bootSector: bootSector, device: blockDevice) { [mftRecordRuns, bootSector, blockDevice] extensionNumber in
+            try NTFSVolume.readRecord(recordNumber: extensionNumber, runs: mftRecordRuns, bootSector: bootSector, device: blockDevice)
+        }
+    }
+
+    private static func loadUpCase(runs: [DataRun], bootSector: BootSector, device: BlockDevice) -> UpCaseTable? {
+        guard let record = try? readRecord(recordNumber: 10, runs: runs, bootSector: bootSector, device: device),
+              let attribute = record.defaultDataAttribute,
+              case .nonResident(_, _, _, let realSize, _, let attributeRuns) = attribute.payload,
+              realSize == UInt64(UpCaseTable.byteCount),
+              let data = try? RunReader.read(
+                runs: attributeRuns,
+                virtualOffset: 0,
+                length: UpCaseTable.byteCount,
+                clusterSize: UInt64(bootSector.clusterSizeBytes),
+                device: device
+              ) else { return nil }
+        return UpCaseTable(data: data)
+    }
+
+    /// Most extension records one file may use. A file with this many is damaged or hostile.
+    private static let maxExtensionRecords = 4096
+    private static let maxAttributeListBytes: UInt64 = 16 << 20
+
+    /// Reads the extension records that the `$ATTRIBUTE_LIST` of `base` names and merges the listed
+    /// attributes into the base record. Returns `base` unchanged when it has no attribute list.
+    private static func resolveAttributeList(
+        base: MFTRecord,
+        bootSector: BootSector,
+        device: BlockDevice,
+        loadRecord: (UInt64) throws -> MFTRecord
+    ) throws -> MFTRecord {
+        guard base.hasUnresolvedAttributeList, let listAttribute = base.attribute(ofType: .attributeList) else {
+            return base
+        }
+
+        let listData = try attributeValue(listAttribute, bootSector: bootSector, device: device)
+        let entries = try AttributeListParser.parse(listData)
+
+        var wanted = [UInt64: [AttributeListEntry]]()
+        for entry in entries where entry.recordNumber != base.recordNumber {
+            wanted[entry.recordNumber, default: []].append(entry)
+        }
+        guard wanted.count <= maxExtensionRecords else {
+            throw NTFSError.resourceLimit("The attribute list names \(wanted.count) extension records")
+        }
+
+        var attributes = base.attributes
+        for number in wanted.keys.sorted() {
+            let extensionRecord = try loadRecord(number)
+            // The reference holds the record number and its sequence number. Comparing both also keeps
+            // an ordinary record (reference 0) from passing as an extension of the $MFT.
+            let expectedReference = (UInt64(base.header.sequenceNumber) << 48) | base.recordNumber
+            guard extensionRecord.isInUse, extensionRecord.header.baseRecordReference == expectedReference else {
+                throw NTFSError.corruptAttributeList("Record \(number) is not an extension record of record \(base.recordNumber)")
+            }
+            for entry in wanted[number] ?? [] {
+                guard let found = extensionRecord.attributes.first(where: {
+                    $0.type == entry.type && $0.attributeID == entry.attributeID && ($0.name ?? "") == (entry.name ?? "")
+                }) else {
+                    throw NTFSError.corruptAttributeList("Record \(number) has no \(entry.type) attribute with ID \(entry.attributeID)")
+                }
+                attributes.append(found)
+            }
+        }
+        return MFTRecord(resolving: base, attributes: try AttributeMerger.merge(attributes))
+    }
+
+    /// The value of a small attribute such as an attribute list, whether it is resident or not.
+    static func attributeValue(_ attribute: NTFSAttribute, bootSector: BootSector, device: BlockDevice) throws -> Data {
+        guard !attribute.flags.contains(.compressed), !attribute.flags.contains(.encrypted) else {
+            throw NTFSError.unsupported(.compressionFormat)
+        }
+        switch attribute.payload {
+        case .resident(let data):
+            return data
+        case .nonResident(_, _, _, let realSize, _, let runs):
+            guard realSize <= maxAttributeListBytes else {
+                throw NTFSError.resourceLimit("Attribute value of \(realSize) bytes")
+            }
+            return try RunReader.read(
+                runs: runs,
+                virtualOffset: 0,
+                length: Int(realSize),
+                clusterSize: UInt64(bootSector.clusterSizeBytes),
+                device: device
+            )
+        }
     }
 
     private static func readRecord(
@@ -96,33 +206,46 @@ public final class NTFSVolume: Sendable {
             device: device
         )
 
-        return try MFTRecord(recordNumber: recordNumber, rawData: rawBytes)
+        let record = try MFTRecord(recordNumber: recordNumber, rawData: rawBytes)
+        // NTFS 3.1 records say which record they are. A different number means the MFT run list points to the wrong place.
+        if record.header.updateSequenceOffset >= 0x30, UInt64(record.header.recordNumber) != recordNumber {
+            throw NTFSError.corruptRecord("The record at position \(recordNumber) says it is record \(record.header.recordNumber)")
+        }
+        return record
     }
 
     /// Largest range `readData` returns in one call. Read bigger files in chunks with `offset` and `length`.
     public static let maxSingleReadBytes: UInt64 = 1 << 30
 
-    /// Reads the payload data for the default $DATA stream of a given MFT record.
-    /// Throws `NTFSError.unsupported` for data it cannot read correctly instead of returning wrong bytes.
-    public func readData(record: MFTRecord, offset: UInt64 = 0, length: Int? = nil) throws -> Data {
+    /// Reads the payload data of a $DATA stream of a given MFT record: the default stream, or the
+    /// named stream `stream`. Throws `NTFSError.unsupported` for data it cannot read correctly
+    /// instead of returning wrong bytes.
+    public func readData(record: MFTRecord, stream: String? = nil, offset: UInt64 = 0, length: Int? = nil) throws -> Data {
         if let length, length < 0 {
             throw NTFSError.outOfBounds(offset: offset, requested: length, available: 0)
         }
-        // The data may live in extension records that are not read, or be a link or a placeholder.
-        if record.attribute(ofType: .attributeList) != nil {
+        // The data may live in extension records that are not read.
+        if record.hasUnresolvedAttributeList {
             throw NTFSError.unsupported(.attributeList)
         }
-        if record.attribute(ofType: .reparsePoint) != nil {
+        // The default stream of a link or placeholder is not the content it stands for.
+        if stream == nil && record.attribute(ofType: .reparsePoint) != nil {
             throw NTFSError.unsupported(.reparse)
         }
-        guard let dataAttr = record.defaultDataAttribute else {
+        let selected = stream.map { record.dataStream(named: $0, upCase: upCase) } ?? record.defaultDataAttribute
+        guard let dataAttr = selected else {
+            // A file can have no default stream. It reads as empty. A missing named stream is an error.
+            if let stream {
+                throw NTFSError.attributeNotFound(type: AttributeType.data.rawValue, name: stream)
+            }
             return Data()
-        }
-        if dataAttr.flags.contains(.compressed) {
-            throw NTFSError.unsupported(.compression)
         }
         if dataAttr.flags.contains(.encrypted) {
             throw NTFSError.unsupported(.encryption)
+        }
+        // Bit 0 is LZNT1. Other bits of the compression mask (0x00FF) name formats this library does not know.
+        if dataAttr.flags.rawValue & 0x00FE != 0 {
+            throw NTFSError.unsupported(.compressionFormat)
         }
 
         switch dataAttr.payload {
@@ -150,15 +273,28 @@ public final class NTFSVolume: Sendable {
             // Bytes at or after the initialized size read as zeros, whatever is stored on disk.
             let validEnd = min(initializedSize, realSize)
             let onDisk = offset < validEnd ? Int(min(wanted, validEnd - offset)) : 0
-            var result = onDisk > 0
-                ? try RunReader.read(
+            let clusterSize = UInt64(bootSector.clusterSizeBytes)
+            var result: Data
+            if onDisk == 0 {
+                result = Data()
+            } else if dataAttr.flags.contains(.compressed) {
+                result = try CompressedRunReader.read(
+                    runs: runs,
+                    unitShift: Int(dataAttr.compressionUnitShift),
+                    offset: offset,
+                    length: onDisk,
+                    clusterSize: clusterSize,
+                    device: blockDevice
+                )
+            } else {
+                result = try RunReader.read(
                     runs: runs,
                     virtualOffset: offset,
                     length: onDisk,
-                    clusterSize: UInt64(bootSector.clusterSizeBytes),
+                    clusterSize: clusterSize,
                     device: blockDevice
                 )
-                : Data()
+            }
             if onDisk < count {
                 result.append(Data(count: count - onDisk))
             }
@@ -197,28 +333,49 @@ public final class NTFSVolume: Sendable {
                 throw NTFSError.notADirectory(components.prefix(index).joined(separator: "/"))
             }
 
-            // Names match by exact UTF-16 first, then case-insensitively. Walking into a link or a
-            // directory with an attribute list throws NTFSError.unsupported.
-            guard let match = try directoryIndexReader.findEntry(named: component, in: currentRecord) else {
-                throw NTFSError.pathNotFound(path)
-            }
-
-            currentRecord = try readMFTRecord(number: match.mftRecordNumber)
+            currentRecord = try child(named: component, in: currentRecord, path: path)
         }
 
         return (currentRecord, currentRecord.isDirectory)
     }
 
+    /// The record of the entry `name` in the directory `directory`.
+    /// Names match by exact UTF-16 first, then case-insensitively. Walking into a link or a
+    /// directory with an attribute list throws NTFSError.unsupported.
+    func child(named name: String, in directory: MFTRecord, path: String) throws -> MFTRecord {
+        guard let match = try directoryIndexReader.findEntry(named: name, in: directory) else {
+            throw NTFSError.pathNotFound(path)
+        }
+        let record = try readMFTRecord(number: match.mftRecordNumber)
+
+        // An index entry can be left behind when its file was deleted and the record reused.
+        guard record.isInUse, record.header.baseRecordReference == 0 else {
+            throw NTFSError.corruptDirectoryIndex("'\(name)' points to record \(match.mftRecordNumber), which is not a file record in use")
+        }
+        if match.sequenceNumber != 0, record.header.sequenceNumber != match.sequenceNumber {
+            throw NTFSError.corruptDirectoryIndex("'\(name)' points to record \(match.mftRecordNumber) with an old sequence number")
+        }
+        return record
+    }
+
     /// Reads entire file content for a given path.
-    public func readFile(at path: String) throws -> Data {
+    public func readFile(at path: String, stream: String? = nil) throws -> Data {
         let (record, isDir) = try lookup(path: path)
-        // A directory link has the directory flag, but it is a link and not a directory to read.
-        if record.attribute(ofType: .reparsePoint) != nil {
-            throw NTFSError.unsupported(.reparse)
+        // Only the default stream of a file is its content. Directories can carry named streams.
+        if stream == nil {
+            // A directory link has the directory flag, but it is a link and not a directory to read.
+            if record.attribute(ofType: .reparsePoint) != nil {
+                throw NTFSError.unsupported(.reparse)
+            }
+            guard !isDir else {
+                throw NTFSError.isADirectory(path)
+            }
         }
-        guard !isDir else {
-            throw NTFSError.isADirectory(path)
-        }
-        return try readData(record: record)
+        return try readData(record: record, stream: stream)
+    }
+
+    /// The data streams of the file or directory at `path`.
+    public func dataStreams(at path: String) throws -> [DataStream] {
+        try lookup(path: path).record.dataStreams
     }
 }

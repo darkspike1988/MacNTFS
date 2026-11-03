@@ -3,10 +3,11 @@ import Foundation
 /// Valid NTFS features this library refuses to read instead of returning wrong data.
 /// The raw values match the `unsupported:<feature>` strings of the test corpus manifests.
 public enum UnsupportedFeature: String, Sendable, Equatable {
-    case compression
     case encryption
     case attributeList = "attribute-list"
     case reparse
+    /// A compression format other than LZNT1.
+    case compressionFormat = "compression-format"
 }
 
 public enum NTFSError: Error, LocalizedError, Sendable {
@@ -18,6 +19,9 @@ public enum NTFSError: Error, LocalizedError, Sendable {
     case attributeNotFound(type: UInt32, name: String?)
     case corruptRunlist(String)
     case corruptDirectoryIndex(String)
+    case corruptAttributeList(String)
+    case corruptCompressedData(String)
+    case corruptRecord(String)
     case pathNotFound(String)
     case notADirectory(String)
     case isADirectory(String)
@@ -48,6 +52,12 @@ public enum NTFSError: Error, LocalizedError, Sendable {
             return "Corrupt data runlist: \(msg)"
         case .corruptDirectoryIndex(let msg):
             return "Corrupt directory index: \(msg)"
+        case .corruptAttributeList(let msg):
+            return "Corrupt attribute list: \(msg)"
+        case .corruptCompressedData(let msg):
+            return "Corrupt compressed data: \(msg)"
+        case .corruptRecord(let msg):
+            return "Corrupt MFT record: \(msg)"
         case .pathNotFound(let path):
             return "Path not found: '\(path)'"
         case .notADirectory(let path):
