@@ -194,8 +194,7 @@ public final class DirectoryIndexReader: Sendable {
         try FixupApplier.applyFixup(
             data: &mutableData,
             updateSequenceOffset: usaOffset,
-            updateSequenceSize: usaSize,
-            bytesPerSector: Int(bootSector.bytesPerSector)
+            updateSequenceSize: usaSize
         )
 
         // The index node header of an INDX block is at offset 0x18.

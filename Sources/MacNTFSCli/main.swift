@@ -1,6 +1,10 @@
 import Foundation
 import NTFSCore
 
+private struct OutputError: LocalizedError {
+    var errorDescription: String? { "Writing to standard output failed" }
+}
+
 /// Read-only NTFS inspector. Opens images and devices read-only and never writes.
 @main
 struct MacNTFSCLI {
@@ -108,7 +112,7 @@ struct MacNTFSCLI {
             throw NTFSError.unsupported(.reparse)
         }
         guard !isDirectory else {
-            throw NTFSError.unsupportedFeature("'\(filePath)' is a directory")
+            throw NTFSError.isADirectory(filePath)
         }
 
         // Read in blocks, so large files do not have to fit in memory.
@@ -119,7 +123,7 @@ struct MacNTFSCLI {
             if chunk.isEmpty { break }
             let written = chunk.withUnsafeBytes { fwrite($0.baseAddress, 1, chunk.count, stdout) }
             guard written == chunk.count else {
-                throw NTFSError.unsupportedFeature("Writing to standard output failed")
+                throw OutputError()
             }
             offset += UInt64(chunk.count)
         }

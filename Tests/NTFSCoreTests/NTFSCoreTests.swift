@@ -3,34 +3,6 @@ import XCTest
 
 final class NTFSCoreTests: XCTestCase {
 
-    override func setUp() {
-        super.setUp()
-        setenv(ExperimentalGate.environmentKey, "1", 1)
-    }
-
-    func testExperimentalFeaturesAreLockedByDefault() throws {
-        let size = 20 * 1024 * 1024
-        let device = MemoryBlockDevice(data: Data(repeating: 0, count: size), writable: true)
-        try NTFSFormatter.format(device: device)
-        let volume = try NTFSVolume(blockDevice: device)
-        let before = try device.read(offset: 0, count: size)
-
-        unsetenv(ExperimentalGate.environmentKey)
-        defer { setenv(ExperimentalGate.environmentKey, "1", 1) }
-
-        func assertLocked(_ body: () throws -> Void, _ name: String) {
-            XCTAssertThrowsError(try body(), name) { error in
-                guard case NTFSError.experimentalDisabled = error else { return XCTFail("\(name): unexpected error \(error)") }
-            }
-        }
-        assertLocked({ try NTFSFormatter.format(device: device) }, "format")
-        assertLocked({ try NTFSVolumeChecker.repair(device: device) }, "repair")
-        assertLocked({ _ = try volume.writeFile(fileName: "a.txt", data: Data("x".utf8)) }, "writeFile")
-        assertLocked({ _ = try volume.repairVolume() }, "repairVolume")
-
-        XCTAssertEqual(before, try device.read(offset: 0, count: size), "a locked call must not change the device")
-    }
-
     // MARK: - BinaryReader Tests
 
     func testBinaryReaderPrimitives() throws {
@@ -65,14 +37,8 @@ final class NTFSCoreTests: XCTestCase {
     func testRunlistDecoderSimpleAndFragmented() throws {
         // Run 1: length = 4 clusters, offset delta = +100 (0x64)
         // Header: low nibble = 1 (length size), high nibble = 1 (offset size) -> 0x11
-        // Length: 0x04
-        // Offset: 0x64
-        // Run 2: length = 8 clusters, offset delta = -10 (0xF6 in 1 byte signed)
-        // Header: low nibble = 1, high nibble = 1 -> 0x11
-        // Length: 0x08
-        // Offset: 0xF6 (-10) -> LCN becomes 100 - 10 = 90
-        // Run 3: Sparse run (offset size = 0, length size = 2) -> 0x02
-        // Length: 0x0020 (32 clusters)
+        // Run 2: length = 8 clusters, offset delta = -10 (0xF6 in 1 byte signed) -> LCN 90
+        // Run 3: sparse run (offset size = 0, length size = 2), 32 clusters
         // Terminator: 0x00
         let runlistData = Data([
             0x11, 0x04, 0x64,
@@ -97,42 +63,35 @@ final class NTFSCoreTests: XCTestCase {
     // MARK: - Fixup Applier Tests
 
     func testFixupApplicationAndIntegrity() throws {
-        // Prepare a 1024-byte record (2 sectors of 512 bytes)
+        // Prepare a 1024-byte record (2 blocks of 512 bytes)
         var recordData = Data(repeating: 0xAA, count: 1024)
 
-        // USA at offset 0x30, update sequence size = 3 (1 USN + 2 sectors)
+        // USA at offset 0x30, update sequence size = 3 (1 USN + 2 blocks)
         let usaOffset = 0x30
         let usn: UInt16 = 0x1234
-        let originalSector0Tail: UInt16 = 0xCAFE
-        let originalSector1Tail: UInt16 = 0xBEEF
+        let originalBlock0Tail: UInt16 = 0xCAFE
+        let originalBlock1Tail: UInt16 = 0xBEEF
 
         // Place USN and saved original tails in USA
         recordData[usaOffset] = UInt8(usn & 0xFF)
         recordData[usaOffset + 1] = UInt8((usn >> 8) & 0xFF)
-        recordData[usaOffset + 2] = UInt8(originalSector0Tail & 0xFF)
-        recordData[usaOffset + 3] = UInt8((originalSector0Tail >> 8) & 0xFF)
-        recordData[usaOffset + 4] = UInt8(originalSector1Tail & 0xFF)
-        recordData[usaOffset + 5] = UInt8((originalSector1Tail >> 8) & 0xFF)
+        recordData[usaOffset + 2] = UInt8(originalBlock0Tail & 0xFF)
+        recordData[usaOffset + 3] = UInt8((originalBlock0Tail >> 8) & 0xFF)
+        recordData[usaOffset + 4] = UInt8(originalBlock1Tail & 0xFF)
+        recordData[usaOffset + 5] = UInt8((originalBlock1Tail >> 8) & 0xFF)
 
-        // Place USN signature at end of sector 0 (510..511) and sector 1 (1022..1023)
+        // Place USN signature at end of block 0 (510..511) and block 1 (1022..1023)
         recordData[510] = UInt8(usn & 0xFF)
         recordData[511] = UInt8((usn >> 8) & 0xFF)
         recordData[1022] = UInt8(usn & 0xFF)
         recordData[1023] = UInt8((usn >> 8) & 0xFF)
 
-        // Apply fixup
-        try FixupApplier.applyFixup(
-            data: &recordData,
-            updateSequenceOffset: usaOffset,
-            updateSequenceSize: 3,
-            bytesPerSector: 512
-        )
+        try FixupApplier.applyFixup(data: &recordData, updateSequenceOffset: usaOffset, updateSequenceSize: 3)
 
-        // Verify restored bytes at sector ends
-        let sec0Tail = UInt16(recordData[510]) | (UInt16(recordData[511]) << 8)
-        let sec1Tail = UInt16(recordData[1022]) | (UInt16(recordData[1023]) << 8)
-        XCTAssertEqual(sec0Tail, originalSector0Tail)
-        XCTAssertEqual(sec1Tail, originalSector1Tail)
+        let block0Tail = UInt16(recordData[510]) | (UInt16(recordData[511]) << 8)
+        let block1Tail = UInt16(recordData[1022]) | (UInt16(recordData[1023]) << 8)
+        XCTAssertEqual(block0Tail, originalBlock0Tail)
+        XCTAssertEqual(block1Tail, originalBlock1Tail)
     }
 
     func testFixupCorruptionDetection() throws {
@@ -142,17 +101,12 @@ final class NTFSCoreTests: XCTestCase {
         recordData[usaOffset] = UInt8(usn & 0xFF)
         recordData[usaOffset + 1] = UInt8((usn >> 8) & 0xFF)
 
-        // Put WRONG signature at end of sector 0
+        // Put WRONG signature at end of block 0
         recordData[510] = 0x99
         recordData[511] = 0x99
 
         XCTAssertThrowsError(
-            try FixupApplier.applyFixup(
-                data: &recordData,
-                updateSequenceOffset: usaOffset,
-                updateSequenceSize: 2,
-                bytesPerSector: 512
-            )
+            try FixupApplier.applyFixup(data: &recordData, updateSequenceOffset: usaOffset, updateSequenceSize: 2)
         ) { error in
             guard case NTFSError.fixupVerificationFailed = error else {
                 XCTFail("Expected fixupVerificationFailed error, got \(error)")
@@ -224,303 +178,5 @@ final class NTFSCoreTests: XCTestCase {
 
         // Precision within 1 millisecond
         XCTAssertEqual(now.timeIntervalSince1970, roundtripDate.timeIntervalSince1970, accuracy: 0.001)
-    }
-
-    // MARK: - Phase 3 Write Engine Tests
-
-    func testBitmapManagerAllocationAndFree() throws {
-        // 8 bytes = 64 bits, all initially free (0x00)
-        var bitmap = BitmapManager(data: Data(repeating: 0x00, count: 8))
-        XCTAssertEqual(bitmap.totalBits, 64)
-        XCTAssertFalse(bitmap.isAllocated(at: 10))
-
-        // Allocate 4 contiguous bits starting at 10
-        let allocatedStart = try bitmap.allocateContiguous(count: 4, startIndex: 10)
-        XCTAssertEqual(allocatedStart, 10)
-
-        // Verify bits 10, 11, 12, 13 are allocated
-        XCTAssertTrue(bitmap.isAllocated(at: 10))
-        XCTAssertTrue(bitmap.isAllocated(at: 11))
-        XCTAssertTrue(bitmap.isAllocated(at: 12))
-        XCTAssertTrue(bitmap.isAllocated(at: 13))
-        XCTAssertFalse(bitmap.isAllocated(at: 9))
-        XCTAssertFalse(bitmap.isAllocated(at: 14))
-
-        // Free bits 11 and 12
-        try bitmap.freeContiguous(startIndex: 11, count: 2)
-        XCTAssertTrue(bitmap.isAllocated(at: 10))
-        XCTAssertFalse(bitmap.isAllocated(at: 11))
-        XCTAssertFalse(bitmap.isAllocated(at: 12))
-        XCTAssertTrue(bitmap.isAllocated(at: 13))
-    }
-
-    func testDataRunEncoderAndDecoderRoundtrip() throws {
-        let originalRuns = [
-            DataRun(clusterCount: 16, startingLCN: 1024),
-            DataRun(clusterCount: 32, startingLCN: 2048),
-            DataRun(clusterCount: 8, startingLCN: 1500), // Jump backwards (negative delta)
-            DataRun(clusterCount: 4, startingLCN: nil)   // Sparse run
-        ]
-
-        let encodedBytes = DataRunEncoder.encode(runs: originalRuns)
-        let decodedRuns = try RunlistDecoder.decode(data: encodedBytes)
-
-        XCTAssertEqual(decodedRuns.count, originalRuns.count)
-        for i in 0..<originalRuns.count {
-            XCTAssertEqual(decodedRuns[i].clusterCount, originalRuns[i].clusterCount)
-            XCTAssertEqual(decodedRuns[i].startingLCN, originalRuns[i].startingLCN)
-            XCTAssertEqual(decodedRuns[i].isSparse, originalRuns[i].isSparse)
-        }
-    }
-
-    func testMFTRecordBuilderGeneratesValidRecord() throws {
-        let expectedPayload = "SwiftNTFS Write Engine Resident Payload Verification".data(using: .utf8)!
-        let fileName = "Document.txt"
-
-        let recordData = try MFTRecordBuilder.buildFileRecord(
-            recordNumber: 42,
-            sequenceNumber: 3,
-            parentDirectoryRecordNumber: 5,
-            fileName: fileName,
-            fileContent: expectedPayload
-        )
-
-        XCTAssertEqual(recordData.count, 1024)
-
-        // Parse generated record back with MFTRecord parser to verify integrity & fixups
-        let parsed = try MFTRecord(recordNumber: 42, rawData: recordData, bytesPerSector: 512)
-        XCTAssertEqual(parsed.header.magic, "FILE")
-        XCTAssertTrue(parsed.isInUse)
-        XCTAssertFalse(parsed.isDirectory)
-        XCTAssertEqual(parsed.header.sequenceNumber, 3)
-
-        // Check file name attribute
-        guard let fn = parsed.primaryFileName else {
-            XCTFail("Missing primary file name attribute")
-            return
-        }
-        XCTAssertEqual(fn.name, fileName)
-        XCTAssertEqual(fn.realSize, UInt64(expectedPayload.count))
-        XCTAssertEqual(fn.parentDirectoryRecordNumber, 5)
-
-        // Check resident data attribute
-        guard let dataAttr = parsed.defaultDataAttribute,
-              let resData = dataAttr.residentData else {
-            XCTFail("Missing or non-resident data attribute")
-            return
-        }
-        XCTAssertEqual(resData, expectedPayload)
-    }
-
-    // MARK: - NTFS Formatter Tests
-
-    func testFormatAndMountNewNTFSVolume() throws {
-        // Create 20 MB blank mock device
-        let totalBytes = 20 * 1024 * 1024
-        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
-
-        let targetName = "TEST_VOLUME"
-        try NTFSFormatter.format(
-            device: memDevice,
-            options: NTFSFormatter.FormatOptions(volumeName: targetName)
-        )
-
-        // 1. Verify Boot Sector
-        let bootSectorData = try memDevice.read(offset: 0, count: 512)
-        let boot = try BootSector(data: bootSectorData)
-        XCTAssertEqual(boot.oemID, "NTFS    ")
-        XCTAssertEqual(boot.clusterSizeBytes, 4096)
-        XCTAssertEqual(boot.mftClusterNumber, 4)
-
-        // 2. Mount with NTFSVolume
-        let volume = try NTFSVolume(blockDevice: memDevice)
-        XCTAssertEqual(volume.volumeName, targetName)
-        XCTAssertFalse(volume.isDirty)
-        XCTAssertFalse(volume.mftRecordRuns.isEmpty)
-
-        // 3. Verify root directory listing
-        let items = try volume.listDirectory(at: "/")
-        XCTAssertEqual(items.count, 0) // Brand new formatted volume has 0 user files
-    }
-
-    // MARK: - Health Check & Repair Tests
-
-    func testVolumeIntegrityCheckAndRepair() throws {
-        let totalBytes = 20 * 1024 * 1024
-        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
-        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "CHECK_ME"))
-
-        // Initial check: perfectly healthy
-        var report = try NTFSVolumeChecker.verify(device: memDevice)
-        XCTAssertTrue(report.isHealthy)
-        XCTAssertFalse(report.isDirty)
-        XCTAssertTrue(report.bootSectorValid)
-        XCTAssertTrue(report.backupBootSectorValid)
-        XCTAssertTrue(report.mft0Valid)
-
-        // Artificially corrupt: set dirty bit in $VOLUME_INFORMATION (Record 3)
-        // Record 3 is at cluster 4 (offset 16384) + 3072 = byte 19456
-        let rec3Offset: UInt64 = (4 * 4096) + 3072
-        var rec3Data = try memDevice.read(offset: rec3Offset, count: 1024)
-        try FixupApplier.applyFixup(data: &rec3Data, updateSequenceOffset: 0x30, updateSequenceSize: 3)
-
-        // Find $VOLUME_INFORMATION (0x70)
-        var offset = 0x38
-        while offset + 16 <= rec3Data.count {
-            let type = UInt32(rec3Data[offset]) | (UInt32(rec3Data[offset+1]) << 8) | (UInt32(rec3Data[offset+2]) << 16) | (UInt32(rec3Data[offset+3]) << 24)
-            if type == 0x70 {
-                let valOff = Int(UInt16(rec3Data[offset+20]) | (UInt16(rec3Data[offset+21]) << 8))
-                let flagsOff = offset + valOff + 10
-                rec3Data[flagsOff] = 0x01 // Set dirty bit
-                break
-            }
-            let len = Int(UInt32(rec3Data[offset+4]) | (UInt32(rec3Data[offset+5]) << 8) | (UInt32(rec3Data[offset+6]) << 16) | (UInt32(rec3Data[offset+7]) << 24))
-            guard len > 0 else { break }
-            offset += len
-        }
-
-        FixupApplier.prepareForWrite(data: &rec3Data, updateSequenceOffset: 0x30, updateSequenceSize: 3)
-        try memDevice.write(offset: rec3Offset, data: rec3Data)
-
-        // Verify should now flag dirty
-        report = try NTFSVolumeChecker.verify(device: memDevice)
-        XCTAssertFalse(report.isHealthy)
-        XCTAssertTrue(report.isDirty)
-        XCTAssertEqual(report.repairsAvailable.count, 1)
-
-        // Execute repair
-        let actions = try NTFSVolumeChecker.repair(device: memDevice)
-        XCTAssertFalse(actions.isEmpty)
-
-        // Re-check: must be clean and healthy again
-        report = try NTFSVolumeChecker.verify(device: memDevice)
-        XCTAssertTrue(report.isHealthy)
-        XCTAssertFalse(report.isDirty)
-    }
-
-    // MARK: - File Writing & Directory Index Tests
-
-    func testFileWritingResidentAndNonResident() throws {
-        let totalBytes = 30 * 1024 * 1024
-        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
-        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "WRITE_TEST"))
-
-        let volume = try NTFSVolume(blockDevice: memDevice)
-
-        // 1. Write small resident file (120 bytes)
-        let smallContent = "Hello from Pure Swift MacNTFS driver! This file is resident inside the MFT record directly.".data(using: .utf8)!
-        let rec1 = try volume.writeFile(fileName: "Welcome.txt", data: smallContent)
-        XCTAssertGreaterThanOrEqual(rec1, 16)
-
-        // 2. Read back small file
-        let readSmall = try volume.readFile(at: "/Welcome.txt")
-        XCTAssertEqual(readSmall, smallContent)
-
-        // 3. Write non-resident file (12 KB = 3 clusters)
-        var largeContent = Data()
-        for i in 0..<(12 * 1024) {
-            largeContent.append(UInt8(i & 0xFF))
-        }
-        let rec2 = try volume.writeFile(fileName: "TestData.bin", data: largeContent)
-        XCTAssertGreaterThan(rec2, rec1)
-
-        // 4. Read back non-resident file
-        let readLarge = try volume.readFile(at: "/TestData.bin")
-        XCTAssertEqual(readLarge, largeContent)
-
-        // 5. Test filename sanitization
-        let illegalName = "Mac:Report*2026?.log"
-        let logContent = "System log entry".data(using: .utf8)!
-        try volume.writeFile(fileName: illegalName, data: logContent)
-
-        // Should be sanitized to "Mac_Report_2026_.log"
-        let readSanitized = try volume.readFile(at: "/Mac_Report_2026_.log")
-        XCTAssertEqual(readSanitized, logContent)
-
-        // 6. Verify directory listing has all 3 files
-        let list = try volume.listDirectory(at: "/")
-        XCTAssertEqual(list.count, 3)
-        let names = Set(list.map { $0.name })
-        XCTAssertTrue(names.contains("Welcome.txt"))
-        XCTAssertTrue(names.contains("TestData.bin"))
-        XCTAssertTrue(names.contains("Mac_Report_2026_.log"))
-    }
-
-    // MARK: - Forensics & Data Recovery Tests
-
-    func testForensicHexDump() {
-        let sample = "NTFS FILE RECOVERY TEST DATA 1234567890".data(using: .utf8)!
-        let dump = NTFSForensicsEngine.hexDump(data: sample, baseOffset: 0x1000)
-        XCTAssertTrue(dump.contains("00001000"))
-        XCTAssertTrue(dump.contains("4E 54 46 53")) // "NTFS" in hex
-        XCTAssertTrue(dump.contains("|NTFS FILE RECOVE|"))
-    }
-
-    func testForensicBootSectorComparison() throws {
-        let totalBytes = 20 * 1024 * 1024
-        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
-        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "BOOT_CMP"))
-
-        let comp = try NTFSForensicsEngine.compareBootSectors(device: memDevice)
-        XCTAssertTrue(comp.primaryValid)
-        XCTAssertTrue(comp.backupValid)
-        XCTAssertTrue(comp.byteIdentical)
-        XCTAssertTrue(comp.oemIDMatches)
-        XCTAssertTrue(comp.serialMatches)
-        XCTAssertTrue(comp.clusterSizeMatches)
-        XCTAssertTrue(comp.mftClusterMatches)
-    }
-
-    func testForensicScanAndRecoverDeletedFile() throws {
-        let totalBytes = 25 * 1024 * 1024
-        let memDevice = MemoryBlockDevice(data: Data(repeating: 0, count: totalBytes), writable: true)
-        try NTFSFormatter.format(device: memDevice, options: .init(volumeName: "CARVE_TEST"))
-
-        let volume = try NTFSVolume(blockDevice: memDevice)
-
-        // 1. Create a confidential file
-        let originalPayload = "CONFIDENTIAL FINANCIAL REPORT - Q3 2026 - DO NOT LEAK".data(using: .utf8)!
-        let recNum = try volume.writeFile(fileName: "Q3_Report.docx", data: originalPayload)
-
-        // 2. Forensically "delete" the file by clearing bit 0 in its MFT header (in-use flag = 0)
-        // Record offset = 4 * 4096 + recNum * 1024
-        let recOffset = (4 * 4096) + (recNum * 1024)
-        var recBytes = try memDevice.read(offset: recOffset, count: 1024)
-        try FixupApplier.applyFixup(data: &recBytes, updateSequenceOffset: 0x30, updateSequenceSize: 3)
-
-        // Clear inUse flag at offset 0x16..0x17
-        recBytes[0x16] = 0x00
-        recBytes[0x17] = 0x00
-
-        FixupApplier.prepareForWrite(data: &recBytes, updateSequenceOffset: 0x30, updateSequenceSize: 3)
-        try memDevice.write(offset: recOffset, data: recBytes)
-
-        // 3. Scan for deleted/recoverable files
-        let deletedFiles = try volume.scanDeletedFiles()
-        XCTAssertFalse(deletedFiles.isEmpty)
-        guard let match = deletedFiles.first(where: { $0.recordNumber == recNum }) else {
-            XCTFail("Deleted file was not found during MFT carving")
-            return
-        }
-
-        XCTAssertEqual(match.fileName, "Q3_Report.docx")
-        XCTAssertEqual(match.fileSize, UInt64(originalPayload.count))
-        XCTAssertEqual(match.confidence, .excellent)
-
-        // 4. Recover (carve) payload
-        let (carvedName, carvedData) = try volume.recoverDeletedFile(recordNumber: recNum)
-        XCTAssertEqual(carvedName, "Q3_Report.docx")
-        XCTAssertEqual(carvedData, originalPayload)
-    }
-
-    func testForensicSurfaceScan() throws {
-        let totalBytes = 1 * 1024 * 1024 // 1 MB
-        let memDevice = MemoryBlockDevice(data: Data(repeating: 0x55, count: totalBytes), writable: true)
-        let report = try NTFSForensicsEngine.surfaceScan(device: memDevice, chunkSize: 32 * 1024)
-
-        XCTAssertEqual(report.totalBytesScanned, UInt64(totalBytes))
-        XCTAssertEqual(report.totalSectorsScanned, UInt64(totalBytes / 512))
-        XCTAssertFalse(report.isDamaged)
-        XCTAssertTrue(report.badSectors.isEmpty)
     }
 }

@@ -14,15 +14,14 @@ public enum NTFSError: Error, LocalizedError, Sendable {
     case invalidSignature(expected: String, found: String)
     case fixupVerificationFailed(sectorIndex: Int, expected: UInt16, found: UInt16)
     case outOfBounds(offset: UInt64, requested: Int, available: Int)
-    case unsupportedFeature(String)
     case recordNotAllocated(recordNumber: UInt64)
     case attributeNotFound(type: UInt32, name: String?)
     case corruptRunlist(String)
     case corruptDirectoryIndex(String)
     case pathNotFound(String)
     case notADirectory(String)
+    case isADirectory(String)
     case invalidIndexEntry
-    case experimentalDisabled(String)
     case unsupported(UnsupportedFeature)
     case resourceLimit(String)
 
@@ -32,18 +31,14 @@ public enum NTFSError: Error, LocalizedError, Sendable {
             return "Unsupported NTFS feature: \(feature.rawValue). The data is not read, because returning it would give wrong bytes."
         case .resourceLimit(let msg):
             return "Resource limit: \(msg)"
-        case .experimentalDisabled(let feature):
-            return "'\(feature)' is disabled. Writing, formatting and repairing are experimental, can destroy data and are locked by default (see docs/SAFETY.md)."
         case .invalidBootSector(let msg):
             return "Invalid NTFS Boot Sector: \(msg)"
         case .invalidSignature(let expected, let found):
             return "Invalid signature. Expected '\(expected)', found '\(found)'"
         case .fixupVerificationFailed(let sector, let exp, let fnd):
-            return "NTFS Multi-Sector Fixup check failed on sector \(sector): expected 0x\(String(exp, radix: 16)), got 0x\(String(fnd, radix: 16))"
+            return "NTFS Multi-Sector Fixup check failed on block \(sector): expected 0x\(String(exp, radix: 16)), got 0x\(String(fnd, radix: 16))"
         case .outOfBounds(let offset, let requested, let available):
             return "Out of bounds reading \(requested) bytes at offset \(offset) (available: \(available))"
-        case .unsupportedFeature(let msg):
-            return "Unsupported NTFS feature: \(msg)"
         case .recordNotAllocated(let num):
             return "MFT record \(num) is not allocated or marked in-use"
         case .attributeNotFound(let type, let name):
@@ -57,6 +52,8 @@ public enum NTFSError: Error, LocalizedError, Sendable {
             return "Path not found: '\(path)'"
         case .notADirectory(let path):
             return "Not a directory: '\(path)'"
+        case .isADirectory(let path):
+            return "Is a directory: '\(path)'"
         case .invalidIndexEntry:
             return "Invalid index entry in directory B-Tree"
         }

@@ -19,7 +19,7 @@ public final class NTFSVolume: Sendable {
 
         // 2. Read bootstrap MFT Record 0 ($MFT) directly from boot.mftByteOffset
         let mft0Raw = try blockDevice.read(offset: boot.mftByteOffset, count: Int(boot.mftRecordSizeBytes))
-        let mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw, bytesPerSector: Int(boot.bytesPerSector))
+        let mft0 = try MFTRecord(recordNumber: 0, rawData: mft0Raw)
 
         // A fragmented $MFT can keep part of its run list in extension records. Those are not read,
         // so opening such a volume would show only the first part of the MFT.
@@ -96,11 +96,7 @@ public final class NTFSVolume: Sendable {
             device: device
         )
 
-        return try MFTRecord(
-            recordNumber: recordNumber,
-            rawData: rawBytes,
-            bytesPerSector: Int(bootSector.bytesPerSector)
-        )
+        return try MFTRecord(recordNumber: recordNumber, rawData: rawBytes)
     }
 
     /// Largest range `readData` returns in one call. Read bigger files in chunks with `offset` and `length`.
@@ -221,44 +217,8 @@ public final class NTFSVolume: Sendable {
             throw NTFSError.unsupported(.reparse)
         }
         guard !isDir else {
-            throw NTFSError.unsupportedFeature("Cannot read raw file data of directory '\(path)'")
+            throw NTFSError.isADirectory(path)
         }
         return try readData(record: record)
-    }
-
-    /// Writes or imports a file into a given directory path on this NTFS volume.
-    @discardableResult
-    public func writeFile(fileName: String, data: Data, directoryPath: String = "/") throws -> UInt64 {
-        let (dirRecord, isDir) = try lookup(path: directoryPath)
-        guard isDir else {
-            throw NTFSError.notADirectory(directoryPath)
-        }
-        return try NTFSVolumeWriter.writeFile(
-            volume: self,
-            directoryRecordNumber: dirRecord.recordNumber,
-            fileName: fileName,
-            data: data
-        )
-    }
-
-    /// Performs an integrity check on this volume.
-    public func verifyHealth() throws -> NTFSHealthReport {
-        return try NTFSVolumeChecker.verify(device: blockDevice)
-    }
-
-    /// Automatically repairs recoverable file system issues (e.g. dirty flag, backup boot sector).
-    @discardableResult
-    public func repairVolume() throws -> [String] {
-        return try NTFSVolumeChecker.repair(device: blockDevice)
-    }
-
-    /// Scans the volume forensically for deleted and recoverable files in the MFT.
-    public func scanDeletedFiles() throws -> [RecoverableFile] {
-        return try NTFSForensicsEngine.scanDeletedFiles(volume: self)
-    }
-
-    /// Recovers / carves the data of a deleted file by its MFT record number.
-    public func recoverDeletedFile(recordNumber: UInt64) throws -> (name: String, data: Data) {
-        return try NTFSForensicsEngine.recoverDeletedFile(volume: self, recordNumber: recordNumber)
     }
 }

@@ -29,11 +29,10 @@ final class CorpusTests: XCTestCase {
         let entries: [Entry]
     }
 
-    private static var corpusDirectory: URL {
-        URL(fileURLWithPath: #filePath)
-            .deletingLastPathComponent()
-            .deletingLastPathComponent()
-            .appendingPathComponent("Corpus/out")
+    /// The built corpus (not committed) and the committed fixtures.
+    private static var manifestDirectories: [URL] {
+        let tests = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+        return [tests.appendingPathComponent("Corpus/out"), tests.appendingPathComponent("Fixtures")]
     }
 
     private static func sha256Hex(_ data: Data) -> String {
@@ -51,8 +50,8 @@ final class CorpusTests: XCTestCase {
     }
 
     func testEveryCorpusImageMatchesItsManifest() throws {
-        let directory = Self.corpusDirectory
-        let manifestURLs = ((try? FileManager.default.contentsOfDirectory(at: directory, includingPropertiesForKeys: nil)) ?? [])
+        let manifestURLs = Self.manifestDirectories
+            .flatMap { (try? FileManager.default.contentsOfDirectory(at: $0, includingPropertiesForKeys: nil)) ?? [] }
             .filter { $0.lastPathComponent.hasSuffix(".manifest.json") }
             .filter { url in
                 // MACNTFS_CORPUS_ONLY=basic-512,sparse limits the run to some images
@@ -66,7 +65,7 @@ final class CorpusTests: XCTestCase {
         for manifestURL in manifestURLs {
             let manifest = try JSONDecoder().decode(Manifest.self, from: Data(contentsOf: manifestURL))
             XCTAssertEqual(manifest.schema, 1, "unknown manifest schema in \(manifestURL.lastPathComponent)")
-            let imagePath = directory.appendingPathComponent(manifest.image).path
+            let imagePath = manifestURL.deletingLastPathComponent().appendingPathComponent(manifest.image).path
 
             let volume: NTFSVolume
             do {

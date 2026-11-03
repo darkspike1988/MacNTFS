@@ -2,34 +2,19 @@ import XCTest
 @testable import NTFSCore
 
 /// Checks that hostile or damaged input produces an error or correct data, never a crash or wrong bytes.
+/// Fixtures come from the committed ntfs-3g image Tests/Fixtures/mini.img.
 final class ParserHardeningTests: XCTestCase {
-
-    override func setUp() {
-        super.setUp()
-        // The fixtures use the experimental formatter and writer.
-        setenv(ExperimentalGate.environmentKey, "1", 1)
-    }
-
-    private func formattedDevice(megabytes: Int = 12) throws -> MemoryBlockDevice {
-        let device = MemoryBlockDevice(data: Data(repeating: 0, count: megabytes * 1024 * 1024), writable: true)
-        try NTFSFormatter.format(device: device, options: .init(volumeName: "HARDEN"))
-        return device
-    }
 
     // MARK: - Boot sector
 
     func testBootSectorRejectsHostileValues() throws {
-        let device = try formattedDevice()
-        let valid = try device.read(offset: 0, count: 512)
+        let valid = Data(try Fixtures.miniImage().prefix(512))
         XCTAssertNoThrow(try BootSector(data: valid))
 
         func mutated(_ patch: (inout Data) -> Void) -> Data {
             var copy = valid
             patch(&copy)
             return copy
-        }
-        func put64(_ data: inout Data, _ offset: Int, _ value: UInt64) {
-            for i in 0..<8 { data[offset + i] = UInt8((value >> UInt64(8 * i)) & 0xFF) }
         }
 
         let cases: [(String, Data)] = [
@@ -41,9 +26,9 @@ final class ParserHardeningTests: XCTestCase {
             ("sector size 8192", mutated { $0[0x0B] = 0x00; $0[0x0C] = 0x20 }),
             ("sector size 0", mutated { $0[0x0B] = 0x00; $0[0x0C] = 0x00 }),
             ("sectors per cluster 0", mutated { $0[0x0D] = 0x00 }),
-            ("total sectors UInt64.max", mutated { put64(&$0, 0x28, UInt64.max) }),
-            ("total sectors 0", mutated { put64(&$0, 0x28, 0) }),
-            ("MFT cluster UInt64.max", mutated { put64(&$0, 0x30, UInt64.max) })
+            ("total sectors UInt64.max", mutated { Fixtures.put64(&$0, 0x28, UInt64.max) }),
+            ("total sectors 0", mutated { Fixtures.put64(&$0, 0x28, 0) }),
+            ("MFT cluster UInt64.max", mutated { Fixtures.put64(&$0, 0x30, UInt64.max) })
         ]
         for (name, data) in cases {
             XCTAssertThrowsError(try BootSector(data: data), name) { error in
@@ -72,7 +57,7 @@ final class ParserHardeningTests: XCTestCase {
             record[end + 1] = 0x12
         }
 
-        try FixupApplier.applyFixup(data: &record, updateSequenceOffset: usaOffset, updateSequenceSize: blocks + 1, bytesPerSector: 4096)
+        try FixupApplier.applyFixup(data: &record, updateSequenceOffset: usaOffset, updateSequenceSize: blocks + 1)
 
         for i in 0..<blocks {
             let end = (i + 1) * 512 - 2
@@ -103,7 +88,7 @@ final class ParserHardeningTests: XCTestCase {
 
     func testRunReaderReadsAcrossRunsAndSparseHoles() throws {
         let disk = Data((0..<4096).map { UInt8($0 & 0xFF) })
-        let device = MemoryBlockDevice(data: disk, writable: false)
+        let device = MemoryBlockDevice(data: disk)
         let runs = [
             DataRun(clusterCount: 1, startingLCN: 2),
             DataRun(clusterCount: 1, startingLCN: nil),
@@ -119,7 +104,7 @@ final class ParserHardeningTests: XCTestCase {
     }
 
     func testRunReaderRejectsInvalidRanges() {
-        let device = MemoryBlockDevice(data: Data(count: 4096), writable: false)
+        let device = MemoryBlockDevice(data: Data(count: 4096))
         let mapped = [DataRun(clusterCount: 3, startingLCN: 0)]
 
         XCTAssertThrowsError(try RunReader.read(runs: mapped, virtualOffset: 3000, length: 100, clusterSize: 1024, device: device), "past the mapped runs")
@@ -130,114 +115,78 @@ final class ParserHardeningTests: XCTestCase {
         XCTAssertEqual(try RunReader.read(runs: mapped, virtualOffset: 0, length: 0, clusterSize: 1024, device: device), Data())
     }
 
+    func testBlockDeviceRejectsRangesWithoutOverflow() {
+        let device = MemoryBlockDevice(data: Data(count: 4096))
+        XCTAssertThrowsError(try device.read(offset: UInt64.max, count: 16))
+        XCTAssertThrowsError(try device.read(offset: 4090, count: 16))
+        XCTAssertThrowsError(try device.read(offset: 0, count: -1))
+        XCTAssertEqual(try device.read(offset: 4096, count: 0), Data())
+    }
+
     // MARK: - Reading data
 
-    /// Builds a file record and lets a test patch the raw bytes of the record and of its $DATA attribute.
-    private func fileRecord(
-        content: Data,
-        runs: [DataRun]? = nil,
-        patch: (inout Data, _ dataAttributeOffset: Int) -> Void = { _, _ in }
-    ) throws -> MFTRecord {
-        var raw = try MFTRecordBuilder.buildFileRecord(
-            recordNumber: 40,
-            parentDirectoryRecordNumber: 5,
-            fileName: "fixture.bin",
-            fileContent: content,
-            dataRuns: runs,
-            clusterSize: 4096
-        )
-        var offset = Int(raw[0x14]) | (Int(raw[0x15]) << 8)
-        var dataOffset = -1
-        while offset + 8 <= raw.count {
-            let type = UInt32(raw[offset]) | (UInt32(raw[offset + 1]) << 8) | (UInt32(raw[offset + 2]) << 16) | (UInt32(raw[offset + 3]) << 24)
-            if type == 0xFFFF_FFFF { break }
-            let length = Int(raw[offset + 4]) | (Int(raw[offset + 5]) << 8)
-            if type == 0x80 { dataOffset = offset; break }
-            guard length > 0 else { break }
-            offset += length
-        }
-        XCTAssertGreaterThan(dataOffset, 0, "fixture has no $DATA attribute")
-        patch(&raw, dataOffset)
-        return try MFTRecord(recordNumber: 40, rawData: raw)
-    }
-
-    private func put64(_ data: inout Data, _ offset: Int, _ value: UInt64) {
-        for i in 0..<8 { data[offset + i] = UInt8((value >> UInt64(8 * i)) & 0xFF) }
-    }
-
     func testReadDataRefusesCompressedAndEncryptedStreams() throws {
-        let volume = try NTFSVolume(blockDevice: try formattedDevice())
-        let content = Data("payload".utf8)
-
-        let compressed = try fileRecord(content: content) { raw, dataOffset in raw[dataOffset + 12] = 0x01 }
-        XCTAssertThrowsError(try volume.readData(record: compressed)) { error in
+        let compressed = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
+            image[record + data + 12] |= 0x01  // compressed flag
+        }
+        XCTAssertThrowsError(try compressed.readFile(at: "/big.bin")) { error in
             guard case NTFSError.unsupported(.compression) = error else { return XCTFail("unexpected error \(error)") }
         }
 
-        let encrypted = try fileRecord(content: content) { raw, dataOffset in raw[dataOffset + 13] = 0x40 }
-        XCTAssertThrowsError(try volume.readData(record: encrypted)) { error in
+        let encrypted = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
+            image[record + data + 13] |= 0x40  // encrypted flag
+        }
+        XCTAssertThrowsError(try encrypted.readFile(at: "/big.bin")) { error in
             guard case NTFSError.unsupported(.encryption) = error else { return XCTFail("unexpected error \(error)") }
         }
     }
 
     func testReadDataRefusesAttributeListAndReparsePoints() throws {
-        let volume = try NTFSVolume(blockDevice: try formattedDevice())
-        let content = Data("payload".utf8)
-
         // Turn the first attribute ($STANDARD_INFORMATION) into another type.
-        let withList = try fileRecord(content: content) { raw, _ in
-            let first = Int(raw[0x14]) | (Int(raw[0x15]) << 8)
-            raw[first] = 0x20
+        let withList = try Fixtures.patchedVolume(path: "/small.txt") { image, record, first, _ in
+            image[record + first] = 0x20
         }
-        XCTAssertThrowsError(try volume.readData(record: withList)) { error in
+        XCTAssertThrowsError(try withList.readFile(at: "/small.txt")) { error in
             guard case NTFSError.unsupported(.attributeList) = error else { return XCTFail("unexpected error \(error)") }
         }
 
-        let withReparse = try fileRecord(content: content) { raw, _ in
-            let first = Int(raw[0x14]) | (Int(raw[0x15]) << 8)
-            raw[first] = 0xC0
+        let withReparse = try Fixtures.patchedVolume(path: "/small.txt") { image, record, first, _ in
+            image[record + first] = 0xC0
         }
-        XCTAssertThrowsError(try volume.readData(record: withReparse)) { error in
+        XCTAssertThrowsError(try withReparse.readFile(at: "/small.txt")) { error in
             guard case NTFSError.unsupported(.reparse) = error else { return XCTFail("unexpected error \(error)") }
         }
     }
 
     func testReadDataReturnsZerosBeyondInitializedSize() throws {
-        let device = try formattedDevice()
-        let volume = try NTFSVolume(blockDevice: device)
-        let cluster = 3000  // free area near the end of the 12 MiB test volume
-        try device.write(offset: UInt64(cluster * 4096), data: Data(repeating: 0xAB, count: 4096))
+        let reference = try NTFSVolume(blockDevice: MemoryBlockDevice(data: try Fixtures.miniImage())).readFile(at: "/big.bin")
+        XCTAssertEqual(reference.count, 20_000)
 
-        let record = try fileRecord(content: Data(count: 4000), runs: [DataRun(clusterCount: 1, startingLCN: UInt64(cluster))]) { raw, dataOffset in
-            put64(&raw, dataOffset + 0x38, 1000)  // initialized size
+        let volume = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
+            Fixtures.put64(&image, record + data + 0x38, 1000)  // initialized size
         }
-
-        let data = try volume.readData(record: record)
-        XCTAssertEqual(data.count, 4000)
-        XCTAssertEqual(data.prefix(1000), Data(repeating: 0xAB, count: 1000))
-        XCTAssertEqual(data.suffix(3000), Data(count: 3000))
+        let data = try volume.readFile(at: "/big.bin")
+        XCTAssertEqual(data.count, 20_000)
+        XCTAssertEqual(data.prefix(1000), reference.prefix(1000))
+        XCTAssertEqual(data.suffix(19_000), Data(count: 19_000))
     }
 
     func testReadDataRejectsSizesBeyondTheMappedRuns() throws {
-        let device = try formattedDevice()
-        let volume = try NTFSVolume(blockDevice: device)
-        let runs = [DataRun(clusterCount: 1, startingLCN: 3000)]
-
         // A size larger than the runs map must fail before anything big is allocated.
-        let unmapped = try fileRecord(content: Data(count: 4000), runs: runs) { raw, dataOffset in
-            put64(&raw, dataOffset + 0x30, 100_000)
-            put64(&raw, dataOffset + 0x38, 100_000)
+        let unmapped = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
+            Fixtures.put64(&image, record + data + 0x30, 100_000_000)
+            Fixtures.put64(&image, record + data + 0x38, 100_000_000)
         }
-        XCTAssertThrowsError(try volume.readData(record: unmapped)) { error in
+        XCTAssertThrowsError(try unmapped.readFile(at: "/big.bin")) { error in
             guard case NTFSError.outOfBounds = error else { return XCTFail("unexpected error \(error)") }
         }
 
         // An absurd size is refused by the limit.
-        let huge = try fileRecord(content: Data(count: 4000), runs: runs) { raw, dataOffset in
-            put64(&raw, dataOffset + 0x30, 1 << 40)
-            put64(&raw, dataOffset + 0x38, 1 << 40)
+        let huge = try Fixtures.patchedVolume(path: "/big.bin") { image, record, _, data in
+            Fixtures.put64(&image, record + data + 0x30, 1 << 40)
+            Fixtures.put64(&image, record + data + 0x38, 1 << 40)
         }
-        XCTAssertThrowsError(try volume.readData(record: huge)) { error in
+        XCTAssertThrowsError(try huge.readFile(at: "/big.bin")) { error in
             guard case NTFSError.resourceLimit = error else { return XCTFail("unexpected error \(error)") }
         }
     }
@@ -255,35 +204,46 @@ final class ParserHardeningTests: XCTestCase {
         }
     }
 
-    /// Flips bytes in the boot sector and in the first MFT records of a valid image and walks the volume.
+    /// Flips bytes in the boot sector, in MFT records and in the index blocks of a valid image and walks the volume.
     /// An error is fine. A crash or a hang is not.
     func testMutatedMetadataNeverCrashes() throws {
-        let device = try formattedDevice()
-        let volume = try NTFSVolume(blockDevice: device)
-        _ = try volume.writeFile(fileName: "small.txt", data: Data("hello".utf8))
-        _ = try volume.writeFile(fileName: "big.bin", data: Data((0..<20_000).map { UInt8($0 & 0xFF) }))
-        let image = try device.read(offset: 0, count: Int(device.size))
+        let image = try Fixtures.miniImage()
+        let volume = try NTFSVolume(blockDevice: MemoryBlockDevice(data: image))
+        let clusterSize = Int(volume.bootSector.clusterSizeBytes)
+
+        var recordOffsets = (0..<24).map { Fixtures.diskOffset(ofRecord: UInt64($0), in: volume) }
+        for path in ["/small.txt", "/big.bin", "/dir", "/many", "/unicode"] {
+            let record = try volume.lookup(path: path).record
+            recordOffsets.append(Fixtures.diskOffset(ofRecord: record.recordNumber, in: volume))
+        }
+        let many = try volume.lookup(path: "/many").record
+        let indexRun = try XCTUnwrap(many.attribute(ofType: .indexAllocation, name: "$I30")?.runs?.first)
+        let indexStart = Int(try XCTUnwrap(indexRun.startingLCN)) * clusterSize
+        let indexLength = Int(indexRun.clusterCount) * clusterSize
 
         var rng = SplitMix64(state: 0xC0FFEE)
-        let mftOffset = 4 * 4096
-        for _ in 0..<4000 {
+        for _ in 0..<3000 {
             var mutated = image
             for _ in 0..<(1 + Int(rng.next() % 6)) {
                 let position: Int
-                if rng.next() % 5 < 2 {
+                switch rng.next() % 10 {
+                case 0..<3:
                     position = Int(rng.next() % 512)
-                } else {
-                    let record = Int(rng.next() % 24)
-                    position = mftOffset + record * 1024 + Int(rng.next() % 1024)
+                case 3..<8:
+                    position = recordOffsets[Int(rng.next() % UInt64(recordOffsets.count))] + Int(rng.next() % 1024)
+                default:
+                    position = indexStart + Int(rng.next() % UInt64(indexLength))
                 }
                 mutated[position] = UInt8(truncatingIfNeeded: rng.next())
             }
 
-            let broken = MemoryBlockDevice(data: mutated, writable: false)
+            let broken = MemoryBlockDevice(data: mutated)
             guard let volume = try? NTFSVolume(blockDevice: broken) else { continue }
             _ = try? volume.listDirectory(at: "/")
+            _ = try? volume.listDirectory(at: "/many")
             _ = try? volume.readFile(at: "/small.txt")
             _ = try? volume.readFile(at: "/big.bin")
+            _ = try? volume.lookup(path: "/many/file-100-with-a-long-name-to-fill-index-blocks.txt")
             for number in 0..<24 {
                 _ = try? volume.readMFTRecord(number: UInt64(number))
             }
