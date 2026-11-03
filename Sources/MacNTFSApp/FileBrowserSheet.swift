@@ -171,7 +171,7 @@ struct FileBrowserSheet: View {
                         .padding(8)
                 }
             }
-            .onDrop(of: [.fileURL], isTargeted: $isDropTargeted) { providers in
+            .onDrop(of: ExperimentalGate.isUnlocked ? [.fileURL] : [], isTargeted: $isDropTargeted) { providers in
                 handleDroppedProviders(providers)
             }
 
@@ -256,10 +256,7 @@ struct FileBrowserSheet: View {
     }
 
     private func handleDroppedProviders(_ providers: [NSItemProvider]) -> Bool {
-        guard ExperimentalGate.isUnlocked else {
-            errorMessage = "Schreiben ist deaktiviert (experimentell, siehe docs/SAFETY.md)."
-            return false
-        }
+        guard ExperimentalGate.isUnlocked else { return false }
         let targetDev = drive.devicePath
         let mount = drive.mountPoint
 

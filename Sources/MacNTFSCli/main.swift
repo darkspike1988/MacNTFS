@@ -258,6 +258,7 @@ struct MacNTFSCLI {
     }
 
     static func handleFormat(path: String, name: String, clusterSize: UInt32) async throws {
+        try ExperimentalGate.require("format")
         print("Formatting '\(path)' to NTFS (Label: '\(name)', Cluster size: \(clusterSize) bytes)...")
         let device = try FileBlockDevice(path: path, writable: true)
         try NTFSFormatter.format(
@@ -287,6 +288,7 @@ struct MacNTFSCLI {
     }
 
     static func handleCheck(path: String, repair: Bool) async throws {
+        if repair { try ExperimentalGate.require("repair") }
         print("Checking NTFS filesystem on '\(path)' (Mode: \(repair ? "Check & Repair" : "Read-Only Check"))...")
         let device = try FileBlockDevice(path: path, writable: repair)
         let report = try NTFSVolumeChecker.verify(device: device)
@@ -327,6 +329,7 @@ struct MacNTFSCLI {
     }
 
     static func handleWrite(devPath: String, localFilePath: String, destFileName: String) async throws {
+        try ExperimentalGate.require("write file")
         let localURL = URL(fileURLWithPath: localFilePath)
         guard FileManager.default.fileExists(atPath: localFilePath) else {
             print("Error: Local file does not exist at '\(localFilePath)'")

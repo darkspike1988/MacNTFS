@@ -9,16 +9,26 @@ final class NTFSCoreTests: XCTestCase {
     }
 
     func testExperimentalFeaturesAreLockedByDefault() throws {
+        let size = 20 * 1024 * 1024
+        let device = MemoryBlockDevice(data: Data(repeating: 0, count: size), writable: true)
+        try NTFSFormatter.format(device: device)
+        let volume = try NTFSVolume(blockDevice: device)
+        let before = try device.read(offset: 0, count: size)
+
         unsetenv(ExperimentalGate.environmentKey)
         defer { setenv(ExperimentalGate.environmentKey, "1", 1) }
-        let device = MemoryBlockDevice(data: Data(repeating: 0, count: 20 * 1024 * 1024), writable: true)
-        XCTAssertThrowsError(try NTFSFormatter.format(device: device)) { error in
-            guard case NTFSError.experimentalDisabled = error else { return XCTFail("unexpected error: \(error)") }
+
+        func assertLocked(_ body: () throws -> Void, _ name: String) {
+            XCTAssertThrowsError(try body(), name) { error in
+                guard case NTFSError.experimentalDisabled = error else { return XCTFail("\(name): unexpected error \(error)") }
+            }
         }
-        XCTAssertThrowsError(try NTFSVolumeChecker.repair(device: device)) { error in
-            guard case NTFSError.experimentalDisabled = error else { return XCTFail("unexpected error: \(error)") }
-        }
-        XCTAssertEqual(Data(repeating: 0, count: 20 * 1024 * 1024), try device.read(offset: 0, count: 20 * 1024 * 1024))
+        assertLocked({ try NTFSFormatter.format(device: device) }, "format")
+        assertLocked({ try NTFSVolumeChecker.repair(device: device) }, "repair")
+        assertLocked({ _ = try volume.writeFile(fileName: "a.txt", data: Data("x".utf8)) }, "writeFile")
+        assertLocked({ _ = try volume.repairVolume() }, "repairVolume")
+
+        XCTAssertEqual(before, try device.read(offset: 0, count: size), "a locked call must not change the device")
     }
 
     // MARK: - BinaryReader Tests

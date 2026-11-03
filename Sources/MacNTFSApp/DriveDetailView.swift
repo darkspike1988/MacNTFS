@@ -309,7 +309,7 @@ struct DriveDetailView: View {
                         DetailRow(label: "Schnittstelle", value: drive.busProtocol.isEmpty ? "Lokal" : drive.busProtocol)
                         DetailRow(label: "Seriennummer", value: drive.serialNumber)
                         DetailRow(label: "Clustergröße", value: drive.isNTFS ? "\(drive.clusterSize / 1024) KB (\(drive.clusterSize) Bytes)" : "Standard (\(drive.clusterSize) Bytes)")
-                        DetailRow(label: "Zugriff", value: drive.isReadOnly ? "Nur Lesen" : "Lesen & Schreiben (durch den aktiven macOS-Treiber)")
+                        DetailRow(label: "Zugriff", value: drive.mountPoint == nil ? "Nicht gemountet" : (drive.isReadOnly ? "Nur Lesen" : "Lesen & Schreiben (durch den aktiven macOS-Treiber)"))
                         if drive.isNTFS && !ExperimentalGate.isUnlocked {
                             DetailRow(label: "MacNTFS", value: "Nur lesend (Schreiben deaktiviert)")
                         }

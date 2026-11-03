@@ -9,7 +9,7 @@ Evidence means a test in this repository. All tests use images produced by this 
 | Boot sector and BPB parsing | prototype | unit tests | Arithmetic is not bounds-checked. Manipulated values can crash the parser. |
 | MFT record parsing, fixups | prototype | unit tests | Fixup step uses the device sector size. 4096-byte sectors untested. |
 | Runlist decoding | prototype | unit tests | |
-| Directory listing and path lookup | prototype | unit tests | Linear scan, ASCII-style case folding, not `$UpCase`. |
+| Directory listing and path lookup | prototype | unit tests | Linear scan. Names are compared with Foundation's `caseInsensitiveCompare`, not the volume's `$UpCase` table, and file name namespaces (Win32, DOS, POSIX) are not handled. |
 | File read (`cat`) | prototype | unit tests | Missing `$DATA`, compression, encryption and attribute lists give empty or raw data instead of an error. |
 | Alternate data streams, hard links, reparse points, symlinks | none | none | |
 | Forensics (deleted record scan, hex dump, surface scan) | prototype | unit tests | Not validated. "Recovered" does not mean intact. |

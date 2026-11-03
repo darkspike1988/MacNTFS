@@ -37,8 +37,10 @@ struct SidebarView: View {
                     Button(action: openImagePicker) {
                         Label("Vorhandenes Image öffnen...", systemImage: "folder")
                     }
-                    Button(action: { showingCreateImageSheet = true }) {
-                        Label("Neues NTFS-Image erstellen...", systemImage: "plus.circle")
+                    if ExperimentalGate.isUnlocked {
+                        Button(action: { showingCreateImageSheet = true }) {
+                            Label("Neues NTFS-Image erstellen...", systemImage: "plus.circle")
+                        }
                     }
                 } label: {
                     Image(systemName: "plus")
@@ -48,13 +50,15 @@ struct SidebarView: View {
         }
         .safeAreaInset(edge: .bottom) {
             VStack(spacing: 8) {
-                Button(action: { showingCreateImageSheet = true }) {
-                    Label("Neues NTFS-Image...", systemImage: "plus.circle.fill")
-                        .frame(maxWidth: .infinity)
+                if ExperimentalGate.isUnlocked {
+                    Button(action: { showingCreateImageSheet = true }) {
+                        Label("Neues NTFS-Image...", systemImage: "plus.circle.fill")
+                            .frame(maxWidth: .infinity)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .tint(AppTheme.ntfsBlue)
+                    .controlSize(.regular)
                 }
-                .buttonStyle(.borderedProminent)
-                .tint(AppTheme.ntfsBlue)
-                .controlSize(.regular)
 
                 Button(action: openImagePicker) {
                     Label("Image öffnen...", systemImage: "folder")
