@@ -21,10 +21,32 @@ public struct DirectoryItem: Identifiable, Hashable, Sendable {
     }
 }
 
-public final class DirectoryIndexReader: Sendable {
+public final class DirectoryIndexReader: @unchecked Sendable {
     private let blockDevice: BlockDevice
     private let bootSector: BootSector
     private let upCase: UpCaseTable?
+
+    /// The names of one directory, to find an entry without scanning the index again.
+    private struct NameTable {
+        var exact = [[UInt16]: DirectoryItem]()
+        var folded = [[UInt16]: DirectoryItem]()
+    }
+
+    /// A directory is identified by its record and by the state of the record when its index was read.
+    private struct DirectoryKey: Hashable {
+        let record: UInt64
+        let sequenceNumber: UInt16
+        let logFileSequenceNumber: UInt64
+    }
+
+    /// Name tables of the directories read last. A client that walks a tree by path looks up one
+    /// directory again and again; the table makes each step a dictionary lookup. A directory with more
+    /// entries than `maxTableEntries` is scanned for each lookup instead, to keep memory bounded.
+    private var tables = [DirectoryKey: NameTable]()
+    private var tableOrder = [DirectoryKey]()
+    private let tablesLock = NSLock()
+    private static let maxTables = 8
+    private static let maxTableEntries = 100_000
 
     /// B-trees of real directories are a few levels deep. A deeper chain means a damaged or hostile index.
     private static let maxIndexDepth = 32
@@ -61,10 +83,75 @@ public final class DirectoryIndexReader: Sendable {
     /// Finds one entry by name. An exact match on the UTF-16 name wins over a case-insensitive match.
     /// The exact pass compares name bytes without building strings, so it is cheap on large directories.
     public func findEntry(named name: String, in record: MFTRecord) throws -> DirectoryItem? {
+        let units = Array(name.utf16)
+        if let table = try nameTable(for: record) {
+            if let item = table.exact[units] { return item }
+            return table.folded[foldedUnits(units)]
+        }
+        return try scanForEntry(named: name, units: units, in: record)
+    }
+
+    private func foldedUnits(_ units: [UInt16]) -> [UInt16] {
+        upCase?.fold(units) ?? NTFSName.approximateFold(String(decoding: units, as: UTF16.self))
+    }
+
+    /// The name table of a directory, built on first use. Nil if the directory is too large to keep.
+    private func nameTable(for record: MFTRecord) throws -> NameTable? {
+        let key = DirectoryKey(
+            record: record.recordNumber,
+            sequenceNumber: record.header.sequenceNumber,
+            logFileSequenceNumber: record.header.logFileSequenceNumber
+        )
+        tablesLock.lock()
+        if let table = tables[key] {
+            tablesLock.unlock()
+            return table
+        }
+        tablesLock.unlock()
+
+        var table = NameTable()
+        var entries = 0
+        var failure: Error?
+        var tooLarge = false
+        try walk(record) { data, entry in
+            do {
+                guard let item = try DirectoryIndexReader.makeItem(from: entry, in: data) else { return false }
+                entries += 1
+                if entries > DirectoryIndexReader.maxTableEntries {
+                    tooLarge = true
+                    return true
+                }
+                let units = Array(item.name.utf16)
+                // The first entry with a name wins, as it does in a scan.
+                if table.exact[units] == nil { table.exact[units] = item }
+                let folded = foldedUnits(units)
+                if table.folded[folded] == nil { table.folded[folded] = item }
+            } catch {
+                failure = error
+                return true
+            }
+            return false
+        }
+        if let failure { throw failure }
+        if tooLarge { return nil }
+
+        tablesLock.lock()
+        defer { tablesLock.unlock() }
+        if tables[key] == nil {
+            tables[key] = table
+            tableOrder.append(key)
+            if tableOrder.count > DirectoryIndexReader.maxTables {
+                tables[tableOrder.removeFirst()] = nil
+            }
+        }
+        return table
+    }
+
+    /// Finds an entry by scanning the index: an exact pass without strings, then a pass ignoring case.
+    private func scanForEntry(named name: String, units: [UInt16], in record: MFTRecord) throws -> DirectoryItem? {
         var failure: Error?
         var found: DirectoryItem?
 
-        let units = Array(name.utf16)
         try walk(record) { data, entry in
             guard entry.namespace(in: data) != .dos, entry.nameEquals(units, in: data) else { return false }
             do {

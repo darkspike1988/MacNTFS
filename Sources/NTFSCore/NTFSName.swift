@@ -44,7 +44,8 @@ enum NTFSName {
         return approximateFold(a).elementsEqual(approximateFold(b))
     }
 
-    private static func approximateFold(_ name: String) -> [UInt16] {
+    /// Upper-cases every character on its own. Used when the volume's table is not available.
+    static func approximateFold(_ name: String) -> [UInt16] {
         var units = [UInt16]()
         units.reserveCapacity(name.utf16.count)
         for scalar in name.unicodeScalars {
